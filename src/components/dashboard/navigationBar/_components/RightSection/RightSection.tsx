@@ -1,0 +1,163 @@
+'use client';
+
+import { roleTypes } from '@/components/dashboard/sidebar/sidebarRoutes';
+import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useModal } from '@/context/ModalContext';
+import { ArrowRight, Bell, BookOpen, ChevronDown, ClipboardList, Trophy, X } from 'lucide-react';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const UserDropdown = dynamic(() => import('./UserDropdown/UserDropdown'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center gap-3 rounded-md border-white/5 md:border md:bg-[#0F1A2C] md:px-3 md:py-1.5">
+      <Skeleton className="size-10 rounded-full bg-white/10 md:size-9" />
+      <div className="hidden flex-col items-start gap-1.5 md:flex">
+        <Skeleton className="h-3.5 w-20 rounded bg-white/10" />
+        <Skeleton className="h-2.5 w-14 rounded bg-white/10" />
+      </div>
+      <ChevronDown className="text-gray/30 hidden h-4 w-4 animate-pulse md:block" />
+    </div>
+  ),
+});
+
+const notificationsData = [
+  {
+    id: 1,
+    title: 'Course Completed',
+    desc: 'You completed AI Architecture Fundamentals!',
+    time: '2 min ago',
+    icon: <BookOpen size={16} />,
+    color: 'bg-purple-500',
+    unread: true,
+  },
+  {
+    id: 2,
+    title: 'Achievement Unlocked',
+    desc: '14-Day Learning Streak! Keep it up!',
+    time: '15 min ago',
+    icon: <Trophy size={16} />,
+    color: 'bg-yellow-500',
+    unread: true,
+  },
+  {
+    id: 3,
+    title: 'Sarah (CTO)',
+    desc: 'Has anyone finished the Mamba-2 analysis?',
+    time: '10m ago',
+    icon: <span className="text-xs font-bold">SC</span>,
+    color: 'bg-purple-600',
+    badge: '2',
+  },
+  {
+    id: 4,
+    title: 'Assignment Due',
+    desc: 'Prompt Engineering Quiz due tomorrow',
+    time: '3h ago',
+    icon: <ClipboardList size={16} />,
+    color: 'bg-red-500',
+    unread: true,
+  },
+];
+
+function RightSection({ role }: { role: roleTypes }) {
+  const { openModal } = useModal();
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="flex items-center gap-3">
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <button className="text-gray flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-gray-800 bg-[#161F2F]/50 transition-all hover:bg-[#161F2F] hover:text-white">
+            <Bell size={20} />
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent className="mt-2 w-100 overflow-hidden rounded-md border border-[#1E293B] bg-[#111827] p-0 shadow-xl">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-[#1E293B] p-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-white">Notifications</h2>
+              <span className="bg-primary/20 text-primary rounded-full px-3 py-1.5 text-[10px] font-semibold">
+                3
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-gray cursor-pointer text-xs hover:text-white">
+                Mark all read
+              </span>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-gray cursor-pointer hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-4 p-4">
+            <span className="bg-primary cursor-pointer rounded-full px-4 py-1.5 text-xs font-medium text-white">
+              All
+            </span>
+            <span className="text-gray cursor-pointer px-4 py-1.5 text-xs hover:text-white">
+              Unread
+            </span>
+            <span className="text-gray cursor-pointer px-4 py-1.5 text-xs hover:text-white">
+              Mentions
+            </span>
+          </div>
+
+          {/* List */}
+          <div className="max-h-100 overflow-y-auto">
+            {notificationsData.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-start gap-3 border-b border-[#1E293B] p-4 transition-colors hover:bg-[#1A2234]"
+              >
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-white ${item.color}`}
+                >
+                  {item.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="text-gray mt-0.5 text-xs">{item.desc}</p>
+                  <p className="text-gray mt-1 text-[10px]">{item.time}</p>
+                </div>
+                {item.unread && <div className="bg-primary mt-2 h-2 w-2 rounded-full" />}
+                {item.badge && (
+                  <span className="bg-primary rounded-full px-1.5 text-[10px] text-white">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="text-primary flex cursor-pointer items-center justify-center gap-2 border-t border-[#1E293B] p-3 text-center text-xs hover:text-blue-300">
+            View all notifications <ArrowRight className="h-4 w-4" />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {role === 'admin' && (
+        <DynamicActionButton
+          className="h-10!"
+          label="New Alert"
+          showIcon
+          onClick={() => openModal({ view: 'NEW_ALERT', title: 'New Alert' })}
+        />
+      )}
+      <UserDropdown role={role} />
+    </div>
+  );
+}
+
+export default RightSection;
