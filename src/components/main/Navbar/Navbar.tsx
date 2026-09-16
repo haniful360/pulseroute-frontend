@@ -1,0 +1,237 @@
+'use client';
+
+import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
+import { Menu, Phone, X } from 'lucide-react';
+import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
+
+interface NavItem {
+  label: string;
+  href: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Ambulance Types', href: '#vehicles' },
+  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Fare Estimator', href: '#booking' },
+  { label: 'Safety Standards', href: '#safety' },
+  { label: 'About Us', href: '#about' },
+  { label: 'Contact', href: '#contact' },
+];
+
+export const Navbar: React.FC = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [lang, setLang] = useState<'EN' | 'BN'>('EN');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Prevent scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
+
+  return (
+    <header
+      className={`sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md transition-all duration-200 ${
+        isScrolled
+          ? 'border-b border-slate-200/80 py-3 shadow-sm'
+          : 'border-b border-slate-100 py-4'
+      }`}
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <PulseRouteLogo />
+          </div>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden items-center gap-6 xl:flex 2xl:gap-8">
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="text-[13px] font-medium text-slate-600 transition-colors hover:text-red-600"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Right Action Items (Desktop) */}
+          <div className="hidden items-center gap-4 md:flex">
+            {/* Language Switcher Pill */}
+            <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setLang('EN')}
+                className={`rounded-full px-2.5 py-1 transition-all ${
+                  lang === 'EN'
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLang('BN')}
+                className={`rounded-full px-2.5 py-1 transition-all ${
+                  lang === 'BN'
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                BN
+              </button>
+            </div>
+
+            {/* Emergency Hotline */}
+            <a
+              href="tel:999"
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-200/60 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600"></span>
+              </span>
+              <Phone className="h-3.5 w-3.5" />
+              <span>24/7: 999</span>
+            </a>
+
+            {/* Login Link */}
+            <Link
+              href="/login"
+              className="px-2 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:text-red-600"
+            >
+              Login
+            </Link>
+
+            {/* Register CTA Button */}
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow"
+            >
+              Register
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="flex items-center gap-2 xl:hidden">
+            <a
+              href="tel:999"
+              className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 md:hidden"
+            >
+              <Phone className="h-3 w-3" />
+              <span>999</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="rounded-lg p-2 text-slate-700 transition-colors hover:bg-slate-100"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Drawer (Matches Figma Frame 1:794) */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 xl:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer Panel */}
+          <div className="fixed inset-y-0 left-0 z-50 flex w-full max-w-xs transform flex-col justify-between bg-white p-6 shadow-2xl transition-transform sm:max-w-sm">
+            <div>
+              {/* Header inside drawer */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+                <PulseRouteLogo />
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  aria-label="Close menu"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <div className="divide-y divide-slate-100 py-4">
+                {NAV_ITEMS.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-3 text-sm font-medium text-slate-700 transition-colors hover:text-red-600"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+                <a
+                  href="#driver"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-3 text-sm font-semibold text-slate-900 transition-colors hover:text-red-600"
+                >
+                  Join as Driver
+                </a>
+              </div>
+            </div>
+
+            {/* Bottom Actions inside drawer */}
+            <div className="space-y-3 border-t border-slate-100 pt-4">
+              {/* Call 999 Button */}
+              <a
+                href="tel:999"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/20 transition-all hover:bg-red-700"
+              >
+                <Phone className="h-4 w-4" />
+                <span>Call 999 now</span>
+              </a>
+
+              {/* Login and Register in Mobile Drawer */}
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-center text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full rounded-lg bg-slate-100 px-3 py-2.5 text-center text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-200"
+                >
+                  Register
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
+
+export default Navbar;
