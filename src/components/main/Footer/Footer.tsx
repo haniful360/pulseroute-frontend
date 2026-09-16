@@ -76,7 +76,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/#booking" className="transition-colors hover:text-white">
+                <Link href="/pricing" className="transition-colors hover:text-white">
                   Fare Estimator
                 </Link>
               </li>
@@ -91,7 +91,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/#contact" className="transition-colors hover:text-white">
+                <Link href="/contact" className="transition-colors hover:text-white">
                   Contact
                 </Link>
               </li>

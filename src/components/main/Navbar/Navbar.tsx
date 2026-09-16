@@ -14,10 +14,10 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Ambulance Types', href: '/#vehicles' },
   { label: 'How It Works', href: '/#how-it-works' },
-  { label: 'Fare Estimator', href: '/#booking' },
+  { label: 'Fare Estimator', href: '/pricing' },
   { label: 'Safety Standards', href: '/safety' },
   { label: 'About Us', href: '/about' },
-  { label: 'Contact', href: '/#contact' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export const Navbar: React.FC = () => {

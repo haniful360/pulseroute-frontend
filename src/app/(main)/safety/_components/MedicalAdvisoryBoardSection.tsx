@@ -69,7 +69,7 @@ export const MedicalAdvisoryBoardSection: React.FC = () => {
         </div>
 
         {/* 6 Clinician Cards Grid */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 sm:gap-6">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {ADVISORY_BOARD.map((member) => (
             <div
               key={member.name}

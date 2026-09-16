@@ -7,7 +7,7 @@ export const MissionVisionSection: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
           {/* Mission Card */}
-          <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-8 sm:p-10 shadow-xs transition-shadow hover:shadow-sm">
+          <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-8 shadow-xs transition-shadow hover:shadow-sm sm:p-10">
             <div>
               {/* Mission Icon Badge */}
               <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full border border-red-200 bg-red-50/70 text-red-600">
@@ -27,7 +27,7 @@ export const MissionVisionSection: React.FC = () => {
           </div>
 
           {/* Vision Card */}
-          <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-8 sm:p-10 shadow-xs transition-shadow hover:shadow-sm">
+          <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-8 shadow-xs transition-shadow hover:shadow-sm sm:p-10">
             <div>
               {/* Vision Icon Badge */}
               <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50/70 text-emerald-600">
