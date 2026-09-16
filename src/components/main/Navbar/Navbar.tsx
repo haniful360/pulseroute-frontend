@@ -1,9 +1,9 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
+import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { Menu, Phone, X } from 'lucide-react';
-import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
 
 interface NavItem {
   label: string;
@@ -101,9 +101,12 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* Emergency Hotline */}
-            <a
+            <DynamicActionButton
               href="tel:999"
-              className="inline-flex items-center gap-1.5 rounded-full border border-red-200/60 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
+              variant="emergency"
+              size="sm"
+              rounded="full"
+              className="gap-1.5 px-3 text-xs font-bold"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
@@ -111,42 +114,51 @@ export const Navbar: React.FC = () => {
               </span>
               <Phone className="h-3.5 w-3.5" />
               <span>24/7: 999</span>
-            </a>
+            </DynamicActionButton>
 
             {/* Login Link */}
-            <Link
+            <DynamicActionButton
               href="/login"
-              className="px-2 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:text-red-600"
-            >
-              Login
-            </Link>
+              variant="ghost"
+              size="sm"
+              rounded="full"
+              label="Login"
+              className="text-xs font-semibold text-slate-700 hover:text-red-600"
+            />
 
             {/* Register CTA Button */}
-            <Link
+            <DynamicActionButton
               href="/register"
-              className="inline-flex items-center justify-center rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow"
-            >
-              Register
-            </Link>
+              label="Register"
+              size="sm"
+              rounded="full"
+              className="px-4 text-xs font-semibold shadow-sm shadow-red-600/20"
+            />
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 xl:hidden">
-            <a
+            <DynamicActionButton
               href="tel:999"
-              className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 md:hidden"
+              variant="emergency"
+              size="xs"
+              rounded="full"
+              className="gap-1 px-2.5 font-bold md:hidden"
             >
               <Phone className="h-3 w-3" />
               <span>999</span>
-            </a>
-            <button
+            </DynamicActionButton>
+            <DynamicActionButton
               type="button"
+              variant="ghost"
+              size="icon"
+              rounded="lg"
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg p-2 text-slate-700 transition-colors hover:bg-slate-100"
               aria-label="Open navigation menu"
+              className="text-slate-700 hover:bg-slate-100"
             >
               <Menu className="h-6 w-6" />
-            </button>
+            </DynamicActionButton>
           </div>
         </div>
       </div>
@@ -166,14 +178,17 @@ export const Navbar: React.FC = () => {
               {/* Header inside drawer */}
               <div className="flex items-center justify-between border-b border-slate-100 pb-5">
                 <PulseRouteLogo />
-                <button
+                <DynamicActionButton
                   type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  rounded="lg"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                   aria-label="Close menu"
+                  className="text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                 >
                   <X className="h-5 w-5" />
-                </button>
+                </DynamicActionButton>
               </div>
 
               {/* Navigation Links */}
@@ -201,30 +216,39 @@ export const Navbar: React.FC = () => {
             {/* Bottom Actions inside drawer */}
             <div className="space-y-3 border-t border-slate-100 pt-4">
               {/* Call 999 Button */}
-              <a
+              <DynamicActionButton
                 href="tel:999"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/20 transition-all hover:bg-red-700"
-              >
-                <Phone className="h-4 w-4" />
-                <span>Call 999 now</span>
-              </a>
+                variant="default"
+                rounded="xl"
+                size="lg"
+                fullWidth
+                icon={Phone}
+                showIcon
+                iconPosition="left"
+                label="Call 999 now"
+                className="font-semibold shadow-md shadow-red-600/20"
+              />
 
               {/* Login and Register in Mobile Drawer */}
               <div className="grid grid-cols-2 gap-2">
-                <Link
+                <DynamicActionButton
                   href="/login"
+                  variant="outline"
+                  rounded="lg"
+                  fullWidth
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-center text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                >
-                  Login
-                </Link>
-                <Link
+                  label="Login"
+                  className="text-xs"
+                />
+                <DynamicActionButton
                   href="/register"
+                  variant="secondary"
+                  rounded="lg"
+                  fullWidth
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full rounded-lg bg-slate-100 px-3 py-2.5 text-center text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-200"
-                >
-                  Register
-                </Link>
+                  label="Register"
+                  className="text-xs font-semibold"
+                />
               </div>
             </div>
           </div>

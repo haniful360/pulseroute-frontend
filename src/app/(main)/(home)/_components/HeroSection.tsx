@@ -2,15 +2,21 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import {
-  MapPin,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Crosshair,
   Clock,
   ShieldCheck,
   ChevronDown,
   ChevronUp,
   Ambulance,
-  AlertCircle,
   Check,
   FileText,
 } from 'lucide-react';
@@ -205,22 +211,24 @@ export const HeroSection: React.FC = () => {
                     <label className="mb-1 block text-xs font-semibold text-slate-600">
                       Destination hospital
                     </label>
-                    <div className="relative">
-                      <select
-                        value={selectedHospital}
-                        onChange={(e) => setSelectedHospital(e.target.value)}
-                        className="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 py-2.5 pr-9 pl-3.5 text-sm text-slate-900 transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-                      >
-                        <option value="">Search hospitals & clinics</option>
-                        <option value="square">Square Hospital, Panthapath</option>
-                        <option value="evercare">Evercare Hospital, Bashundhara</option>
-                        <option value="united">United Hospital, Gulshan 2</option>
-                        <option value="dmc">Dhaka Medical College Hospital (DMCH)</option>
-                        <option value="bsmmu">BSMMU (PG Hospital), Shahbag</option>
-                        <option value="labaid">Labaid Specialized Hospital, Dhanmondi</option>
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute top-3 right-3 h-4 w-4 text-slate-400" />
-                    </div>
+                    <Select
+                      value={selectedHospital}
+                      onValueChange={(value) => setSelectedHospital(value)}
+                    >
+                      <SelectTrigger className="h-10.5 w-full rounded-lg border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 shadow-none transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 data-[placeholder]:text-slate-400">
+                        <SelectValue placeholder="Search hospitals & clinics" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50 rounded-xl border border-slate-200 bg-white text-slate-900 shadow-xl">
+                        <SelectItem value="square">Square Hospital, Panthapath</SelectItem>
+                        <SelectItem value="evercare">Evercare Hospital, Bashundhara</SelectItem>
+                        <SelectItem value="united">United Hospital, Gulshan 2</SelectItem>
+                        <SelectItem value="dmc">Dhaka Medical College Hospital (DMCH)</SelectItem>
+                        <SelectItem value="bsmmu">BSMMU (PG Hospital), Shahbag</SelectItem>
+                        <SelectItem value="labaid">
+                          Labaid Specialized Hospital, Dhanmondi
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Ambulance Type Chips */}
@@ -340,16 +348,21 @@ export const HeroSection: React.FC = () => {
                   </div>
 
                   {/* Primary Find Nearest Ambulance CTA */}
-                  <button
+                  <DynamicActionButton
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-600/25 transition-all hover:bg-red-700 active:scale-[0.99]"
-                  >
-                    <Ambulance className="h-4 w-4" />
-                    <span>
-                      {isSubmitting ? 'Locating Nearest Ambulance...' : 'Find Nearest Ambulance'}
-                    </span>
-                  </button>
+                    isLoading={isSubmitting}
+                    icon={Ambulance}
+                    showIcon
+                    iconPosition="left"
+                    rounded="xl"
+                    size="lg"
+                    fullWidth
+                    label={
+                      isSubmitting ? 'Locating Nearest Ambulance...' : 'Find Nearest Ambulance'
+                    }
+                    className="shadow-lg shadow-red-600/25"
+                  />
                 </form>
               )}
             </div>

@@ -2,6 +2,8 @@
 
 import { CheckCircle2, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import React, { useState } from 'react';
+import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
+import { cn } from '@/lib/utils';
 
 interface Testimonial {
   quote: string;
@@ -65,22 +67,26 @@ export const TestimonialsSection: React.FC = () => {
 
           {/* Prev / Next controls */}
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
+            <DynamicActionButton
               type="button"
+              variant="outline"
+              size="icon-sm"
+              rounded="full"
               onClick={handlePrev}
-              className="rounded-full border border-slate-200 p-2.5 text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
               aria-label="Previous testimonial"
             >
               <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
+            </DynamicActionButton>
+            <DynamicActionButton
               type="button"
+              variant="outline"
+              size="icon-sm"
+              rounded="full"
               onClick={handleNext}
-              className="rounded-full border border-slate-200 p-2.5 text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
               aria-label="Next testimonial"
             >
               <ChevronRight className="h-4 w-4" />
-            </button>
+            </DynamicActionButton>
           </div>
         </div>
 
@@ -89,7 +95,12 @@ export const TestimonialsSection: React.FC = () => {
           {TESTIMONIALS.map((item, idx) => (
             <div
               key={idx}
-              className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+              className={cn(
+                'flex flex-col justify-between rounded-2xl border bg-white p-6 shadow-sm transition-all',
+                activeIndex === idx
+                  ? 'border-primary ring-primary/20 ring-1'
+                  : 'border-slate-200 hover:shadow-md',
+              )}
             >
               <div>
                 {/* 5 Gold Stars */}
