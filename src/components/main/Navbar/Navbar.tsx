@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { Menu, Phone, X } from 'lucide-react';
@@ -11,12 +12,12 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Ambulance Types', href: '#vehicles' },
-  { label: 'How It Works', href: '#how-it-works' },
-  { label: 'Fare Estimator', href: '#booking' },
-  { label: 'Safety Standards', href: '#safety' },
-  { label: 'About Us', href: '#about' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Ambulance Types', href: '/#vehicles' },
+  { label: 'How It Works', href: '/#how-it-works' },
+  { label: 'Fare Estimator', href: '/#booking' },
+  { label: 'Safety Standards', href: '/safety' },
+  { label: 'About Us', href: '/about' },
+  { label: 'Contact', href: '/#contact' },
 ];
 
 export const Navbar: React.FC = () => {
@@ -62,13 +63,13 @@ export const Navbar: React.FC = () => {
           {/* Desktop Navigation Links */}
           <nav className="hidden items-center gap-6 xl:flex 2xl:gap-8">
             {NAV_ITEMS.map((item) => (
-              <a
+              <Link
                 key={item.label}
                 href={item.href}
                 className="text-[13px] font-medium text-slate-600 transition-colors hover:text-red-600"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -194,22 +195,22 @@ export const Navbar: React.FC = () => {
               {/* Navigation Links */}
               <div className="divide-y divide-slate-100 py-4">
                 {NAV_ITEMS.map((item) => (
-                  <a
+                  <Link
                     key={item.label}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className="block py-3 text-sm font-medium text-slate-700 transition-colors hover:text-red-600"
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 ))}
-                <a
-                  href="#driver"
+                <Link
+                  href="/#driver"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block py-3 text-sm font-semibold text-slate-900 transition-colors hover:text-red-600"
                 >
                   Join as Driver
-                </a>
+                </Link>
               </div>
             </div>
 

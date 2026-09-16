@@ -66,42 +66,42 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <a href="#vehicles" className="transition-colors hover:text-white">
+                <Link href="/#vehicles" className="transition-colors hover:text-white">
                   Ambulance Types
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#how-it-works" className="transition-colors hover:text-white">
+                <Link href="/#how-it-works" className="transition-colors hover:text-white">
                   How It Works
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#booking" className="transition-colors hover:text-white">
+                <Link href="/#booking" className="transition-colors hover:text-white">
                   Fare Estimator
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#safety" className="transition-colors hover:text-white">
+                <Link href="/safety" className="transition-colors hover:text-white">
                   Safety Standards
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#about" className="transition-colors hover:text-white">
+                <Link href="/about" className="transition-colors hover:text-white">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#contact" className="transition-colors hover:text-white">
+                <Link href="/#contact" className="transition-colors hover:text-white">
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#driver"
+                <Link
+                  href="/#driver"
                   className="font-medium text-red-400 transition-colors hover:text-red-300"
                 >
                   Join as Driver
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -126,9 +126,9 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <a href="#safety" className="transition-colors hover:text-white">
+                <Link href="/safety" className="transition-colors hover:text-white">
                   Safety Standards
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
