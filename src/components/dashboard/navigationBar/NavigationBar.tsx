@@ -50,7 +50,7 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
           )}
 
           {/* Non-patient & non-driver breadcrumbs */}
-          {(!isPatient && !isDriver) && <DynamicBreadcrumb />}
+          {!isPatient && !isDriver && <DynamicBreadcrumb />}
         </div>
 
         {/* Center Section: Search Bar */}

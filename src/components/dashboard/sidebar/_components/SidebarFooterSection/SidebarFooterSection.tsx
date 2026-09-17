@@ -18,7 +18,7 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
   const isDriver = role === 'driver';
   const isSuperAdmin = role === 'super-admin';
   const isAdmin = role === 'admin';
-  const isLight = isPatient || isDriver || isAdmin;
+  const isLight = isPatient || isDriver || isAdmin || isSuperAdmin;
 
   return (
     <SidebarFooter
@@ -82,7 +82,7 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
             <div className="flex w-full flex-col gap-1">
               <Link
                 href="/dashboard/super-admin/announcements"
-                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-[#1E293B]/60 hover:text-white"
+                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-[#0B132B]"
               >
                 <svg
                   className="h-4 w-4 shrink-0"
@@ -98,7 +98,7 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
               </Link>
               <Link
                 href="/dashboard/super-admin/settings"
-                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-[#1E293B]/60 hover:text-white"
+                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-[#0B132B]"
               >
                 <svg
                   className="h-4 w-4 shrink-0"

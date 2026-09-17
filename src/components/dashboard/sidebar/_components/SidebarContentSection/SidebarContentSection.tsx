@@ -68,7 +68,7 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
   const isDriver = role === 'driver';
   const isSuperAdmin = role === 'super-admin';
   const isAdmin = role === 'admin';
-  const isLight = isPatient || isDriver || isAdmin;
+  const isLight = isPatient || isDriver || isAdmin || isSuperAdmin;
 
   return (
     <SidebarContent
@@ -129,13 +129,9 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                           ? isActive
                             ? 'border-l-4 border-[#E63946] bg-[#FEF2F2] font-semibold text-[#0B132B]'
                             : 'text-[#64748B] hover:bg-slate-50 hover:text-[#0B132B]'
-                          : isSuperAdmin
-                            ? isActive
-                              ? 'bg-[#E63946] font-semibold text-white shadow-md shadow-[#E63946]/20'
-                              : 'text-slate-400 hover:bg-[#1E293B]/60 hover:text-white'
-                            : isActive
-                              ? 'text-primary! bg-[#1E293B]!'
-                              : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
+                          : isActive
+                            ? 'text-primary! bg-[#1E293B]!'
+                            : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
                       }`}
                     >
                       <div className="flex items-center gap-3.5">
@@ -146,11 +142,7 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                                 ? isActive
                                   ? 'text-[#E63946]'
                                   : 'text-[#64748B]'
-                                : isSuperAdmin
-                                  ? isActive
-                                    ? 'text-white'
-                                    : 'text-slate-400'
-                                  : ''
+                                : ''
                             }
                             size={20}
                           />
@@ -269,11 +261,7 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                       ? isActive
                         ? 'rounded-l-none rounded-r-xl border-l-4 border-[#E63946] bg-[#FEF2F2] font-semibold text-[#0B132B]'
                         : 'rounded-xl text-[#64748B] hover:bg-slate-50 hover:text-[#0B132B]'
-                      : isSuperAdmin
-                        ? isActive
-                          ? 'rounded-xl bg-[#E63946] font-semibold text-white shadow-md shadow-[#E63946]/20'
-                          : 'rounded-xl text-slate-400 hover:bg-[#1E293B]/60 hover:text-white'
-                        : ''
+                      : ''
                   }`}
                 >
                   <Link
@@ -284,13 +272,9 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                         ? isActive
                           ? 'font-semibold text-[#0B132B]'
                           : 'text-[#64748B] hover:text-[#0B132B]'
-                        : isSuperAdmin
-                          ? isActive
-                            ? 'font-semibold text-white'
-                            : 'text-slate-400 hover:text-white'
-                          : isActive
-                            ? 'text-primary! bg-[#1E293B]!'
-                            : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
+                        : isActive
+                          ? 'text-primary! bg-[#1E293B]!'
+                          : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
                     }`}
                   >
                     {Icon && (
@@ -302,11 +286,7 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                                 ? 'text-[#06D6A0]'
                                 : 'text-[#E63946]'
                               : 'text-[#64748B]'
-                            : isSuperAdmin
-                              ? isActive
-                                ? 'text-white'
-                                : 'text-slate-400'
-                              : ''
+                            : ''
                         }
                         size={20}
                       />
