@@ -13,7 +13,7 @@ export function AppSidebar({
   className,
   ...props
 }: { role: roleTypes } & React.ComponentProps<typeof Sidebar>) {
-  const isLight = role === 'patient' || role === 'driver';
+  const isLight = role === 'patient' || role === 'driver' || role === 'admin';
   const isSuperAdmin = role === 'super-admin';
 
   return (

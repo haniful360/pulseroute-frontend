@@ -17,7 +17,8 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
   const isPatient = role === 'patient';
   const isDriver = role === 'driver';
   const isSuperAdmin = role === 'super-admin';
-  const isLight = isPatient || isDriver;
+  const isAdmin = role === 'admin';
+  const isLight = isPatient || isDriver || isAdmin;
 
   return (
     <SidebarFooter

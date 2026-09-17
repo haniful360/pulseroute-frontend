@@ -73,7 +73,8 @@ function RightSection({ role }: { role: roleTypes }) {
   const isPatient = role === 'patient';
   const isDriver = role === 'driver';
   const isSuperAdmin = role === 'super-admin';
-  const isLight = isPatient || isDriver || isSuperAdmin;
+  const isAdmin = role === 'admin';
+  const isLight = isPatient || isDriver || isSuperAdmin || isAdmin;
 
   return (
     <div className="flex items-center gap-3">

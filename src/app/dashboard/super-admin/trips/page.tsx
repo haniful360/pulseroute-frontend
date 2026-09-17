@@ -14,10 +14,10 @@ export default function TripManagementPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">Trip Audit Master Log</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Over 1,240 emergency trips logged with full GPS waypoint telemetry and patient handover timestamps.
+          Over 1,240 emergency trips logged with full GPS waypoint telemetry and patient handover
+          timestamps.
         </p>
       </div>
     </div>
   );
 }
-

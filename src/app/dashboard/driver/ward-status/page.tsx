@@ -14,10 +14,10 @@ export default function WardStatusPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">Hospital Ward Status (Coming Soon)</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Direct API telemetry connecting Square Hospital, United Hospital, Evercare, and Dhaka Medical College ER.
+          Direct API telemetry connecting Square Hospital, United Hospital, Evercare, and Dhaka
+          Medical College ER.
         </p>
       </div>
     </div>
   );
 }
-

@@ -12,12 +12,14 @@ export default function DriverKycPage() {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
           <ShieldCheck className="h-8 w-8" />
         </div>
-        <h3 className="text-xl font-bold text-slate-900">Verification Status: Verified &amp; Active</h3>
+        <h3 className="text-xl font-bold text-slate-900">
+          Verification Status: Verified &amp; Active
+        </h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Driver ID: PR-DRV-9022. All documents validated by Super Admin Rahat Mahmud on 12 Oct 2023.
+          Driver ID: PR-DRV-9022. All documents validated by Super Admin Rahat Mahmud on 12 Oct
+          2023.
         </p>
       </div>
     </div>
   );
 }
-

@@ -14,10 +14,10 @@ export default function DriverWalletPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">Available Balance: 12,450.00 BDT</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Connected to Stripe Connect account (acct_paramedic_dh102). Payouts clear in under 2 hours.
+          Connected to Stripe Connect account (acct_paramedic_dh102). Payouts clear in under 2
+          hours.
         </p>
       </div>
     </div>
   );
 }
-

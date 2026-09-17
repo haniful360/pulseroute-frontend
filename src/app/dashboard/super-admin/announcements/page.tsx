@@ -14,10 +14,10 @@ export default function AnnouncementsPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">Broadcast Network Ready</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Send push notifications and audio alerts directly into paramedic duty cockpits across Dhaka.
+          Send push notifications and audio alerts directly into paramedic duty cockpits across
+          Dhaka.
         </p>
       </div>
     </div>
   );
 }
-

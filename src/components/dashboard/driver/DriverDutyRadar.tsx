@@ -35,27 +35,27 @@ export default function DriverDutyRadar() {
           {/* Concentric Radar Rings */}
           <div className="relative flex items-center justify-center">
             {/* Outer Ring 3 */}
-            <div className="h-96 w-96 rounded-full border border-red-500/20 bg-red-500/5 animate-pulse" />
+            <div className="h-96 w-96 animate-pulse rounded-full border border-red-500/20 bg-red-500/5" />
             {/* Middle Ring 2 */}
             <div className="absolute h-64 w-64 rounded-full border border-red-500/30" />
             {/* Inner Ring 1 */}
             <div className="absolute h-36 w-36 rounded-full border border-red-500/40 bg-red-500/10" />
 
             {/* Radar Sweeping Line */}
-            <div className="absolute h-96 w-96 rounded-full border-t-2 border-red-500/60 animate-spin" />
+            <div className="absolute h-96 w-96 animate-spin rounded-full border-t-2 border-red-500/60" />
 
             {/* Central Paramedic Unit Beacon */}
             <div className="absolute flex h-12 w-12 items-center justify-center">
-              <span className="absolute h-10 w-10 rounded-full bg-[#E63946]/40 animate-ping" />
+              <span className="absolute h-10 w-10 animate-ping rounded-full bg-[#E63946]/40" />
               <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#E63946] text-white shadow-lg shadow-red-500/50">
-                <Navigation className="h-4 w-4 fill-white rotate-45" />
+                <Navigation className="h-4 w-4 rotate-45 fill-white" />
               </div>
             </div>
 
             {/* Target 1: Emergency SOS Call (Dhanmondi) */}
             <div className="absolute -top-24 -left-20 flex flex-col items-center">
               <div className="flex items-center gap-1.5 rounded-full border border-red-500 bg-[#0B132B]/90 px-2.5 py-1 text-[10px] font-bold text-white shadow-md backdrop-blur-md">
-                <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+                <span className="h-2 w-2 animate-ping rounded-full bg-red-500" />
                 <span>ICU SOS • Dhanmondi 27</span>
               </div>
               <div className="h-3 w-0.5 bg-red-500" />
@@ -73,14 +73,14 @@ export default function DriverDutyRadar() {
 
         {/* Floating Top Left Card: Demand Zones */}
         <div className="absolute top-4 left-4 z-20 w-60 rounded-2xl border border-white/40 bg-white/90 p-3.5 shadow-lg backdrop-blur-md sm:w-68">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2">
-              <Radio className="h-4 w-4 text-[#E63946] animate-pulse" />
+              <Radio className="h-4 w-4 animate-pulse text-[#E63946]" />
               <span className="text-xs font-bold tracking-wider text-slate-800 uppercase">
                 DEMAND ZONES
               </span>
             </div>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
               LIVE
             </span>
           </div>
@@ -89,7 +89,7 @@ export default function DriverDutyRadar() {
             {/* Dhanmondi Zone */}
             <div>
               <div className="flex items-center justify-between text-xs font-medium">
-                <span className="text-slate-800 font-semibold">Dhanmondi</span>
+                <span className="font-semibold text-slate-800">Dhanmondi</span>
                 <span className="text-xs font-bold text-[#E63946]">High</span>
               </div>
               <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -100,7 +100,7 @@ export default function DriverDutyRadar() {
             {/* Mohakhali Zone */}
             <div>
               <div className="flex items-center justify-between text-xs font-medium">
-                <span className="text-slate-800 font-semibold">Mohakhali</span>
+                <span className="font-semibold text-slate-800">Mohakhali</span>
                 <span className="text-xs font-bold text-amber-500">Medium</span>
               </div>
               <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -140,7 +140,7 @@ export default function DriverDutyRadar() {
             </button>
 
             <div className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
               <span>12 Nearby Units</span>
             </div>
           </div>
@@ -155,4 +155,3 @@ export default function DriverDutyRadar() {
     </div>
   );
 }
-

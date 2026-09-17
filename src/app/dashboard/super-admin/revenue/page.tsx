@@ -14,10 +14,10 @@ export default function RevenueOpsPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">Revenue Ledger</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Monthly gross booking value: 4,820,000 BDT with automated split payouts to private operators.
+          Monthly gross booking value: 4,820,000 BDT with automated split payouts to private
+          operators.
         </p>
       </div>
     </div>
   );
 }
-

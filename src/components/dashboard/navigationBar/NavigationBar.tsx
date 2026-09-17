@@ -11,7 +11,8 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
   const isPatient = role === 'patient';
   const isDriver = role === 'driver';
   const isSuperAdmin = role === 'super-admin';
-  const isLight = isPatient || isDriver || isSuperAdmin;
+  const isAdmin = role === 'admin';
+  const isLight = isPatient || isDriver || isSuperAdmin || isAdmin;
 
   return (
     <header
@@ -49,7 +50,7 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
           )}
 
           {/* Non-patient & non-driver breadcrumbs */}
-          {!isLight && <DynamicBreadcrumb />}
+          {(!isPatient && !isDriver) && <DynamicBreadcrumb />}
         </div>
 
         {/* Center Section: Search Bar */}

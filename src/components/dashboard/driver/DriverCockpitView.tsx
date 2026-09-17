@@ -19,16 +19,16 @@ export default function DriverCockpitView() {
 
         {/* System Status Pill */}
         <div className="flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs sm:self-auto">
-          <span className="text-slate-400 uppercase text-[11px] font-bold">System Status:</span>
-          <span className="flex items-center gap-1.5 text-emerald-600 font-bold">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[11px] font-bold text-slate-400 uppercase">System Status:</span>
+          <span className="flex items-center gap-1.5 font-bold text-emerald-600">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
             All Nodes Optimal
           </span>
         </div>
       </div>
 
       {/* Main Grid: Radar View & Shift Summary */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
         {/* Left Column: Live Radar Map (8 Cols) */}
         <div className="lg:col-span-8">
           <DriverDutyRadar />
@@ -42,4 +42,3 @@ export default function DriverCockpitView() {
     </div>
   );
 }
-

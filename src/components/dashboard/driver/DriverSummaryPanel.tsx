@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, CheckCircle2, Clock, DollarSign, Flame, Star, TrendingUp } from 'lucide-react';
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Flame,
+  Star,
+  TrendingUp,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function DriverSummaryPanel() {
@@ -66,7 +74,7 @@ export default function DriverSummaryPanel() {
               <span className="text-sm font-bold text-slate-400">BDT</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600 border border-emerald-100">
+          <div className="flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
             <TrendingUp className="h-3.5 w-3.5" />
             <span>+12.5% vs avg</span>
           </div>
@@ -97,7 +105,7 @@ export default function DriverSummaryPanel() {
               <span className="text-xs font-semibold text-emerald-600">● 100% Success</span>
             </div>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 text-slate-700 border border-slate-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-slate-700">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
           </div>
         </div>
@@ -134,7 +142,7 @@ export default function DriverSummaryPanel() {
             ACTIVE DUTY HOURS
           </span>
           <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase backdrop-blur-md">
-            <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
             <span>LIVE CLOCK</span>
           </div>
         </div>
@@ -169,7 +177,7 @@ export default function DriverSummaryPanel() {
 
       {/* 4. Performance Rating Card */}
       <div className="flex items-center gap-3.5 rounded-3xl border border-slate-200 bg-white p-4.5 shadow-xs">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 border border-amber-100">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-100 bg-amber-50 text-amber-500">
           <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
         </div>
         <div>
@@ -177,7 +185,7 @@ export default function DriverSummaryPanel() {
             <span>4.9 / 5.0</span>
             <Flame className="h-4 w-4 text-[#E63946]" />
           </div>
-          <p className="mt-0.5 text-xs text-slate-500 leading-snug">
+          <p className="mt-0.5 text-xs leading-snug text-slate-500">
             You&apos;re in the top 5% of paramedics this month.
           </p>
         </div>
@@ -185,4 +193,3 @@ export default function DriverSummaryPanel() {
     </div>
   );
 }
-

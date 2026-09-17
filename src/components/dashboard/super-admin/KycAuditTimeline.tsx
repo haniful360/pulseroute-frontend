@@ -26,24 +26,24 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
   return (
     <div className="space-y-6">
       {/* 1. Application Timeline & Audit Trail Card */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
-        <div className="pb-3 border-b border-slate-100">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
+        <div className="border-b border-slate-100 pb-3">
           <h2 className="text-sm font-bold tracking-tight text-slate-900">
             Application Timeline &amp; Audit Trail
           </h2>
         </div>
 
         {/* Timeline Steps */}
-        <div className="mt-5 relative pl-6 space-y-6 before:absolute before:top-2 before:bottom-2 before:left-2.5 before:w-0.5 before:bg-slate-200">
+        <div className="relative mt-5 space-y-6 pl-6 before:absolute before:top-2 before:bottom-2 before:left-2.5 before:w-0.5 before:bg-slate-200">
           {applicant.timeline.map((step, index) => {
             return (
-              <div key={index} className="relative group">
+              <div key={index} className="group relative">
                 {/* Node icon dot */}
-                <div className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-4 ring-slate-100">
+                <div className="absolute top-0.5 -left-6 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-4 ring-slate-100">
                   {step.status === 'SUCCESS' ? (
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
                   ) : step.status === 'IN_PROGRESS' ? (
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#E63946] animate-pulse" />
+                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#E63946]" />
                   ) : (
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
                   )}
@@ -52,23 +52,17 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">
-                        {step.title}
-                      </span>
+                      <span className="text-xs font-bold text-slate-900">{step.title}</span>
                       {step.status === 'SUCCESS' && (
-                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 border border-emerald-100">
+                        <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
                           SUCCESS
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] font-medium text-slate-400">
-                      {step.time}
-                    </span>
+                    <span className="text-[11px] font-medium text-slate-400">{step.time}</span>
                   </div>
 
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {step.desc}
-                  </p>
+                  <p className="text-xs leading-relaxed text-slate-600">{step.desc}</p>
                 </div>
               </div>
             );
@@ -77,8 +71,8 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
       </div>
 
       {/* 2. Reviewer's Internal Note Card */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
-        <div className="pb-3 border-b border-slate-100">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
+        <div className="border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <MessageSquareText className="h-4 w-4 text-[#E63946]" />
             <h2 className="text-sm font-bold tracking-tight text-slate-900">
@@ -98,7 +92,7 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
                 key={idx}
                 className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-900"
               >
-                <div className="flex items-center justify-between text-[10px] font-bold text-amber-700 pb-1">
+                <div className="flex items-center justify-between pb-1 text-[10px] font-bold text-amber-700">
                   <span>Rahat Mahmud (Super Admin)</span>
                   <span>Just now</span>
                 </div>
@@ -132,4 +126,3 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
     </div>
   );
 }
-

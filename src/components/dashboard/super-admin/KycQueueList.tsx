@@ -29,12 +29,10 @@ export default function KycQueueList({
   });
 
   return (
-    <div className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+    <div className="flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
       {/* Queue Header */}
-      <div className="p-4 sm:p-5 border-b border-slate-100">
-        <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-          Verification Queue
-        </h2>
+      <div className="border-b border-slate-100 p-4 sm:p-5">
+        <h2 className="text-lg font-bold tracking-tight text-slate-900">Verification Queue</h2>
 
         {/* Tab Filters */}
         <div className="mt-4 flex items-center gap-1 rounded-2xl bg-slate-100 p-1">
@@ -42,7 +40,7 @@ export default function KycQueueList({
             type="button"
             onClick={() => setActiveTab('Pending')}
             className={cn(
-              'flex-1 cursor-pointer rounded-xl py-2 text-xs font-bold transition-all text-center',
+              'flex-1 cursor-pointer rounded-xl py-2 text-center text-xs font-bold transition-all',
               activeTab === 'Pending'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800',
@@ -54,7 +52,7 @@ export default function KycQueueList({
             type="button"
             onClick={() => setActiveTab('Approved')}
             className={cn(
-              'flex-1 cursor-pointer rounded-xl py-2 text-xs font-bold transition-all text-center',
+              'flex-1 cursor-pointer rounded-xl py-2 text-center text-xs font-bold transition-all',
               activeTab === 'Approved'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800',
@@ -66,7 +64,7 @@ export default function KycQueueList({
             type="button"
             onClick={() => setActiveTab('Rejected')}
             className={cn(
-              'flex-1 cursor-pointer rounded-xl py-2 text-xs font-bold transition-all text-center',
+              'flex-1 cursor-pointer rounded-xl py-2 text-center text-xs font-bold transition-all',
               activeTab === 'Rejected'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800',
@@ -78,7 +76,7 @@ export default function KycQueueList({
 
         {/* Search inside queue */}
         <div className="relative mt-3">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Filter queue..."
@@ -90,7 +88,7 @@ export default function KycQueueList({
       </div>
 
       {/* Queue Applicant List */}
-      <div className="divide-y divide-slate-100 overflow-y-auto max-h-[640px]">
+      <div className="max-h-[640px] divide-y divide-slate-100 overflow-y-auto">
         {filteredApplicants.length === 0 ? (
           <div className="py-12 text-center text-xs text-slate-400">
             No applicants in this category.
@@ -106,21 +104,19 @@ export default function KycQueueList({
                 type="button"
                 onClick={() => onSelectApplicant(applicant.id)}
                 className={cn(
-                  'w-full cursor-pointer p-4 text-left transition-all border-l-4',
+                  'w-full cursor-pointer border-l-4 p-4 text-left transition-all',
                   isSelected
                     ? 'border-[#E63946] bg-red-50/30'
                     : 'border-transparent hover:bg-slate-50/70',
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="font-bold text-slate-900 text-sm">
-                    {applicant.name}
-                  </div>
+                  <div className="text-sm font-bold text-slate-900">{applicant.name}</div>
                   <span
                     className={cn(
                       'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase',
                       isUrgent
-                        ? 'bg-[#FEF2F2] text-[#E63946] border border-red-200'
+                        ? 'border border-red-200 bg-[#FEF2F2] text-[#E63946]'
                         : 'bg-slate-100 text-slate-600',
                     )}
                   >
@@ -137,9 +133,7 @@ export default function KycQueueList({
                     <Clock className="h-3 w-3" />
                     {applicant.submittedAt}
                   </span>
-                  <span className="font-mono text-slate-500 font-semibold">
-                    ID: {applicant.id}
-                  </span>
+                  <span className="font-mono font-semibold text-slate-500">ID: {applicant.id}</span>
                 </div>
               </button>
             );
@@ -149,4 +143,3 @@ export default function KycQueueList({
     </div>
   );
 }
-

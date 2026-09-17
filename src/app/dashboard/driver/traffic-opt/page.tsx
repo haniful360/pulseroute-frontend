@@ -14,10 +14,10 @@ export default function TrafficOptPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">AI Green Corridor (Coming Soon)</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Currently integrating with Dhaka Metropolitan Police traffic signal networks for active corridor clearance.
+          Currently integrating with Dhaka Metropolitan Police traffic signal networks for active
+          corridor clearance.
         </p>
       </div>
     </div>
   );
 }
-

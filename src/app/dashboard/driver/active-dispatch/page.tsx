@@ -14,10 +14,10 @@ export default function ActiveDispatchPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">Active Dispatch Mission #DISP-9102</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          En route to Dhanmondi 27 for critical ICU transport. Hospital triage node: Square Hospital.
+          En route to Dhanmondi 27 for critical ICU transport. Hospital triage node: Square
+          Hospital.
         </p>
       </div>
     </div>
   );
 }
-

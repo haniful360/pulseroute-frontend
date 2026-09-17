@@ -76,15 +76,15 @@ export default function SuperAdminKycView() {
           Driver (KYC) Verification Queue &amp; Audit Trail
         </h1>
         <p className="text-sm font-medium text-slate-500">
-          Review Bangladesh Road Transport Authority (BRTA) driving licenses, NID credentials,
-          and emergency ambulance fleet compliance.
+          Review Bangladesh Road Transport Authority (BRTA) driving licenses, NID credentials, and
+          emergency ambulance fleet compliance.
         </p>
       </div>
 
       {/* Main 2-Pane / 3-Column Verification Workspace */}
-      <div className="flex flex-col gap-6 lg:flex-row items-start">
+      <div className="flex flex-col items-start gap-6 lg:flex-row">
         {/* Left Pane: Verification Queue (w-full lg:w-96 shrink-0) */}
-        <div className="w-full lg:w-96 shrink-0">
+        <div className="w-full shrink-0 lg:w-96">
           <KycQueueList
             applicants={applicants}
             selectedApplicantId={selectedApplicantId}
@@ -93,7 +93,7 @@ export default function SuperAdminKycView() {
         </div>
 
         {/* Right Pane: Applicant Details, Documents & Audit Trail (flex-1) */}
-        <div className="flex-1 w-full space-y-6">
+        <div className="w-full flex-1 space-y-6">
           <KycApplicantDetails
             applicant={selectedApplicant}
             onApprove={handleApprove}
@@ -106,4 +106,3 @@ export default function SuperAdminKycView() {
     </div>
   );
 }
-

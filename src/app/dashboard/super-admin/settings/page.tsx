@@ -14,10 +14,10 @@ export default function SuperAdminSettingsPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">System Configuration</h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Election Commission database sync frequency: every 15 minutes. Two-factor authentication enforced.
+          Election Commission database sync frequency: every 15 minutes. Two-factor authentication
+          enforced.
         </p>
       </div>
     </div>
   );
 }
-
