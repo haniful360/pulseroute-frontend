@@ -4,11 +4,13 @@ import React from 'react';
 interface PulseRouteLogoProps {
   className?: string;
   isDark?: boolean;
+  subtitle?: string;
 }
 
 export const PulseRouteLogo: React.FC<PulseRouteLogoProps> = ({
   className = '',
   isDark = false,
+  subtitle = 'Emergency Dispatch',
 }) => {
   return (
     <Link href="/" className={`group inline-flex items-center gap-2.5 ${className}`}>
@@ -38,7 +40,7 @@ export const PulseRouteLogo: React.FC<PulseRouteLogoProps> = ({
             isDark ? 'text-slate-400' : 'text-slate-500'
           }`}
         >
-          Emergency Dispatch
+          {subtitle}
         </span>
       </div>
     </Link>
