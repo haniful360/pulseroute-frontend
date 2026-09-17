@@ -3,18 +3,31 @@ import {
   Ambulance,
   AppWindow,
   Award,
+  BarChart3,
   Bookmark,
   BookOpen,
+  Building2,
   CreditCard,
+  DollarSign,
   HeartPulse,
+  History,
+  LayoutDashboard,
   LayoutGrid,
+  Megaphone,
   MessagesSquare,
+  Navigation,
   PackageSearch,
   PlaySquare,
+  Radio,
+  Route,
   Settings,
   ShieldCheck,
+  Sparkles,
   Target,
+  Truck,
+  UserCheck,
   Users,
+  Wallet,
 } from 'lucide-react';
 
 export type roleTypes =
@@ -29,8 +42,19 @@ export type roleTypes =
   | 'noah'
   | 'marcus';
 
+export interface SidebarRouteItem {
+  title: string;
+  url: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any;
+  badge?: string;
+  badgeVariant?: 'red' | 'green' | 'blue' | 'gray';
+  section?: string;
+  items?: { title: string; url: string }[];
+}
+
 // Patient Dashboard Routes (PulseRoute Figma 2:8109)
-export const patientRoutes = [
+export const patientRoutes: SidebarRouteItem[] = [
   {
     title: 'Book Ambulance',
     url: '/dashboard/patient/book-ambulance',
@@ -60,6 +84,139 @@ export const patientRoutes = [
     title: 'Settings',
     url: '/dashboard/patient/settings',
     icon: Settings,
+  },
+];
+
+// Driver Dashboard Routes (PulseRoute Figma 2:8467)
+export const driverRoutes: SidebarRouteItem[] = [
+  // OPERATIONS
+  {
+    title: 'Live Duty Radar',
+    url: '/dashboard/driver',
+    icon: Radio,
+    section: 'OPERATIONS',
+  },
+  {
+    title: 'Active Dispatch',
+    url: '/dashboard/driver/active-dispatch',
+    icon: Navigation,
+    badge: '1',
+    badgeVariant: 'red',
+    section: 'OPERATIONS',
+  },
+  {
+    title: 'Stripe Wallet',
+    url: '/dashboard/driver/wallet',
+    icon: Wallet,
+    section: 'OPERATIONS',
+  },
+  {
+    title: 'Shift History',
+    url: '/dashboard/driver/shift-history',
+    icon: History,
+    section: 'OPERATIONS',
+  },
+  // FLEET & LEGAL
+  {
+    title: 'Ambulance Profile',
+    url: '/dashboard/driver/ambulance-profile',
+    icon: Truck,
+    section: 'FLEET & LEGAL',
+  },
+  {
+    title: 'KYC Verification',
+    url: '/dashboard/driver/kyc',
+    icon: ShieldCheck,
+    badge: '✓',
+    badgeVariant: 'green',
+    section: 'FLEET & LEGAL',
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/driver/settings',
+    icon: Settings,
+    section: 'FLEET & LEGAL',
+  },
+  // COMING SOON
+  {
+    title: 'AI Traffic Opt.',
+    url: '/dashboard/driver/traffic-opt',
+    icon: Sparkles,
+    section: 'COMING SOON',
+  },
+  {
+    title: 'Ward Status',
+    url: '/dashboard/driver/ward-status',
+    icon: Building2,
+    section: 'COMING SOON',
+  },
+];
+
+// Super Admin Dashboard Routes (PulseRoute Figma 3:2)
+export const superAdminRoutes: SidebarRouteItem[] = [
+  // MAIN
+  {
+    title: 'Executive Overview',
+    url: '/dashboard/super-admin/overview',
+    icon: LayoutDashboard,
+    section: 'MAIN',
+  },
+  {
+    title: 'Live Fleet Radar',
+    url: '/dashboard/super-admin/radar',
+    icon: Radio,
+    section: 'MAIN',
+  },
+  {
+    title: 'Trip Management',
+    url: '/dashboard/super-admin/trips',
+    icon: Route,
+    section: 'MAIN',
+  },
+  // MANAGEMENT
+  {
+    title: 'Driver (KYC)',
+    url: '/dashboard/super-admin',
+    icon: UserCheck,
+    section: 'MANAGEMENT',
+  },
+  {
+    title: 'Ambulance Fleet',
+    url: '/dashboard/super-admin/fleet',
+    icon: Ambulance,
+    section: 'MANAGEMENT',
+  },
+  {
+    title: 'User Management',
+    url: '/dashboard/super-admin/users',
+    icon: Users,
+    section: 'MANAGEMENT',
+  },
+  // FINANCIALS
+  {
+    title: 'Pricing & Commission',
+    url: '/dashboard/super-admin/pricing',
+    icon: DollarSign,
+    section: 'FINANCIALS',
+  },
+  {
+    title: 'Revenue Ops',
+    url: '/dashboard/super-admin/revenue',
+    icon: BarChart3,
+    section: 'FINANCIALS',
+  },
+  // FOOTER ITEMS
+  {
+    title: 'Announcements',
+    url: '/dashboard/super-admin/announcements',
+    icon: Megaphone,
+    section: 'FOOTER',
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/super-admin/settings',
+    icon: Settings,
+    section: 'FOOTER',
   },
 ];
 

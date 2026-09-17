@@ -7,16 +7,23 @@ import { roleTypes } from '../../sidebarRoutes';
 function SidebarHeaderSection({ role }: { role: roleTypes }) {
   const { state } = useSidebar();
   const isExpanded = state === 'expanded';
-  const isPatient = role === 'patient';
+  const isLight = role === 'patient' || role === 'driver';
 
   return (
     <SidebarHeader
-      className={`flex flex-col items-center gap-6 px-4 ${isPatient ? 'mt-4' : 'mt-6'}`}
+      className={`flex flex-col items-center gap-4 px-4 ${isLight ? 'mt-4' : 'mt-6'}`}
     >
       {/* PulseRoute Logo */}
       <div className="flex items-center justify-center">
         {isExpanded ? (
-          <PulseRouteLogo isDark={!isPatient} />
+          <div className="flex flex-col items-start">
+            <PulseRouteLogo isDark={!isLight} />
+            {role === 'driver' && (
+              <span className="mt-0.5 text-[10px] font-bold tracking-widest text-[#E63946] uppercase">
+                DRIVER COCKPIT
+              </span>
+            )}
+          </div>
         ) : (
           <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 shadow-md shadow-red-500/20">
             <svg

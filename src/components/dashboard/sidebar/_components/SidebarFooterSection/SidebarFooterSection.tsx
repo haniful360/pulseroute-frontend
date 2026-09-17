@@ -15,17 +15,92 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
   const allowedClients: roleTypes[] = ['enterprise', 'sarah', 'student', 'noah', 'marcus'];
   const shouldShowUpgrade = allowedClients.includes(role);
   const isPatient = role === 'patient';
+  const isDriver = role === 'driver';
+  const isSuperAdmin = role === 'super-admin';
+  const isLight = isPatient || isDriver;
 
   return (
     <SidebarFooter
       className={cn(
         'transition-all duration-300',
         isExpanded ? 'p-4' : 'p-2',
-        isPatient && 'border-t border-gray-100 bg-white',
+        isLight ? 'border-t border-gray-100 bg-white' : 'border-t border-[#1E293B] bg-[#0B1120]',
       )}
     >
       <SidebarMenu>
         <SidebarMenuItem>
+          {isDriver && (
+            <div>
+              {isExpanded ? (
+                <div className="relative overflow-hidden rounded-2xl bg-[#0B132B] p-4 text-white shadow-md">
+                  <span className="text-[11px] font-bold tracking-wider text-[#E63946] uppercase">
+                    EMERGENCY PROTOCOL
+                  </span>
+                  <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-200">
+                    <svg
+                      className="h-4 w-4 shrink-0 text-[#E63946]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>Response time target: &lt; 8 mins</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center">
+                  <div className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B132B] text-[#E63946] shadow-sm">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <div className="invisible absolute left-12 z-50 rounded-md border border-gray-700 bg-[#0B132B] px-2.5 py-1 text-xs whitespace-nowrap text-white group-hover:visible">
+                      Target: &lt; 8 mins
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isSuperAdmin && (
+            <div className="flex flex-col gap-1 w-full">
+              <Link
+                href="/dashboard/super-admin/announcements"
+                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-[#1E293B]/60 hover:text-white"
+              >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m3 11 18-5v12L3 14v-3z" />
+                  <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+                </svg>
+                {isExpanded && <span>Announcements</span>}
+              </Link>
+              <Link
+                href="/dashboard/super-admin/settings"
+                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-[#1E293B]/60 hover:text-white"
+              >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                {isExpanded && <span>Settings</span>}
+              </Link>
+            </div>
+          )}
           {isPatient && (
             <div>
               {isExpanded ? (

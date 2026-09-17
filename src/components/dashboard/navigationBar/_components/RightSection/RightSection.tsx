@@ -71,6 +71,9 @@ function RightSection({ role }: { role: roleTypes }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const isPatient = role === 'patient';
+  const isDriver = role === 'driver';
+  const isSuperAdmin = role === 'super-admin';
+  const isLight = isPatient || isDriver || isSuperAdmin;
 
   return (
     <div className="flex items-center gap-3">
@@ -78,13 +81,18 @@ function RightSection({ role }: { role: roleTypes }) {
         <DropdownMenuTrigger asChild>
           <button
             className={
-              isPatient
+              isLight
                 ? 'relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-slate-50/80 text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900'
                 : 'text-gray flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-gray-800 bg-[#161F2F]/50 transition-all hover:bg-[#161F2F] hover:text-white'
             }
           >
-            <Bell size={isPatient ? 18 : 20} />
-            {isPatient && (
+            <Bell size={isLight ? 18 : 20} />
+            {isSuperAdmin && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#E63946] px-1 text-[10px] font-bold text-white shadow-xs">
+                12
+              </span>
+            )}
+            {(isPatient || isDriver) && (
               <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-[#E63946] ring-2 ring-white" />
             )}
           </button>

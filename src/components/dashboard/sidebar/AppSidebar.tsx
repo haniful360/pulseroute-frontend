@@ -13,12 +13,17 @@ export function AppSidebar({
   className,
   ...props
 }: { role: roleTypes } & React.ComponentProps<typeof Sidebar>) {
-  const isPatient = role === 'patient';
+  const isLight = role === 'patient' || role === 'driver';
+  const isSuperAdmin = role === 'super-admin';
 
   return (
     <Sidebar
       collapsible="icon"
-      className={cn(isPatient && 'border-r border-gray-200 bg-white text-slate-800', className)}
+      className={cn(
+        isLight && 'border-r border-gray-200 bg-white text-slate-800',
+        isSuperAdmin && 'border-r border-[#1E293B] bg-[#0B1120] text-slate-200',
+        className,
+      )}
       {...props}
     >
       <SidebarHeaderSection role={role} />

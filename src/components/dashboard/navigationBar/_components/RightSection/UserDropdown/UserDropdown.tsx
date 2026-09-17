@@ -63,17 +63,38 @@ export default function UserDropdown({ role }: UserDropdownProps) {
   };
 
   const isPatient = role === 'patient';
+  const isDriver = role === 'driver';
+  const isSuperAdmin = role === 'super-admin';
+  const isLight = isPatient || isDriver || isSuperAdmin;
+
+  let fallbackName = 'Admin User';
+  let fallbackSubtitle = 'Emergency Dispatch';
+  let fallbackAvatar: string | undefined = undefined;
+  let fallbackEmail = 'admin@pulseroute.com';
+
+  if (isPatient) {
+    fallbackName = 'Rashida Khatun';
+    fallbackSubtitle = 'Dhanmondi, Dhaka';
+    fallbackAvatar = '/assets/dashboard/patient/rashida-khatun.png';
+    fallbackEmail = 'rashida@pulseroute.com';
+  } else if (isDriver) {
+    fallbackName = 'Capt. Ariful Islam';
+    fallbackSubtitle = 'Advanced Paramedic • DH-102';
+    fallbackAvatar = '/assets/dashboard/driver/capt_ariful_avatar.png';
+    fallbackEmail = 'ariful.paramedic@pulseroute.com';
+  } else if (isSuperAdmin) {
+    fallbackName = 'Rahat Mahmud';
+    fallbackSubtitle = 'Super Admin Executive';
+    fallbackAvatar = '/assets/dashboard/super-admin/rahat_admin_avatar.png';
+    fallbackEmail = 'rahat.admin@pulseroute.com';
+  }
+
   const displayName =
     user?.fullName ||
     (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : null) ||
-    (isPatient ? 'Rashida Khatun' : 'Admin User');
-  const displaySubtitle = isPatient
-    ? user?.address || 'Dhanmondi, Dhaka'
-    : role === 'admin'
-      ? 'System Admin'
-      : 'Emergency Dispatch';
-  const displayAvatar =
-    user?.avatarUrl || (isPatient ? '/assets/dashboard/patient/rashida-khatun.png' : undefined);
+    fallbackName;
+  const displaySubtitle = isPatient && user?.address ? user.address : fallbackSubtitle;
+  const displayAvatar = user?.avatarUrl || fallbackAvatar;
 
   return (
     <DropdownMenu>
@@ -81,7 +102,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
         <button
           className={cn(
             'group flex cursor-pointer items-center gap-3 outline-0! transition-all duration-300',
-            isPatient
+            isLight
               ? 'rounded-xl border border-gray-200/80 bg-slate-50/50 p-1.5 hover:bg-slate-100 md:px-3 md:py-1.5'
               : 'rounded-md border-white/5 hover:bg-[#111B33]/80 md:border md:bg-[#0F1A2C] md:px-3 md:py-1.5',
           )}
@@ -90,7 +111,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
             <span
               className={cn(
                 'text-sm leading-tight font-bold',
-                isPatient ? 'text-slate-900' : 'text-white',
+                isLight ? 'text-slate-900' : 'text-white',
               )}
             >
               {displayName}
@@ -98,7 +119,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
             <span
               className={cn(
                 'text-[11px] font-medium',
-                isPatient
+                isLight
                   ? 'text-slate-500'
                   : 'text-gray mt-1 text-[10px] font-semibold tracking-widest uppercase',
               )}
@@ -112,14 +133,14 @@ export default function UserDropdown({ role }: UserDropdownProps) {
               <AvatarImage src={displayAvatar} alt={displayName} className="object-cover" />
             )}
             <AvatarFallback className="bg-[#E63946] text-xs font-bold text-white">
-              {displayName ? displayName.substring(0, 2).toUpperCase() : 'RK'}
+              {displayName ? displayName.substring(0, 2).toUpperCase() : 'PR'}
             </AvatarFallback>
           </Avatar>
 
           <ChevronDown
             className={cn(
               'hidden h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180 md:block',
-              isPatient ? 'text-slate-400' : 'text-gray',
+              isLight ? 'text-slate-400' : 'text-gray',
             )}
           />
         </button>
@@ -129,7 +150,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
       <DropdownMenuContent
         className={cn(
           'z-100 w-64 rounded-xl p-2 shadow-xl duration-200',
-          isPatient
+          isLight
             ? 'border-gray-200 bg-white text-slate-800'
             : 'border-white/10 bg-[#0F1A2C] text-white backdrop-blur-xl',
         )}
@@ -140,17 +161,17 @@ export default function UserDropdown({ role }: UserDropdownProps) {
           <p
             className={cn(
               'text-xs font-semibold tracking-[0.15em] uppercase',
-              isPatient ? 'text-slate-500' : 'text-gray',
+              isLight ? 'text-slate-500' : 'text-gray',
             )}
           >
             Manage Profile
           </p>
-          <p className={cn('mt-0.5 text-sm', isPatient ? 'text-slate-700' : 'text-gray')}>
-            {user?.email || (isPatient ? 'rashida@pulseroute.com' : 'admin@pulseroute.com')}
+          <p className={cn('mt-0.5 text-sm', isLight ? 'text-slate-700' : 'text-gray')}>
+            {user?.email || fallbackEmail}
           </p>
         </DropdownMenuLabel>
 
-        <DropdownMenuSeparator className={isPatient ? 'bg-gray-100' : 'bg-white/5'} />
+        <DropdownMenuSeparator className={isLight ? 'bg-gray-100' : 'bg-white/5'} />
 
         <div>
           <DropdownMenuItem
