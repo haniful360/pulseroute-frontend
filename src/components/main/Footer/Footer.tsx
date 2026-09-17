@@ -97,7 +97,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  href="/#driver"
+                  href="/join-driver"
                   className="font-medium text-red-400 transition-colors hover:text-red-300"
                 >
                   Join as Driver

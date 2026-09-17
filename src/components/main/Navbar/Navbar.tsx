@@ -205,7 +205,7 @@ export const Navbar: React.FC = () => {
                   </Link>
                 ))}
                 <Link
-                  href="/#driver"
+                  href="/join-driver"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block py-3 text-sm font-semibold text-slate-900 transition-colors hover:text-red-600"
                 >
