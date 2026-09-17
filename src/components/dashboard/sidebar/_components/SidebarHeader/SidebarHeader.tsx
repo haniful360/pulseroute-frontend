@@ -10,9 +10,7 @@ function SidebarHeaderSection({ role }: { role: roleTypes }) {
   const isLight = role === 'patient' || role === 'driver';
 
   return (
-    <SidebarHeader
-      className={`flex flex-col items-center gap-4 px-4 ${isLight ? 'mt-4' : 'mt-6'}`}
-    >
+    <SidebarHeader className={`flex flex-col items-center gap-4 px-4 ${isLight ? 'mt-4' : 'mt-6'}`}>
       {/* PulseRoute Logo */}
       <div className="flex items-center justify-center">
         {isExpanded ? (

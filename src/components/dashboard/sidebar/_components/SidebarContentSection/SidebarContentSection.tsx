@@ -102,7 +102,8 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
 
           // Section header check by index without mutating variable
           const showSectionHeader =
-            Boolean(item.section) && (index === 0 || menuItems[index - 1]?.section !== item.section);
+            Boolean(item.section) &&
+            (index === 0 || menuItems[index - 1]?.section !== item.section);
 
           if (hasSubItems) {
             return (
@@ -160,9 +161,7 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                       {state !== 'collapsed' && (
                         <span
                           className={
-                            isLight
-                              ? 'ml-auto text-slate-400'
-                              : 'ml-auto text-[#F8FAFC]/70'
+                            isLight ? 'ml-auto text-slate-400' : 'ml-auto text-[#F8FAFC]/70'
                           }
                         >
                           {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}

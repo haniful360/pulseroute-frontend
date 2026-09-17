@@ -38,11 +38,11 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
           {isDriver && (
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-1 text-xs font-bold text-emerald-700 shadow-xs">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
                 <span>ONLINE</span>
               </div>
-              <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+              <div className="hidden items-center gap-1.5 text-xs font-semibold text-slate-500 sm:flex">
+                <span className="h-2 w-2 animate-ping rounded-full bg-red-500" />
                 <span className="font-bold text-slate-700">RADAR ACTIVE</span>
               </div>
             </div>
@@ -70,10 +70,10 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
         )}
 
         {isSuperAdmin && (
-          <div className="mx-2 hidden max-w-lg flex-1 sm:flex items-center gap-4">
+          <div className="mx-2 hidden max-w-lg flex-1 items-center gap-4 sm:flex">
             <div className="relative flex-1">
               <Search
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+                className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400"
                 size={16}
               />
               <input
@@ -82,8 +82,8 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
                 className="h-10 w-full rounded-xl border border-gray-200 bg-slate-50/80 pr-4 pl-10 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
               />
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 whitespace-nowrap">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-emerald-700">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
               <span>Verification Queue Live</span>
             </div>
           </div>
