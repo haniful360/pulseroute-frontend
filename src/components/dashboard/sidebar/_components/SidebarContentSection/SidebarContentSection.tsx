@@ -138,11 +138,7 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                         {Icon && (
                           <Icon
                             className={
-                              isLight
-                                ? isActive
-                                  ? 'text-[#E63946]'
-                                  : 'text-[#64748B]'
-                                : ''
+                              isLight ? (isActive ? 'text-[#E63946]' : 'text-[#64748B]') : ''
                             }
                             size={20}
                           />

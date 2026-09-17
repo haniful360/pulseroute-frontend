@@ -7,7 +7,8 @@ import { roleTypes } from '../../sidebarRoutes';
 function SidebarHeaderSection({ role }: { role: roleTypes }) {
   const { state } = useSidebar();
   const isExpanded = state === 'expanded';
-  const isLight = role === 'patient' || role === 'driver' || role === 'admin' || role === 'super-admin';
+  const isLight =
+    role === 'patient' || role === 'driver' || role === 'admin' || role === 'super-admin';
 
   return (
     <SidebarHeader className={`flex flex-col items-center gap-4 px-4 ${isLight ? 'mt-4' : 'mt-6'}`}>
