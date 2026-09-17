@@ -1,25 +1,67 @@
 import {
+  Activity,
+  Ambulance,
   AppWindow,
   Award,
   Bookmark,
   BookOpen,
+  CreditCard,
+  HeartPulse,
   LayoutGrid,
   MessagesSquare,
   PackageSearch,
   PlaySquare,
   Settings,
+  ShieldCheck,
   Target,
   Users,
 } from 'lucide-react';
 
 export type roleTypes =
+  | 'patient'
+  | 'driver'
   | 'admin'
+  | 'super-admin'
   | 'enterprise'
   | 'sarah'
   | 'sarah-team-member'
   | 'student'
   | 'noah'
   | 'marcus';
+
+// Patient Dashboard Routes (PulseRoute Figma 2:8109)
+export const patientRoutes = [
+  {
+    title: 'Book Ambulance',
+    url: '/dashboard/patient/book-ambulance',
+    icon: Ambulance,
+  },
+  {
+    title: 'Active Trip',
+    url: '/dashboard/patient/active-trip',
+    icon: Activity,
+  },
+  {
+    title: 'Trip History',
+    url: '/dashboard/patient/trip-history',
+    icon: HeartPulse,
+  },
+  {
+    title: 'Payment Methods',
+    url: '/dashboard/patient/payment-methods',
+    icon: CreditCard,
+  },
+  {
+    title: 'Medical Profile',
+    url: '/dashboard/patient/medical-profile',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/patient/settings',
+    icon: Settings,
+  },
+];
 
 // Super Admin Dashboard All Routes List
 export const AdminRoutes = [

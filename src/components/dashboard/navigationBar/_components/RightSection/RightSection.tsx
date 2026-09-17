@@ -70,12 +70,23 @@ function RightSection({ role }: { role: roleTypes }) {
   const { openModal } = useModal();
   const [isOpen, setIsOpen] = useState(false);
 
+  const isPatient = role === 'patient';
+
   return (
     <div className="flex items-center gap-3">
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <button className="text-gray flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-gray-800 bg-[#161F2F]/50 transition-all hover:bg-[#161F2F] hover:text-white">
-            <Bell size={20} />
+          <button
+            className={
+              isPatient
+                ? 'relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-slate-50/80 text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900'
+                : 'text-gray flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-gray-800 bg-[#161F2F]/50 transition-all hover:bg-[#161F2F] hover:text-white'
+            }
+          >
+            <Bell size={isPatient ? 18 : 20} />
+            {isPatient && (
+              <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-[#E63946] ring-2 ring-white" />
+            )}
           </button>
         </DropdownMenuTrigger>
 
@@ -155,6 +166,7 @@ function RightSection({ role }: { role: roleTypes }) {
           onClick={() => openModal({ view: 'NEW_ALERT', title: 'New Alert' })}
         />
       )}
+      {isPatient && <div className="mx-1 hidden h-8 w-px bg-gray-200 md:block" />}
       <UserDropdown role={role} />
     </div>
   );

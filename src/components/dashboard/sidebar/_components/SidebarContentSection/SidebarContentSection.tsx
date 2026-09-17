@@ -13,12 +13,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useGetMyProfileQuery } from '@/redux/features/getUser/getUserMeApi';
 import {
   AdminRoutes,
   enterpriseRoutes,
   marcusRoutes,
   noahRoutes,
+  patientRoutes,
   roleTypes,
   sarahRoutes,
   sarahTeamMemberRoutes,
@@ -28,16 +28,17 @@ import {
 function SidebarContentSection({ role }: { role: roleTypes }) {
   const pathname = usePathname();
   const { setOpenMobile, isMobile, state } = useSidebar();
-  const { data: profileResponse } = useGetMyProfileQuery(undefined);
-  const onATeam = profileResponse?.data?.onATeam;
 
   const roleBaseRoutes: Record<roleTypes, any[]> = {
+    patient: patientRoutes,
+    driver: [],
     admin: AdminRoutes,
+    'super-admin': AdminRoutes,
     enterprise: enterpriseRoutes,
     sarah: sarahRoutes,
     'sarah-team-member': sarahTeamMemberRoutes,
-    student: studentRoutes(onATeam),
-    noah: noahRoutes(onATeam),
+    student: studentRoutes(false),
+    noah: noahRoutes(false),
     marcus: marcusRoutes,
   };
 
@@ -61,18 +62,32 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
     setOpenMenus((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
+  const isPatient = role === 'patient';
+
   return (
-    <SidebarContent className={`${state === 'expanded' ? 'px-4' : 'ps-4'} no-scrollbar pt-5`}>
-      <SidebarMenu className="gap-2.5">
+    <SidebarContent
+      className={`${state === 'expanded' ? 'px-4' : 'ps-4'} no-scrollbar pt-3 ${isPatient ? 'bg-white' : ''}`}
+    >
+      {isPatient && state === 'expanded' && (
+        <div className="px-5 pt-3 pb-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+          Main Menu
+        </div>
+      )}
+      <SidebarMenu className="gap-2">
         {menuItems.map((item: any) => {
           const hasSubItems = Boolean(item?.items && item?.items.length > 0);
           const isChildActive =
             hasSubItems &&
             item.items.some((sub: any) => pathname === sub.url || pathname.startsWith(sub.url));
+          const isMedicalActive =
+            item?.url?.includes('medical-profile') &&
+            (pathname === '/dashboard/patient' ||
+              pathname.startsWith('/dashboard/patient/medical-profile'));
           const isActive =
             pathname === item?.url ||
             (item?.url && item?.url !== '/' && pathname.startsWith(item?.url + '/')) ||
-            isChildActive;
+            isChildActive ||
+            isMedicalActive;
           const Icon = item?.icon;
           const isOpen = Boolean(openMenus[item?.title]);
 
@@ -89,19 +104,33 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                     type="button"
                     onClick={() => toggleMenu(item?.title)}
                     className={`flex w-full cursor-pointer items-center justify-between font-medium transition-all duration-300 ${
-                      isActive
-                        ? 'text-primary! bg-[#1E293B]!'
-                        : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
+                      isPatient
+                        ? isActive
+                          ? 'border-l-4 border-[#E63946] bg-[#FEF2F2] font-semibold text-[#0B132B]'
+                          : 'text-[#64748B] hover:bg-slate-50 hover:text-[#0B132B]'
+                        : isActive
+                          ? 'text-primary! bg-[#1E293B]!'
+                          : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
-                      {Icon && <Icon />}
+                      {Icon && (
+                        <Icon
+                          className={
+                            isPatient ? (isActive ? 'text-[#06D6A0]' : 'text-[#64748B]') : ''
+                          }
+                        />
+                      )}
                       <span className={`${state === 'collapsed' ? 'hidden' : 'block'}`}>
                         {item?.title}
                       </span>
                     </div>
                     {state !== 'collapsed' && (
-                      <span className="ml-auto text-[#F8FAFC]/70">
+                      <span
+                        className={
+                          isPatient ? 'ml-auto text-slate-400' : 'ml-auto text-[#F8FAFC]/70'
+                        }
+                      >
                         {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                       </span>
                     )}
@@ -190,18 +219,41 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
                 asChild
                 isActive={isActive}
                 tooltip={state === 'collapsed' ? item?.title : undefined}
-                className="gap-3.5 px-5 py-6 font-medium transition-all duration-200"
+                className={`gap-3.5 px-5 py-5.5 font-medium transition-all duration-200 ${
+                  isPatient
+                    ? isActive
+                      ? 'rounded-l-none rounded-r-xl border-l-4 border-[#E63946] bg-[#FEF2F2] font-semibold text-[#0B132B]'
+                      : 'rounded-xl text-[#64748B] hover:bg-slate-50 hover:text-[#0B132B]'
+                    : ''
+                }`}
               >
                 <Link
                   href={item?.url}
                   onClick={() => isMobile && setOpenMobile(false)}
                   className={`flex items-center gap-3.5 font-medium transition-all duration-300 ${
-                    isActive
-                      ? 'text-primary! bg-[#1E293B]!'
-                      : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
+                    isPatient
+                      ? isActive
+                        ? 'font-semibold text-[#0B132B]'
+                        : 'text-[#64748B] hover:text-[#0B132B]'
+                      : isActive
+                        ? 'text-primary! bg-[#1E293B]!'
+                        : 'hover:text-primary! text-[#F8FAFC]! hover:bg-[#1E293B]/40!'
                   }`}
                 >
-                  {Icon && <Icon />}
+                  {Icon && (
+                    <Icon
+                      className={
+                        isPatient
+                          ? isActive
+                            ? item.title === 'Medical Profile'
+                              ? 'text-[#06D6A0]'
+                              : 'text-[#E63946]'
+                            : 'text-[#64748B]'
+                          : ''
+                      }
+                      size={20}
+                    />
+                  )}
                   <span className={`${state === 'collapsed' ? 'hidden' : 'block'}`}>
                     {item?.title}
                   </span>

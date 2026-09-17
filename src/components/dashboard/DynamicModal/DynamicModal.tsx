@@ -17,6 +17,7 @@ interface DynamicModalProps {
   description?: string;
   children: React.ReactNode;
   className?: string;
+  variant?: 'light' | 'dark';
 }
 
 const DynamicModal: React.FC<DynamicModalProps> = ({
@@ -26,10 +27,19 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   description,
   children,
   className = '',
+  variant = 'dark',
 }) => {
+  const isLight = variant === 'light';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`max-w-137.5 gap-0 p-4 ${className} bg-[#0B1120]`}>
+      <DialogContent
+        className={`max-w-137.5 gap-0 rounded-2xl p-5 ${
+          isLight
+            ? 'border-gray-200 bg-white text-slate-900 shadow-2xl'
+            : 'border-white/10 bg-[#0B1120] text-white shadow-xl'
+        } ${className}`}
+      >
         {!title && (
           <VisuallyHidden.Root>
             <DialogTitle>Modal Dialog</DialogTitle>
@@ -40,13 +50,19 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
         {(title || description) && (
           <div className="mb-4 flex flex-col space-y-1">
             {title && (
-              <DialogTitle className="text-xl font-semibold tracking-tight text-white">
+              <DialogTitle
+                className={`text-xl font-bold tracking-tight ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}
+              >
                 {title}
               </DialogTitle>
             )}
 
             {description && (
-              <DialogDescription className="text-muted text-sm leading-relaxed">
+              <DialogDescription
+                className={`text-sm leading-relaxed ${isLight ? 'text-slate-500' : 'text-muted'}`}
+              >
                 {description}
               </DialogDescription>
             )}

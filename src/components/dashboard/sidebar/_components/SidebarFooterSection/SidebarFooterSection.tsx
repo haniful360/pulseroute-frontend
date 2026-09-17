@@ -14,11 +14,71 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
   // Allowed dynamic roles validation matrix tracking
   const allowedClients: roleTypes[] = ['enterprise', 'sarah', 'student', 'noah', 'marcus'];
   const shouldShowUpgrade = allowedClients.includes(role);
+  const isPatient = role === 'patient';
 
   return (
-    <SidebarFooter className={cn('transition-all duration-300', isExpanded ? 'p-4' : 'p-2')}>
+    <SidebarFooter
+      className={cn(
+        'transition-all duration-300',
+        isExpanded ? 'p-4' : 'p-2',
+        isPatient && 'border-t border-gray-100 bg-white',
+      )}
+    >
       <SidebarMenu>
         <SidebarMenuItem>
+          {isPatient && (
+            <div>
+              {isExpanded ? (
+                <div className="relative overflow-hidden rounded-2xl bg-[#0B132B] p-4 text-white shadow-md">
+                  {/* Subtle watermark pulse in background */}
+                  <div className="pointer-events-none absolute -right-3 -bottom-3 text-red-500/15">
+                    <svg
+                      width="60"
+                      height="60"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                  </div>
+
+                  <div className="relative z-10">
+                    <span className="text-[11px] font-bold tracking-wider text-[#E63946] uppercase">
+                      LIVE TRACKING
+                    </span>
+                    <p className="mt-1.5 text-xs leading-relaxed font-medium text-slate-200">
+                      Stay calm. Your medical crew is highly trained.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center">
+                  <div className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B132B] text-[#E63946] shadow-sm">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                    <div className="invisible absolute left-12 z-50 rounded-md border border-gray-700 bg-[#0B132B] px-2.5 py-1 text-xs whitespace-nowrap text-white group-hover:visible">
+                      Live Tracking Active
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {shouldShowUpgrade && (
             <div>
               {isExpanded ? (

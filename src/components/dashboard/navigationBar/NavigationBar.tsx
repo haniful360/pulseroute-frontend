@@ -4,31 +4,51 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { roleTypes } from '../sidebar/sidebarRoutes';
 import { DynamicBreadcrumb } from './_components/DynamicBreadcrumb/DynamicBreadcrumb';
 import RightSection from './_components/RightSection/RightSection';
+import { Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function NavigationBar({ role }: { role: roleTypes }) {
+  const isPatient = role === 'patient';
+
   return (
-    <header className="sticky top-0 z-50 flex w-full shrink-0 items-center border-b border-gray-800/50 bg-[#0B1120] px-4 py-3.5 lg:px-6">
+    <header
+      className={cn(
+        'sticky top-0 z-40 flex w-full shrink-0 items-center px-4 py-3 transition-colors lg:px-6',
+        isPatient
+          ? 'border-b border-gray-200 bg-white shadow-xs'
+          : 'border-b border-gray-800/50 bg-[#0B1120]',
+      )}
+    >
       <div className="flex w-full items-center justify-between gap-4">
         {/* Left Section: Sidebar Trigger & Breadcrumbs */}
-        <div className="flex items-center gap-4">
-          <SidebarTrigger className="bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary h-9 w-9 cursor-pointer rounded-md transition-colors" />
-          <DynamicBreadcrumb />
+        <div className="flex items-center gap-3">
+          <SidebarTrigger
+            className={cn(
+              'h-9 w-9 cursor-pointer rounded-lg transition-colors',
+              isPatient
+                ? 'border border-gray-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                : 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary',
+            )}
+          />
+          {!isPatient && <DynamicBreadcrumb />}
         </div>
 
-        {/* Center Section: Search Bar */}
-        {/* <div className="mx-4 hidden max-w-xl flex-1 md:block">
-          <div className="group relative">
-            <Search
-              className="text-secondary absolute top-1/2 left-3 -translate-y-1/2 transition-colors group-focus-within:text-blue-500"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search"
-              className="w-full rounded-md border border-gray-800 bg-[#161F2F]/50 py-2.5 pr-16 pl-10 text-sm text-gray-300 transition-all focus:border-blue-500/50 focus:bg-[#161F2F] focus:outline-none"
-            />
+        {/* Center Section: Search Bar (Figma Medical Records Search) */}
+        {isPatient && (
+          <div className="mx-2 hidden max-w-md flex-1 sm:block">
+            <div className="relative flex items-center">
+              <Search
+                className="pointer-events-none absolute left-3.5 h-4 w-4 text-slate-400"
+                size={16}
+              />
+              <input
+                type="text"
+                placeholder="Search for medical records..."
+                className="h-10 w-full rounded-xl border border-gray-200 bg-slate-50/70 pr-4 pl-10 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+              />
+            </div>
           </div>
-        </div> */}
+        )}
 
         {/* Right Section: Actions */}
         <RightSection role={role} />
