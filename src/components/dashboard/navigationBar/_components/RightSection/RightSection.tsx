@@ -8,7 +8,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/context/ModalContext';
-import { ArrowRight, Bell, BookOpen, ChevronDown, ClipboardList, Trophy, X } from 'lucide-react';
+import {
+  ArrowRight,
+  AlertTriangle,
+  Bell,
+  CheckCircle2,
+  ChevronDown,
+  MapPin,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,39 +39,48 @@ const UserDropdown = dynamic(() => import('./UserDropdown/UserDropdown'), {
 const notificationsData = [
   {
     id: 1,
-    title: 'Course Completed',
-    desc: 'You completed AI Architecture Fundamentals!',
-    time: '2 min ago',
-    icon: <BookOpen size={16} />,
-    color: 'bg-purple-500',
+    title: 'Emergency Dispatch',
+    desc: 'Ambulance #AMB-042 dispatched to Mirpur-10 — ETA 6 min.',
+    time: '1 min ago',
+    icon: <AlertTriangle size={15} />,
+    color: 'bg-red-500',
     unread: true,
   },
   {
     id: 2,
-    title: 'Achievement Unlocked',
-    desc: '14-Day Learning Streak! Keep it up!',
-    time: '15 min ago',
-    icon: <Trophy size={16} />,
-    color: 'bg-yellow-500',
+    title: 'Driver KYC Approved',
+    desc: "Ariful Islam's KYC documents verified successfully.",
+    time: '8 min ago',
+    icon: <ShieldCheck size={15} />,
+    color: 'bg-emerald-500',
     unread: true,
   },
   {
     id: 3,
-    title: 'Sarah (CTO)',
-    desc: 'Has anyone finished the Mamba-2 analysis?',
-    time: '10m ago',
-    icon: <span className="text-xs font-bold">SC</span>,
-    color: 'bg-purple-600',
-    badge: '2',
+    title: 'Trip Completed',
+    desc: 'Patient Rakibul delivered to Dhaka Medical — Trip #T-2891.',
+    time: '22 min ago',
+    icon: <CheckCircle2 size={15} />,
+    color: 'bg-blue-500',
+    unread: true,
   },
   {
     id: 4,
-    title: 'Assignment Due',
-    desc: 'Prompt Engineering Quiz due tomorrow',
-    time: '3h ago',
-    icon: <ClipboardList size={16} />,
-    color: 'bg-red-500',
-    unread: true,
+    title: 'New Booking Request',
+    desc: 'Urgent ambulance requested from Uttara Sector-7.',
+    time: '35 min ago',
+    icon: <MapPin size={15} />,
+    color: 'bg-orange-500',
+    unread: false,
+  },
+  {
+    id: 5,
+    title: 'System Alert',
+    desc: 'GPS signal lost for driver Karim Hossain — last seen Badda.',
+    time: '1h ago',
+    icon: <X size={15} />,
+    color: 'bg-slate-500',
+    unread: false,
   },
 ];
 
