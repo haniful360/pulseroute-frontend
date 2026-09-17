@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { Menu, Phone, X } from 'lucide-react';
+import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
 
 interface NavItem {
   label: string;
@@ -13,7 +13,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Ambulance Types', href: '/#vehicles' },
-  { label: 'How It Works', href: '/#how-it-works' },
+  { label: 'How It Works', href: '/how-it-works' },
   { label: 'Fare Estimator', href: '/pricing' },
   { label: 'Safety Standards', href: '/safety' },
   { label: 'About Us', href: '/about' },
