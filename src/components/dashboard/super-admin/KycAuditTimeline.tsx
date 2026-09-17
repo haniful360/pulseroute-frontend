@@ -132,3 +132,4 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
     </div>
   );
 }
+

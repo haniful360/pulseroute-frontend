@@ -31,3 +31,4 @@ export interface Applicant {
     status?: 'SUCCESS' | 'IN_PROGRESS' | 'INFO';
   }[];
 }
+
