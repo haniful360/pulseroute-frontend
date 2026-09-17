@@ -19,7 +19,6 @@ export function AppSidebar({
   return (
     <Sidebar
       collapsible="icon"
-      className={cn(isLight && 'border-r border-gray-200 bg-white text-slate-800', className)}
       className={cn(
         isLight && 'border-r border-gray-200 bg-white text-slate-800',
         'no-scrollbar',
