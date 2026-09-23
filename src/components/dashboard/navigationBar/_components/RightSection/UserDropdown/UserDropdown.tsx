@@ -1,5 +1,6 @@
 'use client';
 
+import { roleTypes } from '@/components/dashboard/sidebar/sidebarRoutes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -10,9 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLogout } from '@/hooks/useLogout';
-import { ChevronDown, LogOut } from 'lucide-react';
-import { roleTypes } from '@/components/dashboard/sidebar/sidebarRoutes';
 import { cn } from '@/lib/utils';
+import { ChevronDown, LogOut } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 
 interface UserDropdownProps {
@@ -65,7 +65,8 @@ export default function UserDropdown({ role }: UserDropdownProps) {
   const isPatient = role === 'patient';
   const isDriver = role === 'driver';
   const isSuperAdmin = role === 'super-admin';
-  const isLight = isPatient || isDriver || isSuperAdmin;
+  const isAdmin = role === 'admin';
+  const isLight = isPatient || isDriver || isSuperAdmin || isAdmin;
 
   let fallbackName = 'Admin User';
   let fallbackSubtitle = 'Emergency Dispatch';

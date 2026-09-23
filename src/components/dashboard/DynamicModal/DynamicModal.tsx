@@ -14,6 +14,7 @@ interface DynamicModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
   description?: string;
   children: React.ReactNode;
   className?: string;
@@ -24,10 +25,11 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   isOpen,
   onClose,
   title,
+  subtitle,
   description,
   children,
   className = '',
-  variant = 'dark',
+  variant = 'light',
 }) => {
   const isLight = variant === 'light';
 
@@ -47,7 +49,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
         )}
 
         {/* Visible Header Section */}
-        {(title || description) && (
+        {(title || description || subtitle) && (
           <div className="mb-4 flex flex-col space-y-1">
             {title && (
               <DialogTitle
@@ -59,11 +61,11 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
               </DialogTitle>
             )}
 
-            {description && (
+            {(description || subtitle) && (
               <DialogDescription
                 className={`text-sm leading-relaxed ${isLight ? 'text-slate-500' : 'text-muted'}`}
               >
-                {description}
+                {description || subtitle}
               </DialogDescription>
             )}
           </div>
