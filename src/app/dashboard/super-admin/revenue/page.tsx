@@ -1,23 +1,21 @@
-import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
-import { BarChart3 } from 'lucide-react';
+import AdminDataView from '@/components/dashboard/super-admin/AdminDataView';
+import { revenueRows } from '@/components/dashboard/super-admin/adminPageData';
 
 export default function RevenueOpsPage() {
   return (
-    <div className="space-y-6">
-      <DynamicPageHeader
-        title="Revenue Operations & Payouts"
-        description="Consolidated transaction logs, platform fee settlements, and automated Stripe payout schedules."
-      />
-      <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-xs">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-          <BarChart3 className="h-8 w-8" />
-        </div>
-        <h3 className="text-xl font-bold text-slate-900">Revenue Ledger</h3>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Monthly gross booking value: 4,820,000 BDT with automated split payouts to private
-          operators.
-        </p>
-      </div>
-    </div>
+    <AdminDataView
+      title="Revenue Operations & Payouts"
+      description="Consolidated transaction logs, platform fee settlements, and automated Stripe payout schedules."
+      stats={[
+        { label: 'Gross booking value', value: 'BDT 4.82M', delta: '+18.2% this month' },
+        { label: 'Platform revenue', value: 'BDT 579K', delta: '12% commission' },
+        { label: 'Pending payouts', value: 'BDT 184K', delta: '32 operators' },
+        { label: 'Refunds', value: 'BDT 18.4K', delta: '-6.8% vs August', positive: true },
+      ]}
+      columns={['Date', 'Trip', 'Gross', 'Commission', 'Status']}
+      rows={revenueRows}
+      filters={['All', 'Settled', 'Pending']}
+      searchPlaceholder="Search invoice or trip..."
+    />
   );
 }
