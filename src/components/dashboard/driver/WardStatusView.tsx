@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import {
   Activity,
   Bed,
@@ -80,14 +81,12 @@ export default function WardStatusView() {
           title="Hospital Ward &amp; ER Bed Telemetry"
           description="Live availability of ICU, CCU, and NICU beds with emergency triage status across Dhaka hospitals."
         />
-        <div className="relative self-start sm:self-auto">
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
+        <div className="w-full sm:w-64 self-start sm:self-auto">
+          <InputField
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search hospitals or zones..."
-            className="h-10 w-full sm:w-64 rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-xs focus:border-red-500 focus:outline-none"
+            icon={<Search className="h-4 w-4 text-slate-400" />}
           />
         </div>
       </div>

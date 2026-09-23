@@ -27,8 +27,12 @@ export interface InputFieldProps<T extends FieldValues = any> {
   rightElement?: React.ReactNode;
   helperText?: string;
   value?: string | number;
+  defaultValue?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyUp?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  autoFocus?: boolean;
   id?: string;
   autoComplete?: string;
   min?: number | string;
@@ -60,8 +64,12 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
       rightElement,
       helperText,
       value,
+      defaultValue,
       onChange,
       onBlur,
+      onKeyDown,
+      onKeyUp,
+      autoFocus,
       id,
       autoComplete,
       min,
@@ -140,9 +148,12 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
             placeholder={placeholder}
             readOnly={readOnly}
             disabled={disabled}
-            value={value ?? ''}
+            {...(value !== undefined ? { value } : defaultValue !== undefined ? { defaultValue } : { value: '' })}
             onChange={onChange}
             onBlur={onBlur}
+            onKeyDown={onKeyDown}
+            onKeyUp={onKeyUp}
+            autoFocus={autoFocus}
             autoComplete={autoComplete}
             min={min}
             max={max}

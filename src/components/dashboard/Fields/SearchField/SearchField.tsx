@@ -1,6 +1,6 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Search } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -27,14 +27,12 @@ const SearchField = ({ placeholder = 'Search...', queryKey = 'search' }: SearchF
   };
 
   return (
-    <div className="relative w-full max-w-lg">
-      <Search className="text-muted absolute top-1/2 left-3 -translate-y-1/2" size={18} />
-      <Input
-        type="text"
+    <div className="w-full max-w-lg">
+      <InputField
         defaultValue={searchParams.get(queryKey) || ''}
         onChange={(e) => handleSearch(e.target.value)}
         placeholder={placeholder}
-        className="bg-muted/5 border-muted/10 focus:ring-primary w-full rounded-md border py-5 pr-4 pl-10 shadow-none transition-all focus:ring-1 focus:outline-none"
+        icon={<Search className="text-slate-400" size={18} />}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import {
   Activity,
   Ambulance,
@@ -200,10 +200,7 @@ export default function AdminDataView({
                       'Webhook endpoint',
                     ]
               ).map((label) => (
-                <label key={label} className="text-xs font-bold text-[#334155]">
-                  {label}
-                  <Input className="mt-2 h-10" placeholder={label} />
-                </label>
+                <InputField key={label} label={label} placeholder={label} />
               ))}
             </div>
             {form === 'announcement' && (
@@ -255,13 +252,12 @@ export default function AdminDataView({
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <div className="relative">
-                <Search className="absolute top-2.5 left-3 h-4 w-4 text-[#94a3b8]" />
-                <Input
+              <div className="w-56">
+                <InputField
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  className="h-9 w-52 pl-9 text-xs"
                   placeholder={searchPlaceholder}
+                  icon={<Search className="h-4 w-4 text-[#94a3b8]" />}
                 />
               </div>
               {filters.map((filter) => (

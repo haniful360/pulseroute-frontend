@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Search, Clock } from 'lucide-react';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Applicant, QueueStatus } from './types';
 import { cn } from '@/lib/utils';
 
@@ -75,14 +76,12 @@ export default function KycQueueList({
         </div>
 
         {/* Search inside queue */}
-        <div className="relative mt-3">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
+        <div className="mt-3">
+          <InputField
             placeholder="Filter queue..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50/50 pr-3 pl-8 text-xs text-slate-800 placeholder:text-slate-400 focus:border-red-500 focus:bg-white focus:outline-none"
+            icon={<Search className="h-3.5 w-3.5 text-slate-400" />}
           />
         </div>
       </div>

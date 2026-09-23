@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Ambulance, Radio, Navigation, WifiOff, Settings2, Search, MapPin, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
 
 const onlineVehicles = [
@@ -195,15 +195,12 @@ export default function RadarView() {
                 62 active
               </span>
             </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input 
-                placeholder="Search by ID, name or area..." 
-                className="pl-9 bg-white text-xs h-9 rounded-xl border-slate-200"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+            <InputField 
+              placeholder="Search by ID, name or area..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              icon={<Search className="h-4 w-4 text-slate-400" />}
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[440px]">

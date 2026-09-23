@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
 import {
   Activity,
@@ -136,30 +136,10 @@ export default function SettingsView() {
             <p className="mt-1 text-xs text-slate-500">Core ambulance dispatch parameters</p>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#334155]">
-                  Dispatch SLA Timeout (minutes)
-                </label>
-                <Input defaultValue="8" />
-              </div>
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#334155]">
-                  Fleet Radar Refresh (seconds)
-                </label>
-                <Input defaultValue="15" />
-              </div>
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#334155]">
-                  Max Dispatch Radius (km)
-                </label>
-                <Input defaultValue="25" />
-              </div>
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#334155]">
-                  Auto-reassign Timeout (minutes)
-                </label>
-                <Input defaultValue="3" />
-              </div>
+              <InputField label="Dispatch SLA Timeout (minutes)" value="8" />
+              <InputField label="Fleet Radar Refresh (seconds)" value="15" />
+              <InputField label="Max Dispatch Radius (km)" value="25" />
+              <InputField label="Auto-reassign Timeout (minutes)" value="3" />
             </div>
           </div>
 
@@ -187,14 +167,14 @@ export default function SettingsView() {
               </div>
               <div className="flex items-center justify-between border-b border-slate-100 py-3">
                 <span className="text-xs font-bold text-[#334155]">Session Timeout (minutes)</span>
-                <div className="w-24">
-                  <Input defaultValue="30" />
+                <div className="w-28">
+                  <InputField value="30" />
                 </div>
               </div>
               <div className="flex items-center justify-between border-b border-slate-100 py-3">
                 <span className="text-xs font-bold text-[#334155]">Max Login Attempts</span>
-                <div className="w-24">
-                  <Input defaultValue="5" />
+                <div className="w-28">
+                  <InputField value="5" />
                 </div>
               </div>
               <div className="flex items-center justify-between py-3">
@@ -222,22 +202,19 @@ export default function SettingsView() {
             <p className="mt-1 text-xs text-slate-500">External service integrations</p>
 
             <div className="mt-4 space-y-4">
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#334155]">
-                  Primary Webhook URL
-                </label>
-                <Input defaultValue="https://api.pulseroute.com/webhooks/dispatch" />
-              </div>
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#334155]">
-                  Stripe Webhook Secret
-                </label>
-                <Input type="password" defaultValue="whsec_1234567890abcdef" />
-              </div>
-              <div>
-                <label className="mb-2 block text-xs font-bold text-[#334155]">Support Email</label>
-                <Input defaultValue="ops@pulseroute.com" />
-              </div>
+              <InputField
+                label="Primary Webhook URL"
+                value="https://api.pulseroute.com/webhooks/dispatch"
+              />
+              <InputField
+                label="Stripe Webhook Secret"
+                type="password"
+                value="whsec_1234567890abcdef"
+              />
+              <InputField
+                label="Support Email"
+                value="ops@pulseroute.com"
+              />
             </div>
           </div>
 

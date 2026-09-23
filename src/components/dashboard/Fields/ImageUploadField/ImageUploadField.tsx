@@ -46,8 +46,8 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     formData.append('files', file);
 
     try {
-      const res = await uploadFiles(formData).unwrap();
-      const uploadedUrl = res?.[0]?.url || res?.data?.[0]?.url;
+      const res: any = await uploadFiles(formData).unwrap();
+      const uploadedUrl = typeof res?.[0] === 'string' ? res[0] : res?.[0]?.url || res?.data?.[0]?.url;
 
       if (uploadedUrl) {
         onChange(uploadedUrl);
@@ -71,7 +71,7 @@ const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     maxSize: 10 * 1024 * 1024,
     noClick: !!previewUrl,
     noKeyboard: !!previewUrl,
-    onDrop: async (acceptedFiles, fileRejections) => {
+    onDrop: async (acceptedFiles: any, fileRejections: any) => {
       if (fileRejections && fileRejections.length > 0) {
         const fileErr = fileRejections[0]?.errors[0];
         if (fileErr?.code === 'file-too-large') {

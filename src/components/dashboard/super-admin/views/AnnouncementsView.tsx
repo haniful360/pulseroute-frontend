@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Megaphone, Radio, Send, Eye, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
 
 const pastBroadcasts = [
@@ -124,10 +124,9 @@ export default function AnnouncementsView() {
           ) : (
             <div className="space-y-5">
               <div>
-                <label className="text-sm font-bold text-slate-900 mb-2 block">Broadcast Title</label>
-                <Input 
+                <InputField 
+                  label="Broadcast Title"
                   placeholder="e.g., Emergency route advisory..." 
-                  className="rounded-xl border-slate-200 h-11"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />

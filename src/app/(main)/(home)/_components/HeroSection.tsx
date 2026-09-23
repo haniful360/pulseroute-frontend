@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import {
   Select,
   SelectContent,
@@ -181,19 +182,14 @@ export const HeroSection: React.FC = () => {
                 <form onSubmit={handleFindAmbulance} className="mt-4 space-y-4">
                   {/* Pickup Address */}
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-600">
-                      Pickup address
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={pickupAddress}
-                        onChange={(e) => setPickupAddress(e.target.value)}
-                        placeholder="Building, road, area"
-                        required
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pr-3 pl-3.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-                      />
-                    </div>
+                    <InputField
+                      label="Pickup address"
+                      type="text"
+                      value={pickupAddress}
+                      onChange={(e) => setPickupAddress(e.target.value)}
+                      placeholder="Building, road, area"
+                      required
+                    />
                     {/* Use Current Location trigger */}
                     <button
                       type="button"

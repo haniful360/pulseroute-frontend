@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { DollarSign, MapPin, HeartPulse, Percent, Check, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -101,14 +101,8 @@ export default function PricingView() {
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Base Fares</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-xs font-bold text-[#334155]">
-                  Base Fare (BDT)
-                  <Input className="mt-2 h-10 rounded-xl" defaultValue="1,200" />
-                </label>
-                <label className="text-xs font-bold text-[#334155]">
-                  Per Kilometer Rate (BDT)
-                  <Input className="mt-2 h-10 rounded-xl" defaultValue="45" />
-                </label>
+                <InputField label="Base Fare (BDT)" value="1,200" />
+                <InputField label="Per Kilometer Rate (BDT)" value="45" />
               </div>
             </div>
 
@@ -117,18 +111,9 @@ export default function PricingView() {
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Surcharges</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-xs font-bold text-[#334155]">
-                  ICU Surcharge (BDT)
-                  <Input className="mt-2 h-10 rounded-xl" defaultValue="1,500" />
-                </label>
-                <label className="text-xs font-bold text-[#334155]">
-                  Night Surcharge (%)
-                  <Input className="mt-2 h-10 rounded-xl" defaultValue="25" />
-                </label>
-                <label className="text-xs font-bold text-[#334155]">
-                  Weekend Surcharge (%)
-                  <Input className="mt-2 h-10 rounded-xl" defaultValue="15" />
-                </label>
+                <InputField label="ICU Surcharge (BDT)" value="1,500" />
+                <InputField label="Night Surcharge (%)" value="25" />
+                <InputField label="Weekend Surcharge (%)" value="15" />
               </div>
             </div>
 
@@ -137,14 +122,8 @@ export default function PricingView() {
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Commission</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-xs font-bold text-[#334155]">
-                  Platform Commission (%)
-                  <Input className="mt-2 h-10 rounded-xl" defaultValue="12" />
-                </label>
-                <label className="text-xs font-bold text-[#334155]">
-                  Insurance Levy (%)
-                  <Input className="mt-2 h-10 rounded-xl" defaultValue="2" />
-                </label>
+                <InputField label="Platform Commission (%)" value="12" />
+                <InputField label="Insurance Levy (%)" value="2" />
               </div>
             </div>
           </div>

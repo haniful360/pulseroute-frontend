@@ -135,7 +135,7 @@ const SearchableSelect = <TFieldValues extends FieldValues>({
                     <CommandInput
                       placeholder={`Search ${label}...`}
                       className="h-10"
-                      onValueChange={(value) => {
+                      onValueChange={(value: string) => {
                         if (onSearchChange) onSearchChange(value);
                       }}
                     />

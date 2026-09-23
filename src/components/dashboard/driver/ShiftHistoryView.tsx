@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import CustomTable from '@/components/dashboard/CustomTable/CustomTable';
 import {
   Activity,
@@ -195,14 +196,12 @@ export default function ShiftHistoryView() {
             <h3 className="text-base font-bold text-slate-900">Recorded Shift Logs</h3>
             <p className="text-xs text-slate-500">Telemetry synced with Central PulseRoute Dispatche</p>
           </div>
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
+          <div className="w-full sm:w-64">
+            <InputField
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search shifts or dates..."
-              className="h-10 w-full sm:w-64 rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs focus:border-red-500 focus:bg-white focus:outline-none"
+              icon={<Search className="h-4 w-4 text-slate-400" />}
             />
           </div>
         </div>

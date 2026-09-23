@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import {
   Select,
   SelectContent,
@@ -38,13 +38,12 @@ function SearchInput({ field }: { field: ITableFilter }) {
   }, [localValue, field]);
 
   return (
-    <div className="group relative w-full sm:w-70">
-      <Search className="group-focus-within:text-primary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-500" />
-      <Input
+    <div className="w-full sm:w-70">
+      <InputField
         placeholder={field.placeholder}
         onChange={(e) => setLocalValue(e.target.value)}
         value={localValue}
-        className="focus:border-primary/50! h-11 w-full rounded-md border border-[#334155]! bg-[#0B1120] pr-4 pl-9 text-xs text-[#9CA3AF] transition-all focus-visible:ring-0 focus-visible:ring-offset-0"
+        icon={<Search className="h-4 w-4 text-gray-500" />}
       />
     </div>
   );
@@ -100,17 +99,14 @@ export default function DynamicTableFilterBar({
 
             if (field.type === 'date') {
               return (
-                <div key={index} className="relative w-full min-w-40 sm:w-auto">
-                  <Input
-                    type="text"
+                <div key={index} className="w-full min-w-40 sm:w-auto">
+                  <InputField
+                    type="date"
                     placeholder={field.placeholder || 'mm/dd/yyyy'}
-                    onFocus={(e) => (e.target.type = 'date')}
-                    onBlur={(e) => (e.target.type = 'text')}
                     onChange={(e) => field.onChange(e.target.value)}
                     value={field.value || ''}
-                    className="h-11 w-full rounded-md border border-[#334155]! bg-[#0B1222] pr-8 text-xs text-[#9CA3AF] focus:ring-0"
+                    icon={<CalendarIcon className="h-3.5 w-3.5 text-[#9CA3AF]" />}
                   />
-                  <CalendarIcon className="pointer-events-none absolute top-1/2 right-3 h-3.5 w-3.5 -translate-y-1/2 text-[#9CA3AF]" />
                 </div>
               );
             }

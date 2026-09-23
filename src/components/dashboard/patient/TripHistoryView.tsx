@@ -5,6 +5,7 @@ import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicP
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
 import DynamicModal from '@/components/dashboard/DynamicModal/DynamicModal';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import CustomTable from '@/components/dashboard/CustomTable/CustomTable';
 import {
   Activity,
@@ -183,14 +184,12 @@ export default function TripHistoryView() {
             <p className="text-xs text-slate-500">Official hospital arrival telemetry and invoice details</p>
           </div>
 
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
+          <div className="w-full sm:w-72">
+            <InputField
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by ID, hospital, or driver..."
-              className="h-10 w-full sm:w-72 rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs focus:border-red-500 focus:bg-white focus:outline-none"
+              icon={<Search className="h-4 w-4 text-slate-400" />}
             />
           </div>
         </div>

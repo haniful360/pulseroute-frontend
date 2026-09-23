@@ -192,20 +192,20 @@ export default function ActiveTripView() {
                   </p>
                 ))}
               </div>
-              <form onSubmit={handleSendMessage} className="mt-3 flex gap-2">
-                <input
-                  type="text"
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  placeholder="Quick message to driver..."
-                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs focus:border-red-500 focus:bg-white focus:outline-none"
-                />
+              <form onSubmit={handleSendMessage} className="mt-3 flex items-center gap-2">
+                <div className="flex-1">
+                  <InputField
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    placeholder="Quick message to driver..."
+                  />
+                </div>
                 <DynamicActionButton
                   type="submit"
                   size="sm"
                   variant="danger"
                   icon={Send}
-                  className="h-9 w-9 p-0 flex items-center justify-center rounded-xl"
+                  className="h-11 w-11 p-0 flex items-center justify-center rounded-xl shrink-0"
                 />
               </form>
             </div>

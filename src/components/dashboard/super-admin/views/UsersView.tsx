@@ -11,7 +11,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
 
 const mockUsers = [
@@ -162,14 +162,12 @@ export default function UsersView() {
           </div>
 
           {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input 
-              type="text"
+          <div className="w-full max-w-md">
+            <InputField 
               placeholder="Search by name, role, or region..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-11 rounded-xl border-slate-200 bg-slate-50/50 text-sm focus-visible:ring-[#E63946]"
+              icon={<Search className="h-4 w-4 text-slate-400" />}
             />
           </div>
         </div>
