@@ -1,0 +1,214 @@
+'use client';
+
+import React, { useState } from 'react';
+import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
+import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
+import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
+import CustomTable from '@/components/dashboard/CustomTable/CustomTable';
+import {
+  Activity,
+  CheckCircle2,
+  Clock,
+  Download,
+  Flame,
+  Search,
+  Timer,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+interface ShiftLog {
+  id: string;
+  shiftDate: string;
+  startTime: string;
+  endTime: string;
+  duration: string;
+  dispatches: number;
+  avgResponse: string;
+  rating: string;
+  status: string;
+}
+
+const shiftData: ShiftLog[] = [
+  {
+    id: 'SFT-1049',
+    shiftDate: 'Sep 23, 2024',
+    startTime: '07:00 AM',
+    endTime: '03:30 PM',
+    duration: '8h 30m',
+    dispatches: 8,
+    avgResponse: '6.4 mins',
+    rating: '5.0',
+    status: 'Completed',
+  },
+  {
+    id: 'SFT-1048',
+    shiftDate: 'Sep 22, 2024',
+    startTime: '03:00 PM',
+    endTime: '11:00 PM',
+    duration: '8h 00m',
+    dispatches: 6,
+    avgResponse: '7.1 mins',
+    rating: '4.9',
+    status: 'Completed',
+  },
+  {
+    id: 'SFT-1047',
+    shiftDate: 'Sep 21, 2024',
+    startTime: '07:00 AM',
+    endTime: '04:00 PM',
+    duration: '9h 00m',
+    dispatches: 10,
+    avgResponse: '5.8 mins',
+    rating: '4.8',
+    status: 'Completed',
+  },
+  {
+    id: 'SFT-1046',
+    shiftDate: 'Sep 20, 2024',
+    startTime: '11:00 PM',
+    endTime: '07:00 AM',
+    duration: '8h 00m',
+    dispatches: 5,
+    avgResponse: '6.9 mins',
+    rating: '5.0',
+    status: 'Completed',
+  },
+];
+
+export default function ShiftHistoryView() {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredShifts = shiftData.filter(
+    (item) =>
+      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.shiftDate.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const columns = [
+    {
+      header: 'Shift ID',
+      cell: (row: ShiftLog) => <span className="font-mono font-bold text-slate-900">{row.id}</span>,
+    },
+    {
+      header: 'Date & Time',
+      cell: (row: ShiftLog) => (
+        <div>
+          <span className="font-semibold text-slate-800">{row.shiftDate}</span>
+          <p className="text-[11px] text-slate-400">
+            {row.startTime} - {row.endTime}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: 'Duty Duration',
+      accessor: 'duration' as keyof ShiftLog,
+    },
+    {
+      header: 'Dispatches',
+      cell: (row: ShiftLog) => (
+        <span className="font-bold text-slate-800">{row.dispatches} Missions</span>
+      ),
+    },
+    {
+      header: 'Avg Response Time',
+      cell: (row: ShiftLog) => (
+        <span className="font-semibold text-emerald-600">{row.avgResponse}</span>
+      ),
+    },
+    {
+      header: 'Rating',
+      cell: (row: ShiftLog) => (
+        <span className="flex items-center gap-1 font-bold text-amber-500">
+          ★ {row.rating}
+        </span>
+      ),
+    },
+    {
+      header: 'Status',
+      cell: (row: ShiftLog) => (
+        <DynamicBadge text={row.status} color="#10b981" size="sm" />
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <DynamicPageHeader
+          title="Shift History & Emergency Telemetry"
+          description="View records of past duty shifts, emergency response durations, and paramedic metrics."
+        />
+        <DynamicActionButton
+          variant="outline"
+          icon={Download}
+          iconPosition="left"
+          onClick={() => toast.success('Shift telemetry report exported.')}
+          label="Export Logs"
+          className="self-start sm:self-auto"
+        />
+      </div>
+
+      {/* Metrics Row */}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase">MONTHLY SHIFTS</span>
+            <Clock className="h-5 w-5 text-blue-500" />
+          </div>
+          <p className="mt-2 text-3xl font-black text-slate-900">22</p>
+          <p className="mt-1 text-xs text-slate-500">176 Duty hours logged</p>
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase">AVG RESPONSE</span>
+            <Timer className="h-5 w-5 text-emerald-500" />
+          </div>
+          <p className="mt-2 text-3xl font-black text-emerald-600">6.4m</p>
+          <p className="mt-1 text-xs text-slate-500">Target &lt; 8.0 mins</p>
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase">MISSIONS COMPLETED</span>
+            <Activity className="h-5 w-5 text-[#E63946]" />
+          </div>
+          <p className="mt-2 text-3xl font-black text-slate-900">142</p>
+          <p className="mt-1 text-xs text-emerald-600">100% successful transports</p>
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase">PARAMEDIC SCORE</span>
+            <Flame className="h-5 w-5 text-amber-500" />
+          </div>
+          <p className="mt-2 text-3xl font-black text-slate-900">4.92</p>
+          <p className="mt-1 text-xs text-slate-500">Top 3% in Dhaka Central</p>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Recorded Shift Logs</h3>
+            <p className="text-xs text-slate-500">Telemetry synced with Central PulseRoute Dispatche</p>
+          </div>
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search shifts or dates..."
+              className="h-10 w-full sm:w-64 rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs focus:border-red-500 focus:bg-white focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <CustomTable columns={columns} data={filteredShifts} />
+      </div>
+    </div>
+  );
+}
