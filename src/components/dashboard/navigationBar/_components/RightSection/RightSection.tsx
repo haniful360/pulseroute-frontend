@@ -7,10 +7,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useModal } from '@/context/ModalContext';
+import { cn } from '@/lib/utils';
 import {
-  ArrowRight,
   AlertTriangle,
+  ArrowRight,
   Bell,
   CheckCircle2,
   ChevronDown,
@@ -18,9 +20,8 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
 
 const UserDropdown = dynamic(() => import('./UserDropdown/UserDropdown'), {
   ssr: false,
@@ -87,12 +88,25 @@ const notificationsData = [
 function RightSection({ role }: { role: roleTypes }) {
   const { openModal } = useModal();
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'mentions'>('all');
+  const [notifications, setNotifications] = useState(notificationsData);
 
   const isPatient = role === 'patient';
   const isDriver = role === 'driver';
   const isSuperAdmin = role === 'super-admin';
   const isAdmin = role === 'admin';
   const isLight = isPatient || isDriver || isSuperAdmin || isAdmin;
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })));
+  };
+
+  const filteredNotifications = notifications.filter((item) => {
+    if (activeTab === 'unread') return item.unread;
+    return true;
+  });
 
   return (
     <div className="flex items-center gap-3">
@@ -106,81 +120,198 @@ function RightSection({ role }: { role: roleTypes }) {
             }
           >
             <Bell size={isLight ? 18 : 20} />
-            {isSuperAdmin && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#E63946] px-1 text-[10px] font-bold text-white shadow-xs">
-                12
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#E63946] px-1 text-[10px] font-bold text-white shadow-xs">
+                {unreadCount}
               </span>
-            )}
-            {(isPatient || isDriver) && (
-              <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-[#E63946] ring-2 ring-white" />
             )}
           </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="mt-2 w-100 overflow-hidden rounded-md border border-[#1E293B] bg-[#111827] p-0 shadow-xl">
+        <DropdownMenuContent
+          align="end"
+          sideOffset={8}
+          className={cn(
+            'z-100 w-84 overflow-hidden rounded-2xl p-0 shadow-2xl duration-200 sm:w-96',
+            isLight
+              ? 'border border-slate-200/80 bg-white text-slate-800'
+              : 'border border-[#1E293B] bg-[#111827] text-white shadow-xl',
+          )}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#1E293B] p-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-white">Notifications</h2>
-              <span className="bg-primary/20 text-primary rounded-full px-3 py-1.5 text-[10px] font-semibold">
-                3
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray cursor-pointer text-xs hover:text-white">
-                Mark all read
-              </span>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray cursor-pointer hover:text-white"
+          <div
+            className={cn(
+              'flex items-center justify-between border-b px-4 py-3.5',
+              isLight ? 'border-slate-100 bg-white' : 'border-[#1E293B] bg-[#111827]',
+            )}
+          >
+            <div className="flex items-center gap-2.5">
+              <h2
+                className={cn(
+                  'text-base font-bold tracking-tight',
+                  isLight ? 'text-slate-900' : 'text-white',
+                )}
               >
-                <X size={18} />
+                Notifications
+              </h2>
+              {unreadCount > 0 && (
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[11px] leading-none font-bold',
+                    isLight
+                      ? 'border border-red-100 bg-red-50 text-[#E63946]'
+                      : 'bg-primary/20 text-primary',
+                  )}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className={cn(
+                  'cursor-pointer text-xs font-semibold transition-colors',
+                  isLight
+                    ? 'text-slate-500 hover:text-slate-900'
+                    : 'text-slate-400 hover:text-white',
+                )}
+              >
+                Mark all read
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className={cn(
+                  'cursor-pointer rounded-lg p-1 transition-colors',
+                  isLight
+                    ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                    : 'text-slate-400 hover:bg-[#1E293B] hover:text-white',
+                )}
+              >
+                <X size={16} />
               </button>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-4 p-4">
-            <span className="bg-primary cursor-pointer rounded-full px-4 py-1.5 text-xs font-medium text-white">
-              All
-            </span>
-            <span className="text-gray cursor-pointer px-4 py-1.5 text-xs hover:text-white">
-              Unread
-            </span>
-            <span className="text-gray cursor-pointer px-4 py-1.5 text-xs hover:text-white">
-              Mentions
-            </span>
-          </div>
-
-          {/* List */}
-          <div className="max-h-100 overflow-y-auto">
-            {notificationsData.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-3 border-b border-[#1E293B] p-4 transition-colors hover:bg-[#1A2234]"
-              >
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-full text-white ${item.color}`}
-                >
-                  {item.icon}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">{item.title}</p>
-                  <p className="text-gray mt-0.5 text-xs">{item.desc}</p>
-                  <p className="text-gray mt-1 text-[10px]">{item.time}</p>
-                </div>
-                {item.unread && <div className="bg-primary mt-2 h-2 w-2 rounded-full" />}
-                {item.badge && (
-                  <span className="bg-primary rounded-full px-1.5 text-[10px] text-white">
-                    {item.badge}
-                  </span>
+          <div
+            className={cn(
+              'flex gap-2 border-b px-4 py-2.5',
+              isLight ? 'border-slate-100 bg-slate-50/60' : 'border-[#1E293B] bg-[#161F2F]/40',
+            )}
+          >
+            {(['all', 'unread', 'mentions'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  'cursor-pointer rounded-full px-3.5 py-1 text-xs font-semibold capitalize transition-all duration-200',
+                  activeTab === tab
+                    ? isLight
+                      ? 'bg-[#E63946] text-white shadow-xs'
+                      : 'bg-primary text-white'
+                    : isLight
+                      ? 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                      : 'text-slate-400 hover:text-white',
                 )}
-              </div>
+              >
+                {tab}
+              </button>
             ))}
           </div>
 
-          <div className="text-primary flex cursor-pointer items-center justify-center gap-2 border-t border-[#1E293B] p-3 text-center text-xs hover:text-blue-300">
-            View all notifications <ArrowRight className="h-4 w-4" />
+          {/* List */}
+          <div className="max-h-96 overflow-y-auto">
+            {filteredNotifications.length === 0 ? (
+              <div className="py-10 text-center">
+                <p
+                  className={cn(
+                    'text-xs font-medium',
+                    isLight ? 'text-slate-400' : 'text-slate-500',
+                  )}
+                >
+                  No {activeTab === 'unread' ? 'unread ' : ''}notifications
+                </p>
+              </div>
+            ) : (
+              filteredNotifications.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    setNotifications((prev) =>
+                      prev.map((n) => (n.id === item.id ? { ...n, unread: false } : n)),
+                    );
+                  }}
+                  className={cn(
+                    'flex cursor-pointer items-start gap-3 border-b p-3.5 transition-colors',
+                    isLight
+                      ? cn(
+                          'border-slate-100 hover:bg-slate-50/80',
+                          item.unread ? 'bg-red-50/20' : 'bg-white',
+                        )
+                      : cn(
+                          'border-[#1E293B] hover:bg-[#1A2234]',
+                          item.unread ? 'bg-[#151D2C]' : 'bg-transparent',
+                        ),
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-xs',
+                      item.color,
+                    )}
+                  >
+                    {item.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p
+                        className={cn(
+                          'truncate text-sm font-semibold',
+                          isLight ? 'text-slate-900' : 'text-white',
+                        )}
+                      >
+                        {item.title}
+                      </p>
+                      {item.unread && (
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-[#E63946]" />
+                      )}
+                    </div>
+                    <p
+                      className={cn(
+                        'mt-0.5 line-clamp-2 text-xs leading-relaxed',
+                        isLight ? 'text-slate-600' : 'text-slate-300',
+                      )}
+                    >
+                      {item.desc}
+                    </p>
+                    <p
+                      className={cn(
+                        'mt-1 text-[11px] font-medium',
+                        isLight ? 'text-slate-400' : 'text-slate-500',
+                      )}
+                    >
+                      {item.time}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
+          <div
+            className={cn(
+              'flex cursor-pointer items-center justify-center gap-1.5 border-t p-3 text-center text-xs font-semibold transition-colors',
+              isLight
+                ? 'border-slate-100 bg-slate-50/50 text-[#E63946] hover:bg-slate-100/80 hover:text-red-700'
+                : 'text-primary border-[#1E293B] bg-[#111827] hover:text-blue-300',
+            )}
+          >
+            View all notifications <ArrowRight className="h-3.5 w-3.5" />
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
