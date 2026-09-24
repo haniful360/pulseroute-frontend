@@ -1,4 +1,4 @@
-import BookAmbulanceView from '@/components/dashboard/patient/BookAmbulanceView';
+import BookAmbulanceView from '@/app/dashboard/patient/book-ambulance/_components/BookAmbulanceView/BookAmbulanceView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

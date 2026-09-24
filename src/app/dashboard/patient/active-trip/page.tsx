@@ -1,4 +1,4 @@
-import ActiveTripView from '@/components/dashboard/patient/ActiveTripView';
+import ActiveTripView from '@/app/dashboard/patient/active-trip/_components/ActiveTripView/ActiveTripView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

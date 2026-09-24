@@ -1,4 +1,4 @@
-import MedicalProfileView from '@/components/dashboard/patient/MedicalProfileView';
+import MedicalProfileView from '@/app/dashboard/patient/medical-profile/_components/MedicalProfile/MedicalProfileView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

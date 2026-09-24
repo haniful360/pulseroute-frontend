@@ -1,4 +1,4 @@
-import PatientSettingsView from '@/components/dashboard/patient/PatientSettingsView';
+import PatientSettingsView from '@/app/dashboard/patient/settings/_components/PatientSetting/PatientSettingsView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

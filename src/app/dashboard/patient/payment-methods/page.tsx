@@ -1,4 +1,4 @@
-import PaymentMethodsView from '@/components/dashboard/patient/PaymentMethodsView';
+import PaymentMethodsView from '@/app/dashboard/patient/payment-methods/_components/PaymentMethods/PaymentMethodsView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

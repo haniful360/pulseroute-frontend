@@ -1,4 +1,4 @@
-import TripHistoryView from '@/components/dashboard/patient/TripHistoryView';
+import TripHistoryView from '@/app/dashboard/patient/trip-history/_components/TripHistoryView/TripHistoryView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
