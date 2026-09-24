@@ -1,4 +1,4 @@
-import DriverKycView from '@/components/dashboard/driver/DriverKycView';
+import DriverKycView from '@/app/dashboard/driver/kyc/_components/DriverKycView/DriverKycView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

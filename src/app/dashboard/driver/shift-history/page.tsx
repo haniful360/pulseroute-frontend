@@ -1,4 +1,4 @@
-import ShiftHistoryView from '@/components/dashboard/driver/ShiftHistoryView';
+import ShiftHistoryView from '@/app/dashboard/driver/shift-history/_components/ShiftHistoryView/ShiftHistoryView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

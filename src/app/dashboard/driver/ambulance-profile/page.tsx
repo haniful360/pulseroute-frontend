@@ -1,4 +1,4 @@
-import AmbulanceProfileView from '@/components/dashboard/driver/AmbulanceProfileView';
+import AmbulanceProfileView from '@/app/dashboard/driver/ambulance-profile/_components/AmbulanceProfileView/AmbulanceProfileView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

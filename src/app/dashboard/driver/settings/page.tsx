@@ -1,4 +1,4 @@
-import DriverSettingsView from '@/components/dashboard/driver/DriverSettingsView';
+import DriverSettingsView from '@/app/dashboard/driver/settings/_components/DriverSettingsView/DriverSettingsView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

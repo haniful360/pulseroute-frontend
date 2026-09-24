@@ -1,4 +1,4 @@
-import WardStatusView from '@/components/dashboard/driver/WardStatusView';
+import WardStatusView from '@/app/dashboard/driver/ward-status/_components/WardStatusView/WardStatusView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

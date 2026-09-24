@@ -1,4 +1,4 @@
-import DriverCockpitView from '@/components/dashboard/driver/DriverCockpitView';
+import DriverCockpitView from '@/app/dashboard/driver/_components/DriverCockpitView/DriverCockpitView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

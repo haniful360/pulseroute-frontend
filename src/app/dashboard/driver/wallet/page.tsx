@@ -1,4 +1,4 @@
-import DriverWalletView from '@/components/dashboard/driver/DriverWalletView';
+import DriverWalletView from '@/app/dashboard/driver/wallet/_components/DriverWalletView/DriverWalletView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

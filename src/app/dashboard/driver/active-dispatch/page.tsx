@@ -1,4 +1,4 @@
-import ActiveDispatchView from '@/components/dashboard/driver/ActiveDispatchView';
+import ActiveDispatchView from '@/app/dashboard/driver/active-dispatch/_components/ActiveDispatchView/ActiveDispatchView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

@@ -1,4 +1,4 @@
-import TrafficOptView from '@/components/dashboard/driver/TrafficOptView';
+import TrafficOptView from '@/app/dashboard/driver/traffic-opt/_components/TrafficOptView/TrafficOptView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
