@@ -1,25 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Phone, X, Twitter, Linkedin } from 'lucide-react';
+import { Phone, X, Twitter, Linkedin, AlertCircle } from 'lucide-react';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
+import { loginUserAction, googleLoginAction } from '@/services/auth.service';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { refreshUser } = useAuth();
+
   const [role, setRole] = useState<'patient' | 'driver'>('patient');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [generalError, setGeneralError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showEmergency, setShowEmergency] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Check for reset password success or other URL flags
+  useEffect(() => {
+    if (searchParams.get('reset') === 'success') {
+      toast.success('Password reset successfully! Please sign in with your new password.');
+    }
+    if (searchParams.get('registered') === 'success') {
+      toast.success('Account verified and created successfully! Please sign in.');
+    }
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let hasError = false;
 
@@ -32,9 +50,9 @@ export default function LoginPage() {
       setEmailError('');
     }
 
-    // Password validation
-    if (!password || password.length < 8) {
-      setPasswordError('Min. 8 characters');
+    // Password validation (allow min 6 as per standard/seed)
+    if (!password || password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
       hasError = true;
     } else {
       setPasswordError('');
@@ -43,14 +61,121 @@ export default function LoginPage() {
     if (hasError) return;
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (role === 'driver') {
-        router.push('/dashboard/driver');
-      } else {
-        router.push('/dashboard');
+    setGeneralError('');
+
+    try {
+      const res = await loginUserAction({
+        email: email.trim(),
+        password,
+      });
+
+      if (!res.success || !res.data) {
+        const errorMsg = res.message || 'Login failed. Please verify your credentials.';
+        setGeneralError(errorMsg);
+        toast.error(errorMsg);
+        return;
       }
-    }, 1000);
+
+      toast.success(res.message || 'Welcome to PulseRoute!');
+      await refreshUser();
+
+      // Check redirect param
+      const redirectUrl = searchParams.get('redirect');
+      if (redirectUrl) {
+        router.push(redirectUrl);
+        return;
+      }
+
+      // Role-based destination
+      const userRole = res.data.user.role;
+      if (userRole === 'DRIVER') {
+        router.push('/dashboard/driver');
+      } else if (userRole === 'SUPER_ADMIN') {
+        router.push('/dashboard/super-admin');
+      } else {
+        router.push('/dashboard/patient');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setGeneralError(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Google OAuth Login handler
+  const handleGoogleLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      toast.error('Google Client ID is not configured.');
+      return;
+    }
+
+    setIsGoogleLoading(true);
+
+    try {
+      // If google identity script is available
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+        const google = (window as any).google;
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response: any) => {
+            if (response.credential) {
+              const res = await googleLoginAction({ idToken: response.credential });
+              if (res.success && res.data) {
+                toast.success(res.message || 'Logged in with Google successfully!');
+                await refreshUser();
+                const userRole = res.data.user.role;
+                if (userRole === 'DRIVER') router.push('/dashboard/driver');
+                else if (userRole === 'SUPER_ADMIN') router.push('/dashboard/super-admin');
+                else router.push('/dashboard/patient');
+              } else {
+                toast.error(res.message || 'Google login failed.');
+              }
+            }
+            setIsGoogleLoading(false);
+          },
+        });
+        google.accounts.id.prompt();
+      } else {
+        // Fallback: load script dynamically
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          const google = (window as any).google;
+          if (google?.accounts?.id) {
+            google.accounts.id.initialize({
+              client_id: clientId,
+              callback: async (response: any) => {
+                if (response.credential) {
+                  const res = await googleLoginAction({ idToken: response.credential });
+                  if (res.success && res.data) {
+                    toast.success(res.message || 'Logged in with Google successfully!');
+                    await refreshUser();
+                    const userRole = res.data.user.role;
+                    if (userRole === 'DRIVER') router.push('/dashboard/driver');
+                    else if (userRole === 'SUPER_ADMIN') router.push('/dashboard/super-admin');
+                    else router.push('/dashboard/patient');
+                  } else {
+                    toast.error(res.message || 'Google login failed.');
+                  }
+                }
+                setIsGoogleLoading(false);
+              },
+            });
+            google.accounts.id.prompt();
+          }
+        };
+        document.body.appendChild(script);
+      }
+    } catch (err: unknown) {
+      console.error('Google Sign-in error:', err);
+      toast.error('Google sign-in could not be initiated.');
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -67,7 +192,7 @@ export default function LoginPage() {
 
         {/* Center: ECG Wave and Slogan */}
         <div className="relative z-10 my-auto flex flex-col items-center text-center">
-          {/* ECG Pulse Graphic from Figma */}
+          {/* ECG Pulse Graphic */}
           <div className="relative mb-6 w-full max-w-sm">
             <svg
               viewBox="0 0 448 168"
@@ -146,6 +271,7 @@ export default function LoginPage() {
                 setRole('patient');
                 setEmailError('');
                 setPasswordError('');
+                setGeneralError('');
               }}
               className={`flex-1 cursor-pointer pb-3 text-center text-sm font-semibold transition-all duration-200 ${
                 role === 'patient'
@@ -161,6 +287,7 @@ export default function LoginPage() {
                 setRole('driver');
                 setEmailError('');
                 setPasswordError('');
+                setGeneralError('');
               }}
               className={`flex-1 cursor-pointer pb-3 text-center text-sm font-semibold transition-all duration-200 ${
                 role === 'driver'
@@ -171,6 +298,14 @@ export default function LoginPage() {
               Driver
             </button>
           </div>
+
+          {/* General Error Banner */}
+          {generalError && (
+            <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+              <span>{generalError}</span>
+            </div>
+          )}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -184,6 +319,7 @@ export default function LoginPage() {
               onChange={(e) => {
                 setEmail(e.target.value);
                 if (emailError) setEmailError('');
+                if (generalError) setGeneralError('');
               }}
               error={emailError}
             />
@@ -198,9 +334,10 @@ export default function LoginPage() {
               onChange={(e) => {
                 setPassword(e.target.value);
                 if (passwordError) setPasswordError('');
+                if (generalError) setGeneralError('');
               }}
               error={passwordError}
-              helperText={passwordError ? undefined : 'Min. 8 characters'}
+              helperText={passwordError ? undefined : 'Min. 6 characters'}
               rightElement={
                 <Link
                   href="/forgot-password"
@@ -230,7 +367,7 @@ export default function LoginPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isGoogleLoading}
               className="flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-red-600 text-sm font-bold text-white shadow-md shadow-red-600/20 transition-all duration-200 hover:bg-red-700 active:scale-[0.99] disabled:opacity-60"
             >
               {isLoading ? (
@@ -256,27 +393,33 @@ export default function LoginPage() {
           {/* Social Google Login Button */}
           <button
             type="button"
-            className="flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50"
+            onClick={handleGoogleLogin}
+            disabled={isLoading || isGoogleLoading}
+            className="flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 disabled:opacity-60"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
-            <span>Continue with Google</span>
+            {isGoogleLoading ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+            ) : (
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+            )}
+            <span>{isGoogleLoading ? 'Connecting Google...' : 'Continue with Google'}</span>
           </button>
 
           {/* Register Callout */}
@@ -322,5 +465,19 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -10,9 +10,13 @@ import { Step2Documents, DriverDocumentsData } from './_components/Step2Document
 import { Step3Vehicle, DriverVehicleData } from './_components/Step3Vehicle';
 import { Step4Otp } from './_components/Step4Otp';
 import { Step5Success } from './_components/Step5Success';
+import { registerDriverAction } from '@/services/auth.service';
+import { AmbulanceType, IRegisterDriverPayload } from '@/types/auth.types';
+import { toast } from 'sonner';
 
 export default function DriverRegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [personalData, setPersonalData] = useState<DriverPersonalData>({
@@ -27,7 +31,7 @@ export default function DriverRegisterPage() {
   const [documentsData, setDocumentsData] = useState<DriverDocumentsData>({
     nidNumber: '',
     nidFront: null,
-    nidBack: 'nid_back_v2.jpg', // Pre-populated example matching Figma state
+    nidBack: 'nid_back_v2.jpg',
     licenseNumber: '',
     licenseExpiry: '',
     licenseFront: null,
@@ -36,7 +40,7 @@ export default function DriverRegisterPage() {
 
   const [vehicleData, setVehicleData] = useState<DriverVehicleData>({
     vehiclePlate: '',
-    ambulanceType: 'icu', // Matches Figma selected default
+    ambulanceType: 'icu',
     equipment: {
       oxygen: true,
       ventilator: false,
@@ -67,6 +71,51 @@ export default function DriverRegisterPage() {
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Called when Step 3 is completed to send OTP via registerDriverAction
+  const handleStep3Complete = async () => {
+    setIsSubmitting(true);
+    try {
+      const payload: IRegisterDriverPayload = {
+        name: personalData.fullName.trim(),
+        email: personalData.email.trim().toLowerCase(),
+        password: personalData.password,
+        contactNumber: personalData.phoneNumber.trim(),
+        licenseNumber: documentsData.licenseNumber.trim() || `DL-${Date.now()}`,
+        licenseExpiry: documentsData.licenseExpiry || '2030-12-31',
+        nidNumber: documentsData.nidNumber.trim() || `NID-${Date.now()}`,
+        experienceYears: Number(personalData.experienceYears) || 1,
+        vehicleNumber:
+          vehicleData.vehiclePlate.trim() ||
+          `DHAKA-METRO-${Math.floor(10 + Math.random() * 89)}-${Math.floor(1000 + Math.random() * 8999)}`,
+        ambulanceType: (vehicleData.ambulanceType.toUpperCase() as AmbulanceType) || 'AC',
+        model: 'Emergency Ambulance',
+        manufacturer: 'Toyota',
+        year: 2023,
+        hasOxygen: vehicleData.equipment.oxygen,
+        hasVentilator: vehicleData.equipment.ventilator,
+        hasDefibrillator: vehicleData.equipment.defibrillator,
+        hasSuctionMachine: vehicleData.equipment.suction,
+        equipmentDetails: 'Stretcher, portable oxygen, emergency kit',
+      };
+
+      const res = await registerDriverAction(payload);
+
+      if (!res.success) {
+        toast.error(res.message || 'Driver registration failed. Please check your details.');
+        return;
+      }
+
+      toast.success(res.message || 'Verification OTP sent to your email!');
+      setCurrentStep(4);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Driver registration failed';
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -106,7 +155,7 @@ export default function DriverRegisterPage() {
             <Step3Vehicle
               data={vehicleData}
               onUpdate={(fields) => setVehicleData((prev) => ({ ...prev, ...fields }))}
-              onNext={handleNext}
+              onNext={handleStep3Complete}
               onBack={handleBack}
             />
           )}
@@ -114,6 +163,7 @@ export default function DriverRegisterPage() {
           {/* Step 4: OTP Verification */}
           {currentStep === 4 && (
             <Step4Otp
+              email={personalData.email}
               phoneNumber={personalData.phoneNumber}
               onVerify={handleNext}
               onBack={handleBack}

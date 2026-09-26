@@ -5,31 +5,46 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
-import { Mail, ArrowLeft, Headphones, X } from 'lucide-react';
+import { Mail, ArrowLeft, Headphones, X, AlertCircle } from 'lucide-react';
+import { forgotPasswordAction } from '@/services/auth.service';
+import { toast } from 'sonner';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSupport, setShowSupport] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!identifier.trim()) {
-      setError('Please enter your email or phone number');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim() || !emailRegex.test(email.trim())) {
+      setError('Please enter a valid registered email address');
       return;
     }
 
     setIsLoading(true);
     setError('');
 
-    // Simulate sending reset code
-    setTimeout(() => {
+    try {
+      const res = await forgotPasswordAction({ email: email.trim().toLowerCase() });
+      if (!res.success) {
+        const errorMsg = res.message || 'No account found with this email address';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        return;
+      }
+
+      toast.success(res.message || 'Password reset OTP sent to your email!');
+      router.push(`/reset-password?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error sending reset code';
+      setError(msg);
+      toast.error(msg);
+    } finally {
       setIsLoading(false);
-      // Route to /reset-password
-      router.push(`/reset-password?identifier=${encodeURIComponent(identifier)}`);
-    }, 800);
+    }
   };
 
   return (
@@ -46,19 +61,19 @@ export default function ForgotPasswordPage() {
             Forgot Password?
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            Enter your registered email address or phone number and we&apos;ll send you a 6-digit
-            code to reset your password.
+            Enter your registered email address and we&apos;ll send you a 6-digit code to reset your
+            password.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <InputField
-              id="identifier"
-              label="Email Address or Phone"
-              type="text"
-              placeholder="name@example.com or +88017..."
-              value={identifier}
+              id="email"
+              label="Registered Email Address"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
               onChange={(e) => {
-                setIdentifier(e.target.value);
+                setEmail(e.target.value);
                 if (error) setError('');
               }}
               icon={<Mail className="h-4 w-4" />}
@@ -67,7 +82,7 @@ export default function ForgotPasswordPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !email.trim()}
               className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl bg-red-600 text-sm font-bold text-white shadow-lg shadow-red-600/25 transition-all duration-200 hover:bg-red-700 active:scale-[0.99] disabled:opacity-60"
             >
               {isLoading ? (
