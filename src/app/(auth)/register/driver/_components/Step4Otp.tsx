@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, Phone, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { verifyOtpAction, resendOtpAction } from '@/services/auth.service';
+import { toast } from 'sonner';
 
 interface Step4Props {
+  email: string;
   phoneNumber: string;
   onVerify: () => void;
   onBack: () => void;
@@ -12,6 +15,7 @@ interface Step4Props {
 }
 
 export const Step4Otp: React.FC<Step4Props> = ({
+  email,
   phoneNumber,
   onVerify,
   onBack,
@@ -23,15 +27,14 @@ export const Step4Otp: React.FC<Step4Props> = ({
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Format phone number for privacy display (e.g. +880 17XX-XXXXXX)
-  const maskedPhone = React.useMemo(() => {
-    if (!phoneNumber) return '+880 1XXX-XXXXXX';
-    const clean = phoneNumber.replace(/\D/g, '');
-    if (clean.length > 4) {
-      return `+880 ${clean.slice(0, 3)}XX-${clean.slice(-4)}`;
-    }
-    return `+880 ${clean}`;
-  }, [phoneNumber]);
+  // Mask email for privacy display
+  const maskedEmail = React.useMemo(() => {
+    if (!email) return 'your registered email';
+    const [name, domain] = email.split('@');
+    if (!domain) return email;
+    const maskedName = name.length > 2 ? `${name.slice(0, 2)}***${name.slice(-1)}` : `${name}***`;
+    return `${maskedName}@${domain}`;
+  }, [email]);
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -47,17 +50,28 @@ export const Step4Otp: React.FC<Step4Props> = ({
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const handleResend = () => {
-    if (timer > 0) return;
+  const handleResend = async () => {
+    if (timer > 0 || isResending) return;
     setIsResending(true);
-    setTimeout(() => {
+    try {
+      const res = await resendOtpAction({ email });
+      if (res.success) {
+        toast.success(res.message || 'New OTP has been sent to your email.');
+        setTimer(299);
+        setOtpValue('');
+        setError('');
+      } else {
+        toast.error(res.message || 'Failed to resend OTP');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error resending OTP';
+      toast.error(msg);
+    } finally {
       setIsResending(false);
-      setTimer(299);
-      setOtpValue('');
-    }, 800);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otpValue.length < 6) {
       setError('Please enter the complete 6-digit verification code');
@@ -65,10 +79,28 @@ export const Step4Otp: React.FC<Step4Props> = ({
     }
 
     setIsVerifying(true);
-    setTimeout(() => {
+    setError('');
+
+    try {
+      const res = await verifyOtpAction({
+        email: email.trim().toLowerCase(),
+        otp: otpValue.trim(),
+      });
+
+      if (res.success) {
+        toast.success(res.message || 'Driver application verified successfully!');
+        onVerify();
+      } else {
+        setError(res.message || 'Invalid or expired OTP code');
+        toast.error(res.message || 'Invalid or expired OTP code');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Verification failed';
+      setError(msg);
+      toast.error(msg);
+    } finally {
       setIsVerifying(false);
-      onVerify();
-    }, 1000);
+    }
   };
 
   return (
@@ -88,17 +120,17 @@ export const Step4Otp: React.FC<Step4Props> = ({
       {/* Header */}
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-          Verify your Phone Number
+          Verify your Email
         </h2>
         <p className="text-xs font-normal text-slate-500 sm:text-sm">
-          We sent a 6-digit code to{' '}
-          <strong className="font-semibold text-slate-800">{maskedPhone}</strong>
+          We sent a 6-digit verification code to{' '}
+          <strong className="font-semibold text-slate-800">{maskedEmail}</strong>
         </p>
       </div>
 
       {/* 6-Digit Shadcn InputOTP Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center">
           <InputOTP
             maxLength={6}
             value={otpValue}
@@ -107,91 +139,77 @@ export const Step4Otp: React.FC<Step4Props> = ({
               if (error) setError('');
             }}
           >
-            <InputOTPGroup className="gap-2 sm:gap-3">
-              <InputOTPSlot
-                index={0}
-                className="h-13 w-11 rounded-2xl border border-slate-200 bg-slate-50/50 text-xl font-extrabold data-[active=true]:border-red-500 data-[active=true]:bg-white data-[active=true]:ring-2 data-[active=true]:ring-red-500/20 sm:h-15 sm:w-13 sm:text-2xl"
-              />
-              <InputOTPSlot
-                index={1}
-                className="h-13 w-11 rounded-2xl border border-slate-200 bg-slate-50/50 text-xl font-extrabold data-[active=true]:border-red-500 data-[active=true]:bg-white data-[active=true]:ring-2 data-[active=true]:ring-red-500/20 sm:h-15 sm:w-13 sm:text-2xl"
-              />
-              <InputOTPSlot
-                index={2}
-                className="h-13 w-11 rounded-2xl border border-slate-200 bg-slate-50/50 text-xl font-extrabold data-[active=true]:border-red-500 data-[active=true]:bg-white data-[active=true]:ring-2 data-[active=true]:ring-red-500/20 sm:h-15 sm:w-13 sm:text-2xl"
-              />
-              <InputOTPSlot
-                index={3}
-                className="h-13 w-11 rounded-2xl border border-slate-200 bg-slate-50/50 text-xl font-extrabold data-[active=true]:border-red-500 data-[active=true]:bg-white data-[active=true]:ring-2 data-[active=true]:ring-red-500/20 sm:h-15 sm:w-13 sm:text-2xl"
-              />
-              <InputOTPSlot
-                index={4}
-                className="h-13 w-11 rounded-2xl border border-slate-200 bg-slate-50/50 text-xl font-extrabold data-[active=true]:border-red-500 data-[active=true]:bg-white data-[active=true]:ring-2 data-[active=true]:ring-red-500/20 sm:h-15 sm:w-13 sm:text-2xl"
-              />
-              <InputOTPSlot
-                index={5}
-                className="h-13 w-11 rounded-2xl border border-slate-200 bg-slate-50/50 text-xl font-extrabold data-[active=true]:border-red-500 data-[active=true]:bg-white data-[active=true]:ring-2 data-[active=true]:ring-red-500/20 sm:h-15 sm:w-13 sm:text-2xl"
-              />
+            <InputOTPGroup className="gap-2 sm:gap-2.5">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <InputOTPSlot
+                  key={index}
+                  index={index}
+                  className={`h-12 w-12 rounded-xl text-lg font-bold sm:h-14 sm:w-14 sm:text-2xl ${
+                    error
+                      ? 'border-red-500 bg-red-50/40 text-red-600 focus:border-red-600'
+                      : 'border-slate-200 focus:border-red-600 focus:ring-1 focus:ring-red-600'
+                  }`}
+                />
+              ))}
             </InputOTPGroup>
           </InputOTP>
+
+          {/* Validation Error Message */}
+          {error && <p className="mt-3 text-xs font-medium text-red-500">{error}</p>}
         </div>
 
-        {error && <p className="text-center text-xs font-medium text-red-600">{error}</p>}
+        {/* Resend Code Section */}
+        <div className="flex items-center justify-between px-1 text-xs sm:text-sm">
+          <span className="font-medium text-slate-500">
+            Expires in: <strong className="text-slate-800">{formatTimer(timer)}</strong>
+          </span>
 
-        {/* Resend Countdown */}
-        <div className="text-center text-xs">
-          <div className="flex items-center justify-center gap-1.5 text-slate-500">
-            <Phone className="h-3.5 w-3.5 text-slate-400" />
-            <span>Didn&apos;t receive the code?</span>
-          </div>
-
-          <div className="mt-2">
-            {timer > 0 ? (
-              <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-bold tracking-wider text-slate-600">
-                RESEND IN {formatTimer(timer)}
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={isResending}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-red-600 underline hover:text-red-700"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${isResending ? 'animate-spin' : ''}`} />
-                <span>Resend Code Now</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Submit Action */}
-        <div className="space-y-3 pt-2">
           <button
-            type="submit"
-            disabled={isVerifying}
-            className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold tracking-wide text-white shadow-md shadow-red-600/25 transition-all hover:bg-red-700 disabled:opacity-70"
+            type="button"
+            disabled={timer > 0 || isResending}
+            onClick={handleResend}
+            className={`inline-flex items-center gap-1.5 font-semibold transition-colors ${
+              timer > 0 || isResending
+                ? 'cursor-not-allowed text-slate-400'
+                : 'cursor-pointer text-red-600 hover:text-red-700 hover:underline'
+            }`}
           >
-            {isVerifying ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            {isResending ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <>
-                <span>Verify & Continue</span>
-                <ArrowRight className="h-4 w-4" />
-              </>
+              <RefreshCw className="h-3.5 w-3.5" />
             )}
+            <span>Resend Code</span>
           </button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={onChangePhone}
-              className="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              Change Phone Number
-            </button>
-          </div>
         </div>
+
+        {/* Verify and Submit Button */}
+        <button
+          type="submit"
+          disabled={otpValue.length < 6 || isVerifying}
+          className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-red-600 text-sm font-bold text-white shadow-lg shadow-red-600/25 transition-all duration-200 hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isVerifying ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          ) : (
+            <>
+              <span>Verify & Complete Registration</span>
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
+        </button>
       </form>
+
+      {/* Change Info Link */}
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={onChangePhone}
+          className="cursor-pointer text-xs font-semibold text-slate-500 transition-colors hover:text-slate-800 hover:underline"
+        >
+          Need to change registration email or phone?
+        </button>
+      </div>
     </div>
   );
 };

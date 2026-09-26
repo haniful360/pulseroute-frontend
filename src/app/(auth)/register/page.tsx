@@ -18,6 +18,10 @@ import {
 import { Lock, Mail, User, Phone, Droplet, ArrowRight } from 'lucide-react';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 
+import { registerUserAction, googleLoginAction } from '@/services/auth.service';
+import { toast } from 'sonner';
+import { Gender } from '@/types/auth.types';
+
 export default function PatientRegisterPage() {
   const router = useRouter();
 
@@ -52,7 +56,7 @@ export default function PatientRegisterPage() {
 
   const strength = getPasswordStrength(password);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -66,8 +70,8 @@ export default function PatientRegisterPage() {
     if (!bloodGroup) {
       newErrors.bloodGroup = 'Please select a blood group';
     }
-    if (!password || password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+    if (!password || password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
     if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
@@ -86,11 +90,95 @@ export default function PatientRegisterPage() {
 
     setErrors({});
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const res = await registerUserAction({
+        name: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        contactNumber: phoneNumber.trim(),
+        emergencyContactNumber: emergencyContact.trim(),
+        bloodGroup,
+        gender: gender.toUpperCase() as Gender,
+      });
+
+      if (!res.success) {
+        toast.error(res.message || 'Registration failed. Please try again.');
+        if (res.message?.toLowerCase().includes('email')) {
+          setErrors({ email: res.message });
+        }
+        return;
+      }
+
+      toast.success(res.message || 'Verification code sent to your email!');
+      router.push(`/verify-otp?email=${encodeURIComponent(email.trim().toLowerCase())}&type=user`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      toast.error(msg);
+    } finally {
       setIsLoading(false);
-      router.push('/dashboard');
-    }, 1200);
+    }
   };
+
+  const handleGoogleSignup = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      toast.error('Google Client ID is not configured.');
+      return;
+    }
+
+    try {
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+        const google = (window as any).google;
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response: any) => {
+            if (response.credential) {
+              const res = await googleLoginAction({ idToken: response.credential });
+              if (res.success && res.data) {
+                toast.success('Account created and logged in with Google!');
+                router.push('/dashboard/patient');
+              } else {
+                toast.error(res.message || 'Google registration failed.');
+              }
+            }
+          },
+        });
+        google.accounts.id.prompt();
+      } else {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          const google = (window as any).google;
+          if (google?.accounts?.id) {
+            google.accounts.id.initialize({
+              client_id: clientId,
+              callback: async (response: any) => {
+                if (response.credential) {
+                  const res = await googleLoginAction({ idToken: response.credential });
+                  if (res.success && res.data) {
+                    toast.success('Account created and logged in with Google!');
+                    router.push('/dashboard/patient');
+                  } else {
+                    toast.error(res.message || 'Google registration failed.');
+                  }
+                }
+              },
+            });
+            google.accounts.id.prompt();
+          }
+        };
+        document.body.appendChild(script);
+      }
+    } catch (err: unknown) {
+      console.error('Google Sign-up error:', err);
+      toast.error('Google sign-up could not be initiated.');
+    }
+  };
+
+
 
   return (
     <div className="flex min-h-screen flex-col justify-between bg-gradient-to-b from-slate-50 via-white to-slate-50/80">
@@ -353,6 +441,7 @@ export default function PatientRegisterPage() {
           {/* Social Google Signup */}
           <button
             type="button"
+            onClick={handleGoogleSignup}
             className="flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
