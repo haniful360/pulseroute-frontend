@@ -65,6 +65,40 @@ export default function BookAmbulanceView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
+  // Restore draft or passed params from HeroSection if available
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlPickup = params.get('pickup');
+        const urlType = params.get('type') as 'BASIC' | 'AC' | 'ICU' | 'CCU' | 'NEONATAL' | 'FREEZER' | null;
+        const urlDest = params.get('dest');
+
+        if (urlPickup) setPickupLocation(urlPickup);
+        if (urlType) setSelectedCategory(urlType);
+        if (urlDest) setDestinationHospital(urlDest);
+
+        const saved = sessionStorage.getItem('pending_ambulance_booking');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.pickup) setPickupLocation(parsed.pickup);
+          if (parsed.pickupLat && parsed.pickupLng) {
+            setPickupCoords({ lat: Number(parsed.pickupLat), lng: Number(parsed.pickupLng) });
+          }
+          if (parsed.dest) setDestinationHospital(parsed.dest);
+          if (parsed.destLat && parsed.destLng) {
+            setDestinationCoords({ lat: Number(parsed.destLat), lng: Number(parsed.destLng) });
+          }
+          if (parsed.type) setSelectedCategory(parsed.type);
+          sessionStorage.removeItem('pending_ambulance_booking');
+          toast.success('Loaded your emergency booking request details.');
+        }
+      } catch {
+        // ignore parse error
+      }
+    }
+  }, []);
+
   // Fetch real pricing configs from backend
   useEffect(() => {
     async function loadPricing() {
