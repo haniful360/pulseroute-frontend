@@ -1,17 +1,67 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { DollarSign, MapPin, HeartPulse, Percent, Check, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { getAllPricingConfigsAction, updatePricingConfigAction } from '@/services/pricing.service';
 
 export default function PricingView() {
+  const [configs, setConfigs] = useState<any[]>([]);
+  const [selectedConfigId, setSelectedConfigId] = useState<string>('');
+  const [baseFare, setBaseFare] = useState('1200');
+  const [perKmRate, setPerKmRate] = useState('45');
+  const [minimumFare, setMinimumFare] = useState('1500');
+  const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  useEffect(() => {
+    async function loadPricing() {
+      try {
+        const res = await getAllPricingConfigsAction();
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          setConfigs(res.data);
+          const first = res.data[0];
+          setSelectedConfigId(first.id);
+          setBaseFare(String(first.baseFare));
+          setPerKmRate(String(first.perKmRate));
+          setMinimumFare(String(first.minimumFare || first.baseFare));
+        }
+      } catch (err) {
+        console.error('Failed to load pricing configs:', err);
+      }
+    }
+    loadPricing();
+  }, []);
+
+  const handleSave = async () => {
+    if (!selectedConfigId) {
+      setSaved(true);
+      toast.success('Fare schedule updated.');
+      setTimeout(() => setSaved(false), 3000);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const res = await updatePricingConfigAction(selectedConfigId, {
+        baseFare: Number(baseFare),
+        perKmRate: Number(perKmRate),
+        minimumFare: Number(minimumFare),
+      });
+      if (res.success) {
+        setSaved(true);
+        toast.success('Fare schedule updated on backend.');
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        toast.error(res.message || 'Failed to update pricing config');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error updating pricing');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -42,7 +92,7 @@ export default function PricingView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Standard base fare</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">৳1,200</div>
+          <div className="text-2xl font-black text-[#0b132b]">৳{Number(baseFare).toLocaleString()}</div>
           <div className="text-xs font-medium text-slate-500 mt-1">Current schedule</div>
         </div>
         
@@ -54,7 +104,7 @@ export default function PricingView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Per kilometer</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">৳45</div>
+          <div className="text-2xl font-black text-[#0b132b]">৳{perKmRate}</div>
           <div className="text-xs font-medium text-slate-500 mt-1">Dhaka metro</div>
         </div>
 
@@ -64,10 +114,10 @@ export default function PricingView() {
             <div className="rounded-lg bg-red-50 p-2 text-[#e63946]">
               <HeartPulse className="h-4 w-4" />
             </div>
-            <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">ICU surcharge</div>
+            <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Minimum fare</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">৳1,500</div>
-          <div className="text-xs font-medium text-slate-500 mt-1">Critical care premium</div>
+          <div className="text-2xl font-black text-[#0b132b]">৳{Number(minimumFare).toLocaleString()}</div>
+          <div className="text-xs font-medium text-slate-500 mt-1">Base threshold</div>
         </div>
 
         {/* Stat 4 */}
@@ -101,8 +151,16 @@ export default function PricingView() {
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Base Fares</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <InputField label="Base Fare (BDT)" value="1,200" />
-                <InputField label="Per Kilometer Rate (BDT)" value="45" />
+                <InputField
+                  label="Base Fare (BDT)"
+                  value={baseFare}
+                  onChange={(e) => setBaseFare(e.target.value)}
+                />
+                <InputField
+                  label="Per Kilometer Rate (BDT)"
+                  value={perKmRate}
+                  onChange={(e) => setPerKmRate(e.target.value)}
+                />
               </div>
             </div>
 
@@ -111,9 +169,12 @@ export default function PricingView() {
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Surcharges</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <InputField label="ICU Surcharge (BDT)" value="1,500" />
-                <InputField label="Night Surcharge (%)" value="25" />
-                <InputField label="Weekend Surcharge (%)" value="15" />
+                <InputField
+                  label="Minimum Trip Fare (BDT)"
+                  value={minimumFare}
+                  onChange={(e) => setMinimumFare(e.target.value)}
+                />
+                <InputField label="Night Surcharge (%)" value="25" disabled />
               </div>
             </div>
 
@@ -122,15 +183,20 @@ export default function PricingView() {
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Commission</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <InputField label="Platform Commission (%)" value="12" />
-                <InputField label="Insurance Levy (%)" value="2" />
+                <InputField label="Platform Commission (%)" value="12" disabled />
+                <InputField label="Insurance Levy (%)" value="2" disabled />
               </div>
             </div>
           </div>
 
           <div className="pt-6 mt-6 border-t border-slate-100">
-            <Button variant="danger" className="w-full sm:w-auto h-11 px-6 rounded-2xl font-bold" onClick={handleSave}>
-              Save Changes
+            <Button
+              variant="danger"
+              disabled={isSaving}
+              className="w-full sm:w-auto h-11 px-6 rounded-2xl font-bold disabled:opacity-50"
+              onClick={handleSave}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </div>

@@ -1,34 +1,67 @@
 'use client';
 
-import Image from 'next/image';
 import { useState } from 'react';
 import { Compass, Crosshair, Layers, Navigation, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import GoogleMapView from '@/components/shared/GoogleMap/GoogleMapView';
 
 export default function DriverDutyRadar() {
   const [trafficActive, setTrafficActive] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
+  const [cockpitCenter, setCockpitCenter] = useState({ lat: 23.7508, lng: 90.3800 });
 
   const handleLocate = () => {
     setIsLocating(true);
-    setTimeout(() => setIsLocating(false), 1200);
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCockpitCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setIsLocating(false);
+        },
+        () => {
+          setCockpitCenter({ lat: 23.7508, lng: 90.3800 });
+          setIsLocating(false);
+        },
+        { timeout: 4000 }
+      );
+    } else {
+      setTimeout(() => setIsLocating(false), 800);
+    }
   };
 
   return (
     <div className="relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
       {/* Map Canvas Container */}
       <div className="relative h-[480px] w-full overflow-hidden bg-slate-900 sm:h-[540px] lg:h-[620px]">
-        {/* Background Map Image */}
-        <Image
-          src="/assets/dashboard/driver/dhaka_radar_map.png"
-          alt="Dhaka Emergency Radar Map"
-          fill
-          className={cn(
-            'object-cover transition-opacity duration-300',
-            trafficActive ? 'opacity-90' : 'opacity-70',
-          )}
-          priority
-        />
+        {/* Google Map View */}
+        <div className="absolute inset-0">
+          <GoogleMapView
+            center={cockpitCenter}
+            zoom={14}
+            traffic={trafficActive}
+            markers={[
+              {
+                id: 'my-unit',
+                position: cockpitCenter,
+                title: 'Paramedic Ambulance (Duty Radar)',
+                type: 'ambulance',
+              },
+              {
+                id: 'sos-dhanmondi',
+                position: { lat: 23.7461, lng: 90.3742 },
+                title: 'ICU SOS Area: Dhanmondi 27',
+                type: 'pickup',
+              },
+              {
+                id: 'hospital-united',
+                position: { lat: 23.7937, lng: 90.4140 },
+                title: 'Hospital Destination: United Hospital',
+                type: 'hospital',
+              },
+            ]}
+            className="h-full w-full"
+          />
+        </div>
 
         {/* Dynamic Radar Pulse Sweeper Overlay */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

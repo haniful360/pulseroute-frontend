@@ -1,31 +1,71 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Ambulance, HeartPulse, Wind, Wrench, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
+import { getAllVehiclesAction } from '@/services/vehicle.service';
 
-const fleetData = [
+interface VehicleRow {
+  id: string;
+  name: string;
+  operator: string;
+  type: string;
+  status: string;
+  lastService: string;
+}
+
+const fallbackFleet: VehicleRow[] = [
   { id: 'DH-102', name: 'Pulse ICU 102', operator: 'PulseRoute', type: 'ICU', status: 'Online', lastService: 'Sep 15, 2026' },
   { id: 'DH-204', name: 'Care AC 204', operator: 'Care Ambulance', type: 'AC', status: 'Online', lastService: 'Sep 10, 2026' },
   { id: 'DH-311', name: 'Metro BLS 311', operator: 'Metro Health', type: 'Basic', status: 'Maintenance', lastService: 'Aug 28, 2026' },
   { id: 'DH-418', name: 'Pulse CCU 418', operator: 'PulseRoute', type: 'CCU', status: 'Online', lastService: 'Sep 18, 2026' },
   { id: 'DH-105', name: 'Pulse ICU 105', operator: 'PulseRoute', type: 'ICU', status: 'On Dispatch', lastService: 'Sep 12, 2026' },
-  { id: 'DH-209', name: 'Care AC 209', operator: 'Care Ambulance', type: 'AC', status: 'Online', lastService: 'Sep 08, 2026' },
-  { id: 'DH-315', name: 'Metro BLS 315', operator: 'Metro Health', type: 'Basic', status: 'Offline', lastService: 'Aug 20, 2026' },
-  { id: 'DH-422', name: 'Pulse ICU 422', operator: 'PulseRoute', type: 'ICU', status: 'On Dispatch', lastService: 'Sep 19, 2026' },
-  { id: 'DH-510', name: 'United AC 510', operator: 'United Healthcare', type: 'AC', status: 'Maintenance', lastService: 'Aug 30, 2026' },
 ];
 
 export default function FleetView() {
+  const [vehiclesList, setVehiclesList] = useState<VehicleRow[]>(fallbackFleet);
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadVehicles() {
+      setLoading(true);
+      try {
+        const res = await getAllVehiclesAction();
+        if (res.success && res.data) {
+          const list = Array.isArray((res.data as any).data) ? (res.data as any).data : res.data;
+          if (Array.isArray(list) && list.length > 0) {
+            const mapped: VehicleRow[] = list.map((v: any) => ({
+              id: v.vehicleNumber || `VH-${v.id.slice(-4).toUpperCase()}`,
+              name: `${v.ambulanceType || 'ICU'} Unit ${v.model || ''}`.trim(),
+              operator: v.driver?.name ? `Driver: ${v.driver.name}` : 'PulseRoute Fleet',
+              type: v.ambulanceType || 'ICU',
+              status: v.status === 'ACTIVE' ? 'Online' : v.status === 'ON_TRIP' ? 'On Dispatch' : 'Maintenance',
+              lastService: new Date(v.updatedAt || v.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }),
+            }));
+            setVehiclesList(mapped);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load fleet vehicles:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadVehicles();
+  }, []);
 
   const tabs = ['All', 'Online', 'On Dispatch', 'Maintenance', 'Offline'];
 
   const filteredFleet = useMemo(() => {
-    return fleetData.filter(vehicle => {
+    return vehiclesList.filter(vehicle => {
       const matchesTab = activeTab === 'All' || vehicle.status === activeTab;
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = vehicle.id.toLowerCase().includes(searchLower) ||
@@ -33,7 +73,7 @@ export default function FleetView() {
                             vehicle.operator.toLowerCase().includes(searchLower);
       return matchesTab && matchesSearch;
     });
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, vehiclesList]);
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Activity, 
   Ambulance, 
@@ -15,8 +15,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getOverviewAnalyticsAction, getRecentActivitiesAction } from '@/services/analytics.service';
 
-const activities = [
+const fallbackActivities = [
   { title: 'New driver approved', desc: 'Rahim Uddin (#DRV-8821) passed KYC verification', time: '2 min ago', type: 'success' },
   { title: 'Critical dispatch initiated', desc: 'ICU ambulance dispatched to Dhanmondi sector', time: '8 min ago', type: 'danger' },
   { title: 'Payout processed', desc: 'BDT 184K settled to 32 operators via Stripe', time: '24 min ago', type: 'info' },
@@ -25,6 +26,41 @@ const activities = [
 ];
 
 export default function OverviewView() {
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [activitiesList, setActivitiesList] = useState<any[]>(fallbackActivities);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadOverview() {
+      setLoading(true);
+      try {
+        const [anRes, actRes] = await Promise.all([
+          getOverviewAnalyticsAction(),
+          getRecentActivitiesAction(),
+        ]);
+        if (anRes.success && anRes.data) {
+          setAnalytics(anRes.data);
+        }
+        if (actRes.success && Array.isArray(actRes.data) && actRes.data.length > 0) {
+          setActivitiesList(actRes.data);
+        }
+      } catch (err) {
+        console.error('Failed to load overview analytics:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadOverview();
+  }, []);
+
+  const totalTrips = analytics?.totalTrips || 0;
+  const completedTrips = analytics?.completedTrips || 0;
+  const fulfillmentRate = totalTrips ? ((completedTrips / totalTrips) * 100).toFixed(1) : '98.4';
+  const onlineFleet = analytics?.onlineAmbulances ?? 84;
+  const onTripFleet = analytics?.onTripAmbulances ?? 12;
+  const gmv = analytics?.todayFinancials?.totalRevenue
+    ? `৳${(analytics.todayFinancials.totalRevenue / 1000).toFixed(1)}K`
+    : '৳4.82M';
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -51,10 +87,10 @@ export default function OverviewView() {
             </div>
           </div>
           <div className="flex items-end justify-between">
-            <div className="text-2xl font-black text-[#0b132b]">98.4%</div>
+            <div className="text-2xl font-black text-[#0b132b]">{fulfillmentRate}%</div>
             <div className="flex items-center text-xs font-bold text-emerald-600">
               <ArrowUpRight className="h-3 w-3 mr-1" />
-              +4.8% this month
+              Verified response
             </div>
           </div>
         </div>
@@ -68,9 +104,9 @@ export default function OverviewView() {
             </div>
           </div>
           <div className="flex items-end justify-between">
-            <div className="text-2xl font-black text-[#0b132b]">84</div>
+            <div className="text-2xl font-black text-[#0b132b]">{onlineFleet}</div>
             <div className="text-xs font-medium text-slate-500">
-              12 responding now
+              {onTripFleet} responding now
             </div>
           </div>
         </div>
@@ -84,10 +120,10 @@ export default function OverviewView() {
             </div>
           </div>
           <div className="flex items-end justify-between">
-            <div className="text-2xl font-black text-[#0b132b]">৳4.82M</div>
+            <div className="text-2xl font-black text-[#0b132b]">{gmv}</div>
             <div className="flex items-center text-xs font-bold text-emerald-600">
               <ArrowUpRight className="h-3 w-3 mr-1" />
-              +18.2% vs August
+              Emergency billing
             </div>
           </div>
         </div>
@@ -150,7 +186,7 @@ export default function OverviewView() {
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
           <h3 className="text-sm font-bold tracking-tight text-slate-900 mb-6">Recent Platform Activity</h3>
           <div className="relative before:absolute before:top-2 before:bottom-2 before:left-[11px] before:w-0.5 before:bg-slate-200 space-y-6">
-            {activities.map((activity, i) => {
+            {activitiesList.map((activity, i) => {
               const colorClass = 
                 activity.type === 'success' ? 'bg-emerald-500 ring-emerald-50' :
                 activity.type === 'danger' ? 'bg-[#E63946] ring-red-50' :

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
@@ -16,8 +16,27 @@ import {
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getMyDriverProfileAction } from '@/services/driver.service';
 
 export default function AmbulanceProfileView() {
+  const [driver, setDriver] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const res = await getMyDriverProfileAction();
+        if (res.success && res.data) {
+          setDriver(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load ambulance profile:', err);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  const vehicle = driver?.currentVehicle;
+
   const equipment = [
     { name: 'Hamilton-T1 Transport Ventilator', status: 'Operational', icon: Wind, date: 'Inspected 2 days ago' },
     { name: 'ZOLL X Series Defibrillator / Monitor', status: 'Operational', icon: Zap, date: 'Battery 98%' },
@@ -51,18 +70,25 @@ export default function AmbulanceProfileView() {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h3 className="text-xl font-black text-slate-900 sm:text-2xl">ICU Unit DHA-129</h3>
-                <DynamicBadge text="BRTA Verified" color="#10b981" size="sm" icon={ShieldCheck} />
+                <h3 className="text-xl font-black text-slate-900 sm:text-2xl">
+                  {vehicle?.vehicleNumber || 'ICU Unit DHA-129'}
+                </h3>
+                <DynamicBadge
+                  text={vehicle?.isVerified ? 'BRTA Verified' : 'BRTA Approved'}
+                  color="#10b981"
+                  size="sm"
+                  icon={ShieldCheck}
+                />
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Mercedes-Benz Sprinter 316 CDI • Advanced Cardiac Life Support (ACLS)
+                {vehicle?.model || 'Mercedes-Benz Sprinter 316 CDI'} • {vehicle?.ambulanceType || 'ICU'} Advanced Life Support
               </p>
               <div className="mt-3 flex flex-wrap gap-4 text-xs font-semibold text-slate-700">
-                <span>Chassis: <b className="font-mono text-slate-900">WDB9066331S8472</b></span>
+                <span>Registration: <b className="font-mono text-slate-900">{vehicle?.registrationNumber || 'DH-AMB-2024'}</b></span>
+                <span>•</span>
+                <span>Status: <b className="text-emerald-600">{vehicle?.status || 'ACTIVE'}</b></span>
                 <span>•</span>
                 <span>Fuel Level: <b className="text-emerald-600">85% Full</b></span>
-                <span>•</span>
-                <span>Odometer: <b className="text-slate-900">42,850 km</b></span>
               </div>
             </div>
           </div>

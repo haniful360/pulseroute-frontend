@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -11,11 +12,37 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  getDriverDashboardOverviewAction,
+  updateDutyStatusAction,
+} from '@/services/driver.service';
 
 export default function DriverSummaryPanel() {
-  // Live shift clock starting from 06:42:15 (24135 seconds)
+  const router = useRouter();
+  // Live shift clock
   const [seconds, setSeconds] = useState(24135);
   const [isShiftEnded, setIsShiftEnded] = useState(false);
+  const [overview, setOverview] = useState<any>(null);
+  const [dutyStatus, setDutyStatus] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await getDriverDashboardOverviewAction();
+        if (res.success && res.data) {
+          setOverview(res.data);
+          if (res.data.driver?.dutyStatus) {
+            setDutyStatus(res.data.driver.dutyStatus);
+            setIsShiftEnded(res.data.driver.dutyStatus === 'OFFLINE');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load driver overview:', err);
+      }
+    }
+    loadData();
+  }, []);
 
   useEffect(() => {
     if (isShiftEnded) return;
@@ -32,18 +59,31 @@ export default function DriverSummaryPanel() {
     return `${hrs}:${mins}:${secs}`;
   };
 
-  const handleEndShift = () => {
-    if (isShiftEnded) {
-      setIsShiftEnded(false);
-      toast.success('Shift resumed! Duty radar is active.');
-    } else {
-      setIsShiftEnded(true);
-      toast.info('Shift ended successfully. Logged 06:42+ hours.');
+  const handleEndShift = async () => {
+    const nextStatus = dutyStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE';
+    setIsUpdatingStatus(true);
+    try {
+      const res = await updateDutyStatusAction({ dutyStatus: nextStatus });
+      if (res.success) {
+        setDutyStatus(nextStatus);
+        setIsShiftEnded(nextStatus === 'OFFLINE');
+        toast.success(
+          nextStatus === 'ONLINE'
+            ? 'Shift resumed! Paramedic unit is ONLINE on central radar.'
+            : 'Shift paused. Unit is OFFLINE.'
+        );
+      } else {
+        toast.error(res.message || 'Failed to update duty status');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error updating duty status');
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
   const handleStripeWithdraw = () => {
-    toast.success('Payout initiated! 12,450.00 BDT transferring to Stripe account.');
+    router.push('/dashboard/driver/wallet');
   };
 
   return (
@@ -69,7 +109,7 @@ export default function DriverSummaryPanel() {
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                12,450.00
+                {Number(overview?.todayEarnings ?? overview?.driver?.wallet?.balance ?? 12450).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
               <span className="text-sm font-bold text-slate-400">BDT</span>
             </div>
@@ -101,7 +141,9 @@ export default function DriverSummaryPanel() {
               COMPLETED TRIPS
             </span>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">08</span>
+              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
+                {String(overview?.completedTripsCount ?? 8).padStart(2, '0')}
+              </span>
               <span className="text-xs font-semibold text-emerald-600">● 100% Success</span>
             </div>
           </div>
@@ -170,7 +212,13 @@ export default function DriverSummaryPanel() {
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white py-3 text-xs font-bold text-[#E63946] shadow-md transition-all hover:bg-slate-50 active:scale-[0.99]"
           >
             <Clock className="h-4 w-4" />
-            <span>{isShiftEnded ? 'Resume Shift' : 'End Shift'}</span>
+            <span>
+              {isUpdatingStatus
+                ? 'Updating Status...'
+                : isShiftEnded
+                  ? 'Resume Shift (Go Online)'
+                  : 'End Shift (Go Offline)'}
+            </span>
           </button>
         </div>
       </div>
@@ -182,7 +230,7 @@ export default function DriverSummaryPanel() {
         </div>
         <div>
           <div className="flex items-center gap-1 text-sm font-bold text-slate-900">
-            <span>4.9 / 5.0</span>
+            <span>{overview?.driver?.rating ? Number(overview.driver.rating).toFixed(1) : '4.9'} / 5.0</span>
             <Flame className="h-4 w-4 text-[#E63946]" />
           </div>
           <p className="mt-0.5 text-xs leading-snug text-slate-500">

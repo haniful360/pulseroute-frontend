@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
@@ -16,6 +16,7 @@ import {
   Timer,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getMyTripsAction } from '@/services/trip.service';
 
 interface ShiftLog {
   id: string;
@@ -29,7 +30,7 @@ interface ShiftLog {
   status: string;
 }
 
-const shiftData: ShiftLog[] = [
+const fallbackShiftData: ShiftLog[] = [
   {
     id: 'SFT-1049',
     shiftDate: 'Sep 23, 2024',
@@ -52,34 +53,53 @@ const shiftData: ShiftLog[] = [
     rating: '4.9',
     status: 'Completed',
   },
-  {
-    id: 'SFT-1047',
-    shiftDate: 'Sep 21, 2024',
-    startTime: '07:00 AM',
-    endTime: '04:00 PM',
-    duration: '9h 00m',
-    dispatches: 10,
-    avgResponse: '5.8 mins',
-    rating: '4.8',
-    status: 'Completed',
-  },
-  {
-    id: 'SFT-1046',
-    shiftDate: 'Sep 20, 2024',
-    startTime: '11:00 PM',
-    endTime: '07:00 AM',
-    duration: '8h 00m',
-    dispatches: 5,
-    avgResponse: '6.9 mins',
-    rating: '5.0',
-    status: 'Completed',
-  },
 ];
 
 export default function ShiftHistoryView() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [shifts, setShifts] = useState<ShiftLog[]>(fallbackShiftData);
+  const [loading, setLoading] = useState(true);
 
-  const filteredShifts = shiftData.filter(
+  useEffect(() => {
+    async function loadTrips() {
+      try {
+        const res = await getMyTripsAction();
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          const mapped: ShiftLog[] = res.data.map((trip: any, index: number) => ({
+            id: `MSN-${trip.id.slice(-4).toUpperCase()}`,
+            shiftDate: new Date(trip.createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            startTime: new Date(trip.createdAt).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            endTime: trip.completedAt
+              ? new Date(trip.completedAt).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : 'En Route',
+            duration: '45 mins',
+            dispatches: 1,
+            avgResponse: '4.8 mins',
+            rating: '5.0',
+            status: trip.status === 'COMPLETED' ? 'Completed' : trip.status,
+          }));
+          setShifts(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load driver shifts:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadTrips();
+  }, []);
+
+  const filteredShifts = shifts.filter(
     (item) =>
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.shiftDate.toLowerCase().includes(searchTerm.toLowerCase()),

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
@@ -22,64 +22,61 @@ import {
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getMyTripsAction } from '@/services/trip.service';
 
 interface PatientTrip {
   id: string;
+  rawId: string;
   date: string;
   ambulance: string;
   pickup: string;
   destination: string;
   driver: string;
+  driverPhone?: string;
   fare: string;
   status: string;
+  rawFare: number;
 }
-
-const trips: PatientTrip[] = [
-  {
-    id: '#8821',
-    date: 'Sep 18, 2026',
-    ambulance: 'ICU',
-    pickup: 'Dhanmondi Road 27',
-    destination: 'United Hospital, Gulshan-2',
-    driver: 'Rahim Uddin',
-    fare: 'BDT 3,500',
-    status: 'Completed',
-  },
-  {
-    id: '#8794',
-    date: 'Aug 29, 2026',
-    ambulance: 'AC',
-    pickup: 'Lalmatia Block C',
-    destination: 'Square Hospital, Panthapath',
-    driver: 'Kamal Hossain',
-    fare: 'BDT 2,200',
-    status: 'Completed',
-  },
-  {
-    id: '#8712',
-    date: 'Aug 10, 2026',
-    ambulance: 'Basic',
-    pickup: 'Azimpur Govt Colony',
-    destination: 'Dhaka Medical College',
-    driver: 'Arif Hasan',
-    fare: 'BDT 1,450',
-    status: 'Completed',
-  },
-  {
-    id: '#8668',
-    date: 'Jul 22, 2026',
-    ambulance: 'CCU',
-    pickup: 'Uttara Sector 11',
-    destination: 'Evercare Hospital Dhaka',
-    driver: 'Nayeem Islam',
-    fare: 'BDT 3,100',
-    status: 'Cancelled',
-  },
-];
 
 export default function TripHistoryView() {
   const [query, setQuery] = useState('');
   const [selectedTrip, setSelectedTrip] = useState<PatientTrip | null>(null);
+  const [trips, setTrips] = useState<PatientTrip[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadTrips() {
+      setLoading(true);
+      try {
+        const res = await getMyTripsAction();
+        if (res.success && Array.isArray(res.data)) {
+          const mapped: PatientTrip[] = res.data.map((t: any) => ({
+            id: `#${t.id.slice(-6).toUpperCase()}`,
+            rawId: t.id,
+            date: new Date(t.createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            ambulance: t.ambulanceType || 'ICU',
+            pickup: t.pickupAddress || 'Current Location',
+            destination: t.destinationAddress || 'Hospital',
+            driver: t.driver?.name || 'Assigned Driver',
+            driverPhone: t.driver?.contactNumber,
+            fare: `BDT ${Number(t.fare || 0).toLocaleString()}`,
+            status: t.status === 'COMPLETED' ? 'Completed' : t.status === 'CANCELLED' ? 'Cancelled' : t.status,
+            rawFare: Number(t.fare || 0),
+          }));
+          setTrips(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load trips:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadTrips();
+  }, []);
 
   const filteredTrips = trips.filter(
     (trip) =>
@@ -155,24 +152,30 @@ export default function TripHistoryView() {
           <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
             TOTAL DISPATCHES
           </p>
-          <p className="mt-2 text-3xl font-black text-slate-900">24</p>
-          <p className="mt-1 text-xs font-semibold text-emerald-600">+3 trips this quarter</p>
+          <p className="mt-2 text-3xl font-black text-slate-900">{trips.length}</p>
+          <p className="mt-1 text-xs font-semibold text-emerald-600">All recorded transports</p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
           <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
             SUCCESS RATE
           </p>
-          <p className="mt-2 text-3xl font-black text-slate-900">92%</p>
-          <p className="mt-1 text-xs text-slate-500">22 Successful ER transports</p>
+          <p className="mt-2 text-3xl font-black text-slate-900">
+            {trips.length ? Math.round((trips.filter((t) => t.status === 'Completed').length / trips.length) * 100) : 100}%
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {trips.filter((t) => t.status === 'Completed').length} Successful ER transports
+          </p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
           <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
             TOTAL EXPENDITURE
           </p>
-          <p className="mt-2 text-3xl font-black text-slate-900">BDT 48,750</p>
-          <p className="mt-1 text-xs text-slate-500">Fully reconciled with insurance</p>
+          <p className="mt-2 text-3xl font-black text-slate-900">
+            BDT {trips.reduce((sum, t) => sum + (t.status === 'Completed' ? t.rawFare : 0), 0).toLocaleString()}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Emergency transport fares</p>
         </div>
       </div>
 

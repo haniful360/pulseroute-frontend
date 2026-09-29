@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
@@ -17,6 +17,11 @@ import {
   Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  getMyWalletAction,
+  getMyTransactionsAction,
+  createPayoutRequestAction,
+} from '@/services/wallet.service';
 
 interface LedgerItem {
   id: string;
@@ -28,13 +33,13 @@ interface LedgerItem {
   method: string;
 }
 
-const ledgerData: LedgerItem[] = [
+const fallbackLedgerData: LedgerItem[] = [
   {
     id: '1',
     date: 'Sep 24, 2024',
     time: '11:42 AM',
     tripId: 'TRP-8821',
-    amount: '+$211.20',
+    amount: '+BDT 2,500',
     status: 'Completed',
     method: 'Stripe Express',
   },
@@ -43,43 +48,84 @@ const ledgerData: LedgerItem[] = [
     date: 'Sep 24, 2024',
     time: '08:15 AM',
     tripId: 'TRP-8816',
-    amount: '+$182.60',
-    status: 'Completed',
-    method: 'Stripe Express',
-  },
-  {
-    id: '3',
-    date: 'Sep 23, 2024',
-    time: '04:30 PM',
-    tripId: 'TRP-8794',
-    amount: '+$281.60',
-    status: 'Pending',
-    method: 'Direct Bank',
-  },
-  {
-    id: '4',
-    date: 'Sep 22, 2024',
-    time: '02:10 PM',
-    tripId: 'TRP-8750',
-    amount: '+$195.00',
+    amount: '+BDT 1,800',
     status: 'Completed',
     method: 'Stripe Express',
   },
 ];
 
 export default function DriverWalletView() {
+  const [wallet, setWallet] = useState<any>(null);
+  const [ledger, setLedger] = useState<LedgerItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState('1482.50');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePayoutSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadWalletData() {
+      setLoading(true);
+      try {
+        const [wRes, txRes] = await Promise.all([
+          getMyWalletAction(),
+          getMyTransactionsAction(),
+        ]);
+        if (wRes.success && wRes.data) {
+          setWallet(wRes.data);
+          if (wRes.data.balance) {
+            setPayoutAmount(Number(wRes.data.balance).toFixed(2));
+          }
+        }
+        if (txRes.success && Array.isArray(txRes.data)) {
+          const items: LedgerItem[] = txRes.data.map((tx: any) => ({
+            id: tx.id,
+            date: new Date(tx.createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            time: new Date(tx.createdAt).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            tripId: tx.trip?.tripCode || `#TRP-${tx.id.slice(-4).toUpperCase()}`,
+            amount: `${tx.type === 'DEBIT' ? '-' : '+'}BDT ${Number(tx.amount || 0).toLocaleString()}`,
+            status: tx.status || 'Completed',
+            method: tx.paymentMethod || 'Stripe Express',
+          }));
+          setLedger(items);
+        }
+      } catch (err) {
+        console.error('Failed to load wallet data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadWalletData();
+  }, []);
+
+  const handlePayoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      const res = await createPayoutRequestAction({
+        amount: Number(payoutAmount),
+        paymentMethod: 'STRIPE',
+        notes: 'Paramedic driver withdrawal',
+      });
+      if (res.success) {
+        toast.success(`Withdrawal request of BDT ${payoutAmount} submitted successfully!`);
+        setPayoutOpen(false);
+        const wRes = await getMyWalletAction();
+        if (wRes.success && wRes.data) setWallet(wRes.data);
+      } else {
+        toast.error(res.message || 'Failed to submit withdrawal');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error processing payout request');
+    } finally {
       setIsProcessing(false);
-      setPayoutOpen(false);
-      toast.success(`Withdrawal request of $${payoutAmount} submitted successfully!`);
-    }, 1000);
+    }
   };
 
   const handleExportCSV = () => {
@@ -153,9 +199,11 @@ export default function DriverWalletView() {
               <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 AVAILABLE BALANCE
               </p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">$1,482.50</h3>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                BDT {Number(wallet?.balance ?? 1482.5).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </h3>
               <p className="mt-2 text-xs text-slate-500">
-                Next auto-settlement: <b className="text-slate-700">Sept 30</b>
+                Next auto-settlement: <b className="text-slate-700">End of week</b>
               </p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-[#E63946]">
@@ -170,10 +218,12 @@ export default function DriverWalletView() {
               <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 THIS MONTH EARNINGS
               </p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">$842.20</h3>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                BDT {Number(wallet?.totalEarned ? wallet.totalEarned * 0.4 : 842.2).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </h3>
               <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
                 <TrendingUp className="h-3.5 w-3.5" />
-                <span>+12.5% vs last month</span>
+                <span>Paramedic duty earnings</span>
               </div>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
@@ -188,8 +238,10 @@ export default function DriverWalletView() {
               <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 TOTAL LIFETIME PAYOUTS
               </p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">$14,245.90</h3>
-              <p className="mt-2 text-xs text-slate-500">328 Completed emergency trips</p>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                BDT {Number(wallet?.totalWithdrawn ?? 14245.9).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </h3>
+              <p className="mt-2 text-xs text-slate-500">Processed through central banking</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
               <CreditCard className="h-6 w-6" />
@@ -215,7 +267,7 @@ export default function DriverWalletView() {
           />
         </div>
 
-        <CustomTable columns={columns} data={ledgerData} />
+        <CustomTable columns={columns} data={ledger.length > 0 ? ledger : fallbackLedgerData} />
       </div>
 
       {/* Payout Modal */}

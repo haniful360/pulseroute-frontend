@@ -1,38 +1,92 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Route, Activity, CheckCircle2, XCircle, Download, Search, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
+import { getAllTripsAction } from '@/services/trip.service';
 
-const tripsData = [
+interface TripRow {
+  id: string;
+  patient: string;
+  driver: string;
+  origin: string;
+  destination: string;
+  type: string;
+  status: string;
+  date: string;
+}
+
+const fallbackTrips: TripRow[] = [
   { id: 'TRP-8821', patient: 'Rashida Khatun', driver: 'Rahim Uddin', origin: 'Dhanmondi', destination: 'Gulshan', type: 'ICU', status: 'Completed', date: 'Sep 24, 2026' },
   { id: 'TRP-8816', patient: 'Sajid Ahmed', driver: 'Kamal Hossain', origin: 'Uttara', destination: 'Banani', type: 'AC', status: 'In Transit', date: 'Sep 24, 2026' },
   { id: 'TRP-8794', patient: 'Mina Begum', driver: 'Arif Hasan', origin: 'Mirpur', destination: 'Square Hospital', type: 'Basic', status: 'Critical', date: 'Sep 24, 2026' },
   { id: 'TRP-8788', patient: 'Nusrat Jahan', driver: 'Nayeem Islam', origin: 'Gulshan', destination: 'Evercare', type: 'CCU', status: 'Completed', date: 'Sep 24, 2026' },
   { id: 'TRP-8776', patient: 'Abdul Karim', driver: 'Shakib Rahman', origin: 'Mohammadpur', destination: 'DMCH', type: 'ICU', status: 'In Transit', date: 'Sep 23, 2026' },
-  { id: 'TRP-8770', patient: 'Fatema Akter', driver: 'Habib Chowdhury', origin: 'Bashundhara', destination: 'United Hospital', type: 'AC', status: 'Completed', date: 'Sep 23, 2026' },
-  { id: 'TRP-8761', patient: 'Rafiq Hossain', driver: 'Jahid Alam', origin: 'Tejgaon', destination: 'Lab Aid', type: 'Basic', status: 'Cancelled', date: 'Sep 23, 2026' },
-  { id: 'TRP-8755', patient: 'Sadia Islam', driver: 'Mamun Khan', origin: 'Banasree', destination: 'Apollo Hospital', type: 'ICU', status: 'Completed', date: 'Sep 22, 2026' },
 ];
 
 export default function TripsView() {
+  const [tripsList, setTripsList] = useState<TripRow[]>(fallbackTrips);
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadTrips() {
+      setLoading(true);
+      try {
+        const res = await getAllTripsAction();
+        if (res.success && res.data) {
+          const list = Array.isArray((res.data as any).data) ? (res.data as any).data : res.data;
+          if (Array.isArray(list) && list.length > 0) {
+            const mapped: TripRow[] = list.map((t: any) => {
+              const statusDisplay = 
+                t.status === 'COMPLETED' ? 'Completed' :
+                t.status === 'CANCELLED' ? 'Cancelled' :
+                ['EN_ROUTE', 'ARRIVED', 'IN_TRANSIT'].includes(t.status) ? 'In Transit' :
+                'Critical';
+              return {
+                id: `TRP-${t.id.slice(-4).toUpperCase()}`,
+                patient: t.patient?.name || 'Emergency Patient',
+                driver: t.driver?.name || 'Paramedic On Duty',
+                origin: t.pickupAddress || 'Dhaka',
+                destination: t.destinationAddress || 'Hospital',
+                type: t.ambulanceType || 'ICU',
+                status: statusDisplay,
+                date: new Date(t.createdAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                }),
+              };
+            });
+            setTripsList(mapped);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load trips for admin:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadTrips();
+  }, []);
 
   const tabs = ['All', 'Completed', 'In Transit', 'Critical', 'Cancelled'];
 
   const filteredTrips = useMemo(() => {
-    return tripsData.filter(trip => {
+    return tripsList.filter(trip => {
       const matchesTab = activeTab === 'All' || trip.status === activeTab;
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = trip.id.toLowerCase().includes(searchLower) ||
                             trip.patient.toLowerCase().includes(searchLower) ||
-                            trip.driver.toLowerCase().includes(searchLower);
+                            trip.driver.toLowerCase().includes(searchLower) ||
+                            trip.origin.toLowerCase().includes(searchLower) ||
+                            trip.destination.toLowerCase().includes(searchLower);
       return matchesTab && matchesSearch;
     });
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, tripsList]);
 
   return (
     <div className="space-y-6">
@@ -58,8 +112,8 @@ export default function TripsView() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">1,240</div>
-            <div className="mt-1 text-xs font-medium text-emerald-600">+86 this month</div>
+            <div className="text-2xl font-black text-[#0b132b]">{tripsList.length}</div>
+            <div className="mt-1 text-xs font-medium text-emerald-600">All registered dispatches</div>
           </div>
         </div>
 
@@ -72,22 +126,26 @@ export default function TripsView() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">18</div>
-            <div className="mt-1 text-xs font-medium text-amber-600">3 critical</div>
+            <div className="text-2xl font-black text-[#0b132b]">
+              {tripsList.filter(t => t.status === 'In Transit' || t.status === 'Critical').length}
+            </div>
+            <div className="mt-1 text-xs font-medium text-amber-600">Active en route</div>
           </div>
         </div>
 
         {/* Completed today */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Completed today</div>
+            <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Completed</div>
             <div className="rounded-lg bg-red-50 p-2 text-[#e63946]">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">142</div>
-            <div className="mt-1 text-xs font-medium text-emerald-600">+11.4%</div>
+            <div className="text-2xl font-black text-[#0b132b]">
+              {tripsList.filter(t => t.status === 'Completed').length}
+            </div>
+            <div className="mt-1 text-xs font-medium text-emerald-600">Successfully transported</div>
           </div>
         </div>
 
@@ -100,8 +158,10 @@ export default function TripsView() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">8</div>
-            <div className="mt-1 text-xs font-medium text-emerald-600">-2.1%</div>
+            <div className="text-2xl font-black text-[#0b132b]">
+              {tripsList.filter(t => t.status === 'Cancelled').length}
+            </div>
+            <div className="mt-1 text-xs font-medium text-slate-500">Trip aborted</div>
           </div>
         </div>
       </div>
@@ -111,7 +171,7 @@ export default function TripsView() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-sm font-bold tracking-tight text-slate-900">Dispatch Records</h2>
-              <p className="mt-1 text-xs text-slate-500">Showing {filteredTrips.length} of {tripsData.length} trips</p>
+              <p className="mt-1 text-xs text-slate-500">Showing {filteredTrips.length} of {tripsList.length} trips</p>
             </div>
             <Button variant="outline" size="sm" className="h-9 rounded-xl">
               <Download className="mr-2 h-4 w-4" /> Export CSV

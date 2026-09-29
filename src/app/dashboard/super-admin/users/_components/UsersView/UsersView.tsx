@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
   UserCheck, 
@@ -8,31 +8,101 @@ import {
   ShieldCheck, 
   Plus,
   Search,
-  ChevronRight
+  ChevronRight,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { getAllUsersAction, updateUserStatusAction } from '@/services/user.service';
 
-const mockUsers = [
-  { id: 'USR-201', name: 'Rahim Uddin', role: 'Paramedic', region: 'Dhanmondi', status: 'Active', joined: 'Sep 12, 2026' },
-  { id: 'USR-188', name: 'Kamal Hossain', role: 'Driver', region: 'Gulshan', status: 'Active', joined: 'Aug 28, 2026' },
-  { id: 'USR-164', name: 'Square Hospital Desk', role: 'Triage Officer', region: 'Panthapath', status: 'Active', joined: 'Jul 15, 2026' },
-  { id: 'USR-142', name: 'Arif Hasan', role: 'Driver', region: 'Mirpur', status: 'Suspended', joined: 'Jun 02, 2026' },
-  { id: 'USR-138', name: 'Nusrat Jahan', role: 'Paramedic', region: 'Uttara', status: 'Active', joined: 'May 18, 2026' },
-  { id: 'USR-125', name: 'Fahim Rahman', role: 'Dispatch Coordinator', region: 'Banani', status: 'Active', joined: 'Apr 22, 2026' },
-  { id: 'USR-112', name: 'Evercare Dispatch', role: 'Triage Officer', region: 'Bashundhara', status: 'Pending', joined: 'Sep 20, 2026' },
-  { id: 'USR-098', name: 'Shakib Al Hasan', role: 'Driver', region: 'Mohammadpur', status: 'Active', joined: 'Mar 08, 2026' },
+interface UserRow {
+  id: string;
+  name: string;
+  role: string;
+  region: string;
+  status: 'Active' | 'Suspended' | 'Pending';
+  rawStatus: string;
+  joined: string;
+}
+
+const fallbackUsers: UserRow[] = [
+  { id: 'USR-201', name: 'Rahim Uddin', role: 'Paramedic', region: 'Dhanmondi', status: 'Active', rawStatus: 'ACTIVE', joined: 'Sep 12, 2026' },
+  { id: 'USR-188', name: 'Kamal Hossain', role: 'Driver', region: 'Gulshan', status: 'Active', rawStatus: 'ACTIVE', joined: 'Aug 28, 2026' },
+  { id: 'USR-164', name: 'Square Hospital Desk', role: 'Triage Officer', region: 'Panthapath', status: 'Active', rawStatus: 'ACTIVE', joined: 'Jul 15, 2026' },
+  { id: 'USR-142', name: 'Arif Hasan', role: 'Driver', region: 'Mirpur', status: 'Suspended', rawStatus: 'SUSPENDED', joined: 'Jun 02, 2026' },
+  { id: 'USR-138', name: 'Nusrat Jahan', role: 'Paramedic', region: 'Uttara', status: 'Active', rawStatus: 'ACTIVE', joined: 'May 18, 2026' },
 ];
 
 export default function UsersView() {
+  const [usersList, setUsersList] = useState<UserRow[]>(fallbackUsers);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadUsers() {
+      setLoading(true);
+      try {
+        const res = await getAllUsersAction();
+        if (res.success && res.data) {
+          const list = Array.isArray((res.data as any).data) ? (res.data as any).data : res.data;
+          if (Array.isArray(list) && list.length > 0) {
+            const mapped: UserRow[] = list.map((u: any) => ({
+              id: u.id,
+              name: u.name || 'PulseRoute User',
+              role: u.role === 'SUPER_ADMIN' ? 'Super Admin' : u.role === 'DRIVER' ? 'Paramedic Driver' : 'Patient',
+              region: u.patient?.address || u.phone || 'Dhaka',
+              status: u.status === 'ACTIVE' ? 'Active' : u.status === 'SUSPENDED' ? 'Suspended' : 'Pending',
+              rawStatus: u.status,
+              joined: new Date(u.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }),
+            }));
+            setUsersList(mapped);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load users:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadUsers();
+  }, []);
+
+  const handleToggleStatus = async (user: UserRow) => {
+    const nextStatus = user.rawStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    try {
+      const res = await updateUserStatusAction(user.id, { status: nextStatus as any });
+      if (res.success) {
+        toast.success(`User ${user.name} status updated to ${nextStatus}`);
+        setUsersList((prev) =>
+          prev.map((u) =>
+            u.id === user.id
+              ? {
+                  ...u,
+                  status: nextStatus === 'ACTIVE' ? 'Active' : 'Suspended',
+                  rawStatus: nextStatus,
+                }
+              : u
+          )
+        );
+      } else {
+        toast.error(res.message || 'Failed to update user status');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error updating status');
+    }
+  };
 
   const tabs = ['All', 'Active', 'Suspended', 'Pending'];
 
   const filteredUsers = useMemo(() => {
-    return mockUsers.filter(user => {
+    return usersList.filter(user => {
       const matchesSearch = 
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -42,7 +112,7 @@ export default function UsersView() {
       
       return matchesSearch && matchesTab;
     });
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, activeTab, usersList]);
 
   return (
     <div className="space-y-6">
@@ -139,7 +209,7 @@ export default function UsersView() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold tracking-tight text-slate-900">User Directory</h3>
-              <p className="text-xs font-medium text-slate-500 mt-1">Showing {filteredUsers.length} of {mockUsers.length} users</p>
+              <p className="text-xs font-medium text-slate-500 mt-1">Showing {filteredUsers.length} of {usersList.length} users</p>
             </div>
             
             {/* Tab Filter */}
@@ -218,10 +288,25 @@ export default function UsersView() {
                       </span>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-right">
-                      <Button variant="ghost" size="sm" className="h-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 font-bold text-xs">
-                        View
-                        <ChevronRight className="ml-1 h-3 w-3" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(user)}
+                          className={cn(
+                            "h-7 text-[10px] font-bold rounded-lg px-2",
+                            user.status === 'Active'
+                              ? "text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                              : "text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                          )}
+                        >
+                          {user.status === 'Active' ? 'Suspend' : 'Activate'}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 font-bold text-xs">
+                          View
+                          <ChevronRight className="ml-1 h-3 w-3" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))

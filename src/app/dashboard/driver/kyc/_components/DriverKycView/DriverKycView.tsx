@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DynamicPageHeader from '@/components/dashboard/DynamicPageHeader/DynamicPageHeader';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
@@ -15,8 +15,24 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getMyDriverProfileAction } from '@/services/driver.service';
 
 export default function DriverKycView() {
+  const [driver, setDriver] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadDriver() {
+      try {
+        const res = await getMyDriverProfileAction();
+        if (res.success && res.data) {
+          setDriver(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load driver KYC profile:', err);
+      }
+    }
+    loadDriver();
+  }, []);
   const documents = [
     {
       title: 'BRTA Professional Driving License',
@@ -78,11 +94,17 @@ export default function DriverKycView() {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h3 className="text-xl font-bold text-slate-900">Verification Status: Active &amp; Cleared</h3>
-                <DynamicBadge text="Approved" color="#10b981" size="xs" />
+                <h3 className="text-xl font-bold text-slate-900">
+                  Verification Status: {driver?.isVerified ? 'Active & Cleared' : 'Under Review'}
+                </h3>
+                <DynamicBadge
+                  text={driver?.isVerified ? 'Approved' : 'Pending'}
+                  color={driver?.isVerified ? '#10b981' : '#f59e0b'}
+                  size="xs"
+                />
               </div>
               <p className="mt-1 text-xs text-slate-600">
-                Driver ID: <b className="font-mono text-slate-900">PR-DRV-9022</b> • Validated by Super Admin on 12 Oct 2023.
+                Driver ID: <b className="font-mono text-slate-900">{driver?.id ? `PR-DRV-${driver.id.slice(-4).toUpperCase()}` : 'PR-DRV-9022'}</b> • License: {driver?.licenseNumber || 'DL-DH-992144'}
               </p>
             </div>
           </div>

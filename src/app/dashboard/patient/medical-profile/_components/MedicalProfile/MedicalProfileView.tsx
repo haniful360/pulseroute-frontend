@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image, { StaticImageData } from 'next/image';
 import {
   Heart,
@@ -23,6 +23,9 @@ import InputField from '@/components/dashboard/Fields/InputField/InputField';
 
 import abdurRahmanImg from '@/assets/dashboard/patient/abdur-rahman.png';
 import fatemaBegumImg from '@/assets/dashboard/patient/fatema-begum.png';
+
+import { getMyProfileAction, updateMyProfileAction } from '@/services/user.service';
+import { toast } from 'sonner';
 
 interface Contact {
   id: string;
@@ -61,15 +64,50 @@ export default function MedicalProfileView() {
   const [newCondition, setNewCondition] = useState('');
   const [allergies, setAllergies] = useState<string[]>(['Penicillin', 'Latex']);
   const [newAllergy, setNewAllergy] = useState('');
+  const [address, setAddress] = useState('House 12, Road 5, Dhanmondi, Dhaka');
+  const [emergencyPhone, setEmergencyPhone] = useState('+8801711223355');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Emergency Contacts state
   const [contacts, setContacts] = useState<Contact[]>(initialContacts);
 
   // Toast notification state
-  const [showToast, setShowToast] = useState(true);
+  const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState(
     'Your medical data has been saved successfully.',
   );
+
+  // Load real profile from backend
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const res = await getMyProfileAction();
+        if (res.success && res.data) {
+          const patient = res.data.patient || {};
+          if (patient.bloodGroup) {
+            setBloodGroup(patient.bloodGroup.includes('(') ? patient.bloodGroup : `${patient.bloodGroup} (Positive)`);
+          }
+          if (patient.address) setAddress(patient.address);
+          if (patient.emergencyContactNumber) setEmergencyPhone(patient.emergencyContactNumber);
+
+          if (patient.medicalHistory) {
+            try {
+              const parsed = JSON.parse(patient.medicalHistory);
+              if (parsed.conditions) setConditions(parsed.conditions);
+              if (parsed.allergies) setAllergies(parsed.allergies);
+              if (parsed.contacts) setContacts(parsed.contacts);
+            } catch {
+              // Plain text medical history
+              setConditions([patient.medicalHistory]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load patient medical profile:', err);
+      }
+    }
+    loadProfile();
+  }, []);
 
   // Modal states for Contact Add/Edit
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -191,12 +229,32 @@ export default function MedicalProfileView() {
   };
 
   // Global Save Changes
-  const handleSaveChanges = () => {
-    setToastMessage('Your medical data has been saved successfully.');
-    setShowToast(true);
-    setTimeout(() => {
-      // toast auto-fades after 5 seconds
-    }, 5000);
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        bloodGroup: bloodGroup.split(' ')[0],
+        address,
+        emergencyContactNumber: contacts[0]?.phone || emergencyPhone,
+        medicalHistory: JSON.stringify({
+          conditions,
+          allergies,
+          contacts,
+        }),
+      };
+      const res = await updateMyProfileAction(payload);
+      if (res.success) {
+        setToastMessage('Your medical data has been saved successfully.');
+        setShowToast(true);
+        toast.success('Medical profile updated successfully');
+      } else {
+        toast.error(res.message || 'Failed to update profile');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error updating profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Cancel action
@@ -225,16 +283,18 @@ export default function MedicalProfileView() {
           <button
             type="button"
             onClick={handleCancel}
-            className="cursor-pointer rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-95"
+            disabled={isSaving}
+            className="cursor-pointer rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSaveChanges}
-            className="cursor-pointer rounded-xl bg-[#E63946] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition hover:bg-red-600 active:scale-95"
+            disabled={isSaving}
+            className="cursor-pointer rounded-xl bg-[#E63946] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition hover:bg-red-600 active:scale-95 disabled:opacity-50"
           >
-            Save Changes
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
