@@ -2,7 +2,8 @@
 
 import { Info, Moon, Siren } from 'lucide-react';
 import Link from 'next/link';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { getAllPricingConfigsAction } from '@/services/pricing.service';
 
 interface VehicleClass {
   id: string;
@@ -58,13 +59,53 @@ const VEHICLE_CLASSES: VehicleClass[] = [
 ];
 
 export const InteractiveFareCalculator: React.FC = () => {
+  const [vehicleClasses, setVehicleClasses] = useState<VehicleClass[]>(VEHICLE_CLASSES);
   const [distance, setDistance] = useState<number>(8);
   const [selectedClassId, setSelectedClassId] = useState<string>('icu');
   const [surgeActive, setSurgeActive] = useState<boolean>(false);
 
+  useEffect(() => {
+    async function loadPricing() {
+      try {
+        const res = await getAllPricingConfigsAction();
+        if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+          const configs = res.data;
+          const typeMap: Record<string, string> = {
+            BASIC: 'bls',
+            AC: 'ac',
+            ICU: 'icu',
+            CCU: 'ccu',
+            NEONATAL: 'neonatal',
+            FREEZER: 'freezer',
+          };
+          setVehicleClasses((prev) =>
+            prev.map((vc) => {
+              const matched = configs.find(
+                (p: any) =>
+                  typeMap[p.ambulanceType] === vc.id ||
+                  p.ambulanceType?.toLowerCase() === vc.id,
+              );
+              if (matched) {
+                return {
+                  ...vc,
+                  baseFare: Number(matched.baseFare) || vc.baseFare,
+                  perKmRate: Number(matched.perKmRate) || vc.perKmRate,
+                };
+              }
+              return vc;
+            }),
+          );
+        }
+      } catch {
+        // keep fallback
+      }
+    }
+    loadPricing();
+  }, []);
+
   const selectedClass = useMemo(
-    () => VEHICLE_CLASSES.find((v) => v.id === selectedClassId) || VEHICLE_CLASSES[2],
-    [selectedClassId],
+    () => vehicleClasses.find((v) => v.id === selectedClassId) || vehicleClasses[2],
+    [selectedClassId, vehicleClasses],
   );
 
   const { distanceFare, surgeAmount, total, rangeMin, rangeMax } = useMemo(() => {
