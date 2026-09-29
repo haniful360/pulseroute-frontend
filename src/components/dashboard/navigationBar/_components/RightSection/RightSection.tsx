@@ -21,7 +21,11 @@ import {
   X,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  getMyNotificationsAction,
+  markAllNotificationsReadAction,
+} from '@/services/notification.service';
 
 const UserDropdown = dynamic(() => import('./UserDropdown/UserDropdown'), {
   ssr: false,
@@ -99,7 +103,38 @@ function RightSection({ role }: { role: roleTypes }) {
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  const handleMarkAllRead = () => {
+  useEffect(() => {
+    async function loadNotifications() {
+      try {
+        const res = await getMyNotificationsAction();
+        if (res?.success && res.data) {
+          const list = (res.data as any).notifications || (Array.isArray(res.data) ? res.data : []);
+          if (list.length > 0) {
+            const mapped = list.map((item: any) => ({
+              id: item.id,
+              title: item.title,
+              desc: item.message,
+              time: new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              icon: item.type === 'EMERGENCY' ? <AlertTriangle size={15} /> : <ShieldCheck size={15} />,
+              color: item.type === 'EMERGENCY' ? 'bg-red-500' : 'bg-blue-500',
+              unread: !item.isRead,
+            }));
+            setNotifications(mapped);
+          }
+        }
+      } catch {
+        // keep fallback data
+      }
+    }
+    loadNotifications();
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsReadAction();
+    } catch {
+      // ignore
+    }
     setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })));
   };
 

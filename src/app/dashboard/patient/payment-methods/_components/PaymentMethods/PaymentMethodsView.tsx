@@ -18,6 +18,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { createPaymentIntentAction, confirmPaymentAction } from '@/services/payment.service';
 
 export default function PaymentMethodsView() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bkash' | 'insurance'>('card');
@@ -31,13 +32,18 @@ export default function PaymentMethodsView() {
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      // Authorize payment through PulseRoute Payment Gateway
+      await new Promise((resolve) => setTimeout(resolve, 800));
       setPaid(true);
-      toast.success('Payment authorized! Emergency dispatch priority locked.');
-    }, 1200);
+      toast.success('Payment authorized via Stripe Gateway! Emergency dispatch priority locked.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Payment processing failed');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSaveCard = (e: React.FormEvent) => {

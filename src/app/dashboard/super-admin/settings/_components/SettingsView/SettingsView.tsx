@@ -14,7 +14,9 @@ import {
   Settings2,
   ShieldCheck,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { getAllSettingsAction, upsertSettingAction } from '@/services/setting.service';
 
 const auditEvents = [
   { action: 'Pricing updated', actor: 'Rahat Mahmud', time: '2 min ago', type: 'config' },
@@ -36,14 +38,43 @@ const auditEvents = [
 export default function SettingsView() {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dispatchSla, setDispatchSla] = useState('8');
+  const [radarRefresh, setRadarRefresh] = useState('15');
+  const [maxRadius, setMaxRadius] = useState('25');
+  const [reassignTimeout, setReassignTimeout] = useState('3');
 
-  const handleSave = () => {
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await getAllSettingsAction();
+        if (res.success && Array.isArray(res.data)) {
+          const sla = res.data.find((s: any) => s.key === 'DISPATCH_SLA_TIMEOUT');
+          if (sla) setDispatchSla(String(sla.value));
+          const rad = res.data.find((s: any) => s.key === 'MAX_DISPATCH_RADIUS');
+          if (rad) setMaxRadius(String(rad.value));
+        }
+      } catch {
+        // use defaults
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await Promise.all([
+        upsertSettingAction({ key: 'DISPATCH_SLA_TIMEOUT', value: dispatchSla, category: 'DISPATCH' }),
+        upsertSettingAction({ key: 'MAX_DISPATCH_RADIUS', value: maxRadius, category: 'DISPATCH' }),
+      ]);
       setSaved(true);
+      toast.success('Platform operational settings synchronized with backend.');
       setTimeout(() => setSaved(false), 3000);
-    }, 800);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -136,10 +167,26 @@ export default function SettingsView() {
             <p className="mt-1 text-xs text-slate-500">Core ambulance dispatch parameters</p>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <InputField label="Dispatch SLA Timeout (minutes)" value="8" />
-              <InputField label="Fleet Radar Refresh (seconds)" value="15" />
-              <InputField label="Max Dispatch Radius (km)" value="25" />
-              <InputField label="Auto-reassign Timeout (minutes)" value="3" />
+              <InputField
+                label="Dispatch SLA Timeout (minutes)"
+                value={dispatchSla}
+                onChange={(e) => setDispatchSla(e.target.value)}
+              />
+              <InputField
+                label="Fleet Radar Refresh (seconds)"
+                value={radarRefresh}
+                onChange={(e) => setRadarRefresh(e.target.value)}
+              />
+              <InputField
+                label="Max Dispatch Radius (km)"
+                value={maxRadius}
+                onChange={(e) => setMaxRadius(e.target.value)}
+              />
+              <InputField
+                label="Auto-reassign Timeout (minutes)"
+                value={reassignTimeout}
+                onChange={(e) => setReassignTimeout(e.target.value)}
+              />
             </div>
           </div>
 
