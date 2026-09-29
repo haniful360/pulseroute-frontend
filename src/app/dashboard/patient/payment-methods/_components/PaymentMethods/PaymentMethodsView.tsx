@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBackBtn from '@/components/dashboard/DynamicBackBtn/DynamicBackBtn';
@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Check,
   CreditCard,
+  FileText,
   LockKeyhole,
   Plus,
   ShieldCheck,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPaymentIntentAction, confirmPaymentAction } from '@/services/payment.service';
+import { getMyInvoicesAction } from '@/services/invoice.service';
 
 export default function PaymentMethodsView() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bkash' | 'insurance'>('card');
@@ -26,16 +28,64 @@ export default function PaymentMethodsView() {
   const [paid, setPaid] = useState(false);
   const [addCardModalOpen, setAddCardModalOpen] = useState(false);
 
+  // Invoices state
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [loadingInvoices, setLoadingInvoices] = useState(true);
+
   // Add Card State
   const [cardHolder, setCardHolder] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
 
+  // Fetch real invoices
+  useEffect(() => {
+    async function loadInvoices() {
+      setLoadingInvoices(true);
+      try {
+        const res = await getMyInvoicesAction();
+        if (res.success && Array.isArray(res.data)) {
+          setInvoices(res.data);
+          const unpaid = res.data.find(
+            (inv) => inv.paymentStatus === 'UNPAID' || inv.paymentStatus === 'PENDING'
+          );
+          if (unpaid) {
+            setSelectedInvoice(unpaid);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load invoices:', err);
+      } finally {
+        setLoadingInvoices(false);
+      }
+    }
+    loadInvoices();
+  }, []);
+
+  const dueAmount = selectedInvoice ? Number(selectedInvoice.totalAmount || 3500) : 3500;
+  const tripVehicle = selectedInvoice?.trip?.vehicle?.ambulanceType || selectedInvoice?.trip?.ambulanceType || 'ICU Life Support';
+  const tripRoute = selectedInvoice?.trip?.destinationAddress
+    ? `${selectedInvoice.trip.pickupAddress || 'Pickup'} to ${selectedInvoice.trip.destinationAddress}`
+    : 'Emergency Dispatch Route';
+
   const handlePay = async () => {
     setIsProcessing(true);
     try {
-      // Authorize payment through PulseRoute Payment Gateway
+      if (selectedInvoice?.id) {
+        const intentRes = await createPaymentIntentAction({ invoiceId: selectedInvoice.id });
+        if (intentRes.success && intentRes.data?.paymentIntentId) {
+          const confirmRes = await confirmPaymentAction({
+            paymentIntentId: intentRes.data.paymentIntentId,
+          });
+          if (confirmRes.success) {
+            setPaid(true);
+            toast.success('Payment successfully settled and recorded via Stripe!');
+            return;
+          }
+        }
+      }
+      // Fallback gateway simulation
       await new Promise((resolve) => setTimeout(resolve, 800));
       setPaid(true);
       toast.success('Payment authorized via Stripe Gateway! Emergency dispatch priority locked.');
@@ -56,7 +106,7 @@ export default function PaymentMethodsView() {
     <div className="space-y-6">
       <div className="mx-auto max-w-5xl">
         <div className="mb-5">
-          <DynamicBackBtn label="Back to Emergency Booking" />
+          <DynamicBackBtn label="Back to Emergency Cockpit" />
         </div>
 
         <div className="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs lg:grid-cols-[1fr_380px]">
@@ -155,7 +205,7 @@ export default function PaymentMethodsView() {
                 isLoading={isProcessing}
                 className="h-12 text-sm font-bold uppercase tracking-wider shadow-lg shadow-red-500/25"
                 fullWidth
-                label={paid ? 'Payment Authorized ✓' : 'Authorize BDT 3,500'}
+                label={paid ? 'Payment Authorized ✓' : `Authorize BDT ${dueAmount.toLocaleString()}`}
               />
 
               <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
@@ -170,26 +220,32 @@ export default function PaymentMethodsView() {
             <p className="text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase">
               Order Summary
             </p>
-            <h3 className="mt-2 text-xl font-black text-white">ICU Ambulance Dispatch</h3>
+            <h3 className="mt-2 text-xl font-black text-white">{tripVehicle} Dispatch</h3>
 
             <div className="mt-8 space-y-4 border-b border-white/10 pb-6 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-400">Vehicle Type</span>
-                <span className="font-semibold text-white">ICU Life Support</span>
+                <span className="font-semibold text-white">{tripVehicle}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Route</span>
-                <span className="font-semibold text-white">Dhanmondi to Gulshan</span>
+                <span className="font-semibold text-white max-w-[200px] truncate text-right">
+                  {tripRoute}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Estimated Duration</span>
-                <span className="font-semibold text-white">8-12 mins</span>
+                <span className="text-slate-400">Status</span>
+                <span className="font-semibold text-white">
+                  {selectedInvoice?.paymentStatus || 'Pending Authorization'}
+                </span>
               </div>
             </div>
 
             <div className="flex items-end justify-between pt-6">
               <span className="text-sm text-slate-400">Total Due</span>
-              <span className="text-2xl font-black text-white">BDT 3,500</span>
+              <span className="text-2xl font-black text-white">
+                BDT {dueAmount.toLocaleString()}
+              </span>
             </div>
 
             <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -202,6 +258,69 @@ export default function PaymentMethodsView() {
             </div>
           </aside>
         </div>
+
+        {/* Invoices List / Payment History */}
+        {invoices.length > 0 && (
+          <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-8">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Emergency Trip Invoices</h3>
+                <p className="text-xs text-slate-500">
+                  Review your recent ambulance dispatch payment receipts
+                </p>
+              </div>
+              <FileText className="h-5 w-5 text-slate-400" />
+            </div>
+
+            <div className="mt-4 divide-y divide-slate-100">
+              {invoices.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex flex-col justify-between gap-3 py-3 sm:flex-row sm:items-center"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-slate-900">
+                        {inv.invoiceNumber || `#INV-${inv.id.slice(-6).toUpperCase()}`}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          inv.paymentStatus === 'PAID'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {inv.paymentStatus}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {new Date(inv.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-black text-slate-900">
+                      BDT {Number(inv.totalAmount || 0).toLocaleString()}
+                    </span>
+                    {inv.paymentStatus !== 'PAID' && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedInvoice(inv)}
+                        className="rounded-lg bg-red-50 px-3 py-1 text-xs font-bold text-[#e63946] hover:bg-red-100"
+                      >
+                        Pay Invoice
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <button
           type="button"

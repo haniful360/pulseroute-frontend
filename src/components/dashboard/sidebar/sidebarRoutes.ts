@@ -56,6 +56,11 @@ export interface SidebarRouteItem {
 // Patient Dashboard Routes (PulseRoute Figma 2:8109)
 export const patientRoutes: SidebarRouteItem[] = [
   {
+    title: 'Overview',
+    url: '/dashboard/patient',
+    icon: LayoutDashboard,
+  },
+  {
     title: 'Book Ambulance',
     url: '/dashboard/patient/book-ambulance',
     icon: Ambulance,
