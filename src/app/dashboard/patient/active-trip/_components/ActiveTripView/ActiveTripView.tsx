@@ -23,10 +23,12 @@ import {
   User,
   X,
   Clock,
+  Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getTripByIdAction, getMyTripsAction, cancelTripAction } from '@/services/trip.service';
 import { getUserDashboardOverviewAction } from '@/services/user.service';
+import { createReviewAction } from '@/services/review.service';
 
 export default function ActiveTripView() {
   const searchParams = useSearchParams();
@@ -43,6 +45,34 @@ export default function ActiveTripView() {
   const [messages, setMessages] = useState<string[]>([
     'Dispatch acknowledged. Paramedic unit assigned with emergency green corridor.',
   ]);
+
+  // Review states for completed trips
+  const [rating, setRating] = useState<number>(5);
+  const [reviewComment, setReviewComment] = useState<string>('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState<boolean>(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState<boolean>(false);
+
+  const handleSubmitReview = async () => {
+    if (!trip?.id) return;
+    setIsSubmittingReview(true);
+    try {
+      const res = await createReviewAction({
+        tripId: trip.id,
+        rating,
+        comment: reviewComment,
+      });
+      if (res.success) {
+        toast.success('Thank you! Your feedback has been submitted.');
+        setReviewSubmitted(true);
+      } else {
+        toast.error(res.message || 'Could not submit review');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error submitting review');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   // Load active trip
   useEffect(() => {
@@ -381,6 +411,58 @@ export default function ActiveTripView() {
                 />
               </form>
             </div>
+
+            {/* Post-Trip Rating & Feedback Card */}
+            {trip.status === 'COMPLETED' && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                  <span className="text-xs font-bold text-slate-900">Rate Paramedic Care</span>
+                </div>
+                {reviewSubmitted ? (
+                  <p className="text-xs font-medium text-emerald-700">
+                    Thank you! Your feedback helps maintain our 5-star emergency dispatch standard.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-[11px] text-slate-500">
+                      How was the emergency response and medical care provided?
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          className="cursor-pointer transition-transform hover:scale-110"
+                        >
+                          <Star
+                            className={`h-6 w-6 ${
+                              star <= rating
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'text-slate-300'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <InputField
+                      label="Comments (optional)"
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Add any feedback for driver..."
+                    />
+                    <DynamicActionButton
+                      variant="danger"
+                      onClick={handleSubmitReview}
+                      isLoading={isSubmittingReview}
+                      className="w-full text-xs font-bold"
+                      label="Submit Review"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Cancel Button */}
             {trip.status !== 'COMPLETED' && trip.status !== 'CANCELLED' && (
