@@ -8,7 +8,7 @@ import KycApplicantDetails from './KycApplicantDetails';
 import KycAuditTimeline from './KycAuditTimeline';
 import { Applicant } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getAllDriversAction, verifyDriverAction } from '@/services/driver.service';
+import { getAllDriversAction, verifyDriverAction } from '@/services/driver/driver.service';
 
 export default function SuperAdminKycView() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);

@@ -24,8 +24,8 @@ import {
   Check,
   FileText,
 } from 'lucide-react';
-import { createTripAction, ICreateTripPayload } from '@/services/trip.service';
-import { getAllPricingConfigsAction } from '@/services/pricing.service';
+import { createTripAction, ICreateTripPayload } from '@/services/trip/trip.service';
+import { getAllPricingConfigsAction } from '@/services/pricing/pricing.service';
 
 interface VehicleOption {
   id: string;

@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { getAllSettingsAction, upsertSettingAction } from '@/services/setting.service';
-import { getRecentActivitiesAction } from '@/services/analytics.service';
+import { getAllSettingsAction, upsertSettingAction } from '@/services/setting/setting.service';
+import { getRecentActivitiesAction } from '@/services/analytics/analytics.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SettingsView() {

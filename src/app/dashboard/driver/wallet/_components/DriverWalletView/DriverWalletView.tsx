@@ -22,7 +22,7 @@ import {
   getMyTransactionsAction,
   createPayoutRequestAction,
   exportDriverStatementAction,
-} from '@/services/wallet.service';
+} from '@/services/wallet/wallet.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface LedgerItem {

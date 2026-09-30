@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiGet, apiPatch, apiPost, ApiResponse } from "./fetchClient";
+import { apiGet, apiPatch, apiPost, ApiResponse } from "@/services/fetchClient/fetchClient";
 
 /**
  * 1. Get driver's wallet and balance

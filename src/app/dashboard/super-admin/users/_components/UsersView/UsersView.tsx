@@ -26,7 +26,7 @@ import {
   updateUserStatusAction, 
   deleteUserAction, 
   createUserAction 
-} from '@/services/user.service';
+} from '@/services/user/user.service';
 
 interface UserRow {
   id: string;

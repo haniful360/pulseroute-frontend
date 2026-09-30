@@ -6,8 +6,8 @@ import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wallet, TrendingUp, CreditCard, RefreshCcw, Download, Search, RefreshCw, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAllInvoicesAction, exportInvoicesCsvAction } from '@/services/invoice.service';
-import { getOverviewAnalyticsAction } from '@/services/analytics.service';
+import { getAllInvoicesAction, exportInvoicesCsvAction } from '@/services/invoice/invoice.service';
+import { getOverviewAnalyticsAction } from '@/services/analytics/analytics.service';
 import { toast } from 'sonner';
 
 const TABS = ['All', 'Settled', 'Pending', 'Refunded'];

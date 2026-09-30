@@ -12,7 +12,7 @@ import {
   ApiResponse,
   IAuthData,
 } from '@/types/auth.types';
-import { getCurrentUserAction, loginUserAction, logoutAction } from '@/services/auth.service';
+import { getCurrentUserAction, loginUserAction, logoutAction } from '@/services/auth/auth.service';
 
 interface AuthContextType {
   user: IUser | null;

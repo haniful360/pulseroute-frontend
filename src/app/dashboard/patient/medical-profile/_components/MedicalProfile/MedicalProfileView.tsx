@@ -24,7 +24,7 @@ import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import abdurRahmanImg from '@/assets/dashboard/patient/abdur-rahman.png';
 import fatemaBegumImg from '@/assets/dashboard/patient/fatema-begum.png';
 
-import { getMyProfileAction, updateMyProfileAction } from '@/services/user.service';
+import { getMyProfileAction, updateMyProfileAction } from '@/services/user/user.service';
 import { toast } from 'sonner';
 
 interface Contact {

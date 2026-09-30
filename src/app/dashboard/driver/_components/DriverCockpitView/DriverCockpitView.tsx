@@ -11,7 +11,7 @@ import {
   getMyOffersAction,
   acceptDispatchOfferAction,
   rejectDispatchOfferAction,
-} from '@/services/trip.service';
+} from '@/services/trip/trip.service';
 import { toast } from 'sonner';
 
 export default function DriverCockpitView() {

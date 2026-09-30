@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import {
   getDriverDashboardOverviewAction,
   updateDutyStatusAction,
-} from '@/services/driver.service';
+} from '@/services/driver/driver.service';
 
 export default function DriverSummaryPanel() {
   const router = useRouter();

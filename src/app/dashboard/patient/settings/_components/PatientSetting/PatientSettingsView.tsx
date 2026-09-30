@@ -6,8 +6,8 @@ import DynamicActionButton from '@/components/shared/DynamicActionButton/Dynamic
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/context/AuthContext';
-import { getMyProfileAction, updateMyProfileAction } from '@/services/user.service';
-import { changePasswordAction } from '@/services/auth.service';
+import { getMyProfileAction, updateMyProfileAction } from '@/services/user/user.service';
+import { changePasswordAction } from '@/services/auth/auth.service';
 import { Shield, User, Lock, MapPin, KeyRound, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 

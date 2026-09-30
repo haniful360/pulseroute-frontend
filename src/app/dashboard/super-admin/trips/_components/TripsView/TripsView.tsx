@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { getAllTripsAction } from '@/services/trip.service';
+import { getAllTripsAction } from '@/services/trip/trip.service';
 
 interface TripRow {
   id: string;

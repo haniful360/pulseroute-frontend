@@ -26,9 +26,9 @@ import {
   Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getTripByIdAction, getMyTripsAction, cancelTripAction } from '@/services/trip.service';
-import { getUserDashboardOverviewAction } from '@/services/user.service';
-import { createReviewAction } from '@/services/review.service';
+import { getTripByIdAction, getMyTripsAction, cancelTripAction } from '@/services/trip/trip.service';
+import { getUserDashboardOverviewAction } from '@/services/user/user.service';
+import { createReviewAction } from '@/services/review/review.service';
 
 export default function ActiveTripView() {
   const searchParams = useSearchParams();

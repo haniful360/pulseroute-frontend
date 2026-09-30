@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiPost, ApiResponse } from "./fetchClient";
+import { apiPost, ApiResponse } from "@/services/fetchClient/fetchClient";
 
 export interface ICreatePaymentIntentPayload {
   invoiceId: string;

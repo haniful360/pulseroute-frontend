@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiGet, ApiResponse } from "./fetchClient";
+import { apiGet, ApiResponse } from "@/services/fetchClient/fetchClient";
 
 /**
  * Super Admin: Get real-time overview analytics and KPIs

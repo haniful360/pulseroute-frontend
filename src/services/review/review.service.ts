@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiDelete, apiGet, apiPost, ApiResponse } from "./fetchClient";
+import { apiDelete, apiGet, apiPost, ApiResponse } from "@/services/fetchClient/fetchClient";
 
 export interface ICreateReviewPayload {
   tripId: string;

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiGet, apiPatch, ApiResponse } from "./fetchClient";
+import { apiGet, apiPatch, ApiResponse } from "@/services/fetchClient/fetchClient";
 
 export interface IUpdateDriverProfilePayload {
   name?: string;

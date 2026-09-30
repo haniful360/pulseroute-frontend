@@ -16,9 +16,9 @@ import {
   Timer,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getMyTripsAction } from '@/services/trip.service';
-import { getDriverDashboardOverviewAction } from '@/services/driver.service';
-import { getMyReviewsAction } from '@/services/review.service';
+import { getMyTripsAction } from '@/services/trip/trip.service';
+import { getDriverDashboardOverviewAction } from '@/services/driver/driver.service';
+import { getMyReviewsAction } from '@/services/review/review.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShiftLog {

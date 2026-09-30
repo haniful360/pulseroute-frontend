@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { cn } from '@/lib/utils';
 import GoogleMapView, { MapMarkerItem } from '@/components/shared/GoogleMap/GoogleMapView';
-import { getAllDriversAction } from '@/services/driver.service';
-import { getOverviewAnalyticsAction } from '@/services/analytics.service';
+import { getAllDriversAction } from '@/services/driver/driver.service';
+import { getOverviewAnalyticsAction } from '@/services/analytics/analytics.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Standard Dhaka coverage coordinates for realistic fleet simulation if driver GPS is not yet active

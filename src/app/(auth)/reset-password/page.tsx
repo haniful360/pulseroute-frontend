@@ -7,7 +7,7 @@ import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 import { CheckCircle2, Check, Headphones, X, ArrowLeft, Mail } from 'lucide-react';
-import { resetPasswordAction } from '@/services/auth.service';
+import { resetPasswordAction } from '@/services/auth/auth.service';
 import { toast } from 'sonner';
 
 function ResetPasswordContent() {

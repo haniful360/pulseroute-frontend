@@ -22,8 +22,8 @@ import {
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getMyTripsAction } from '@/services/trip.service';
-import { exportInvoiceReceiptAction } from '@/services/invoice.service';
+import { getMyTripsAction } from '@/services/trip/trip.service';
+import { exportInvoiceReceiptAction } from '@/services/invoice/invoice.service';
 
 interface PatientTrip {
   id: string;

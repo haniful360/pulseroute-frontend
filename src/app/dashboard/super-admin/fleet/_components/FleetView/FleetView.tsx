@@ -25,7 +25,7 @@ import {
   getAllVehiclesAction, 
   createVehicleAction, 
   verifyVehicleAction 
-} from '@/services/vehicle.service';
+} from '@/services/vehicle/vehicle.service';
 
 interface VehicleRow {
   id: string;

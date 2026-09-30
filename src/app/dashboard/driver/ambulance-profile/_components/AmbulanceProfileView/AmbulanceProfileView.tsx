@@ -16,7 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getMyDriverProfileAction } from '@/services/driver.service';
+import { getMyDriverProfileAction } from '@/services/driver/driver.service';
 
 export default function AmbulanceProfileView() {
   const [driver, setDriver] = useState<any>(null);

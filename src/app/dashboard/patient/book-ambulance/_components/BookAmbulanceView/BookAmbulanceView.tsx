@@ -22,8 +22,8 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createTripAction } from '@/services/trip.service';
-import { getAllPricingConfigsAction, estimateFareAction } from '@/services/pricing.service';
+import { createTripAction } from '@/services/trip/trip.service';
+import { getAllPricingConfigsAction, estimateFareAction } from '@/services/pricing/pricing.service';
 
 const ambulanceCategories = [
   { label: 'BASIC' as const, icon: Ambulance, defaultPrice: '1,500' },

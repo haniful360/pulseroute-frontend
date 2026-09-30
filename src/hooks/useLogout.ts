@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { logoutAction } from '@/services/auth.service';
+import { logoutAction } from '@/services/auth/auth.service';
 import { toast } from 'sonner';
 
 export function useLogout() {

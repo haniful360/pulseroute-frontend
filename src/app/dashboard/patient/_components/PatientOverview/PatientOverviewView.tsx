@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { getUserDashboardOverviewAction } from '@/services/user.service';
+import { getUserDashboardOverviewAction } from '@/services/user/user.service';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import {

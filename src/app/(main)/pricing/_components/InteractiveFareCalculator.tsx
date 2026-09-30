@@ -3,7 +3,7 @@
 import { Info, Moon, Siren } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo, useState, useEffect } from 'react';
-import { getAllPricingConfigsAction } from '@/services/pricing.service';
+import { getAllPricingConfigsAction } from '@/services/pricing/pricing.service';
 
 interface VehicleClass {
   id: string;

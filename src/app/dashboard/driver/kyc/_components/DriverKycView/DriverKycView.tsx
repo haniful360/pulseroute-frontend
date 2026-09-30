@@ -15,7 +15,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getMyDriverProfileAction } from '@/services/driver.service';
+import { getMyDriverProfileAction } from '@/services/driver/driver.service';
 
 export default function DriverKycView() {
   const [driver, setDriver] = useState<any>(null);

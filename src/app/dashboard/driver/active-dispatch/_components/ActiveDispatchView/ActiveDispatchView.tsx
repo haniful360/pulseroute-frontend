@@ -25,11 +25,11 @@ import { toast } from 'sonner';
 import {
   getDriverDashboardOverviewAction,
   updateDriverLocationAction,
-} from '@/services/driver.service';
+} from '@/services/driver/driver.service';
 import {
   updateTripStatusAction,
   getMyTripsAction,
-} from '@/services/trip.service';
+} from '@/services/trip/trip.service';
 
 export default function ActiveDispatchView() {
   const router = useRouter();

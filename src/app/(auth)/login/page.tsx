@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Phone, X, Twitter, Linkedin, AlertCircle } from 'lucide-react';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
-import { loginUserAction, googleLoginAction } from '@/services/auth.service';
+import { loginUserAction, googleLoginAction } from '@/services/auth/auth.service';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 

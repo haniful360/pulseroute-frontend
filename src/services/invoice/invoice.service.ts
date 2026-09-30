@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiGet, apiPost, ApiResponse } from "./fetchClient";
+import { apiGet, apiPost, ApiResponse } from "@/services/fetchClient/fetchClient";
 
 /**
  * 1. Get user's or driver's invoices

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { getOverviewAnalyticsAction, getRecentActivitiesAction } from '@/services/analytics.service';
+import { getOverviewAnalyticsAction, getRecentActivitiesAction } from '@/services/analytics/analytics.service';
 
 export default function OverviewView() {
   const [analytics, setAnalytics] = useState<any>(null);

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 import { Mail, ArrowLeft, Headphones, X, AlertCircle } from 'lucide-react';
-import { forgotPasswordAction } from '@/services/auth.service';
+import { forgotPasswordAction } from '@/services/auth/auth.service';
 import { toast } from 'sonner';
 
 export default function ForgotPasswordPage() {

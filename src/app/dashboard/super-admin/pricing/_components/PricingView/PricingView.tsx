@@ -6,7 +6,7 @@ import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { DollarSign, MapPin, HeartPulse, Percent, Check, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { getAllPricingConfigsAction, updatePricingConfigAction } from '@/services/pricing.service';
+import { getAllPricingConfigsAction, updatePricingConfigAction } from '@/services/pricing/pricing.service';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PricingView() {

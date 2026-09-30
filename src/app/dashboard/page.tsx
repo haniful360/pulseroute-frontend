@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUserAction } from '@/services/auth.service';
+import { getCurrentUserAction } from '@/services/auth/auth.service';
 
 export default async function DashboardPage() {
   const userRes = await getCurrentUserAction();

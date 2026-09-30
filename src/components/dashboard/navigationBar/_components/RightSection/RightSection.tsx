@@ -25,7 +25,7 @@ import { useState, useEffect } from 'react';
 import {
   getMyNotificationsAction,
   markAllNotificationsReadAction,
-} from '@/services/notification.service';
+} from '@/services/notification/notification.service';
 
 const UserDropdown = dynamic(() => import('./UserDropdown/UserDropdown'), {
   ssr: false,

@@ -10,7 +10,7 @@ import { Step2Documents, DriverDocumentsData } from './_components/Step2Document
 import { Step3Vehicle, DriverVehicleData } from './_components/Step3Vehicle';
 import { Step4Otp } from './_components/Step4Otp';
 import { Step5Success } from './_components/Step5Success';
-import { registerDriverAction } from '@/services/auth.service';
+import { registerDriverAction } from '@/services/auth/auth.service';
 import { AmbulanceType, IRegisterDriverPayload } from '@/types/auth.types';
 import { toast } from 'sonner';
 

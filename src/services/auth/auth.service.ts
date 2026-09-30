@@ -2,7 +2,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { apiGet, apiPost } from "./fetchClient";
+import { apiGet, apiPost } from "@/services/fetchClient/fetchClient";
 import {
   ApiResponse,
   IAuthData,

@@ -19,8 +19,8 @@ import {
   Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createPaymentIntentAction, confirmPaymentAction } from '@/services/payment.service';
-import { getMyInvoicesAction } from '@/services/invoice.service';
+import { createPaymentIntentAction, confirmPaymentAction } from '@/services/payment/payment.service';
+import { getMyInvoicesAction } from '@/services/invoice/invoice.service';
 
 export default function PaymentMethodsView() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bkash' | 'insurance'>('card');

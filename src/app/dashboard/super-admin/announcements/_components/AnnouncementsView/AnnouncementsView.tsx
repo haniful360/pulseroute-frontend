@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { 
   createBroadcastAnnouncementAction, 
   getBroadcastAnnouncementsAction 
-} from '@/services/notification.service';
+} from '@/services/notification/notification.service';
 
 interface BroadcastItem {
   id: string | number;
