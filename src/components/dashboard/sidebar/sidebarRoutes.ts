@@ -4,6 +4,7 @@ import {
   AppWindow,
   Award,
   BarChart3,
+  Bell,
   Bookmark,
   BookOpen,
   Building2,
@@ -86,6 +87,11 @@ export const patientRoutes: SidebarRouteItem[] = [
     icon: ShieldCheck,
   },
   {
+    title: 'Notifications',
+    url: '/dashboard/patient/notifications',
+    icon: Bell,
+  },
+  {
     title: 'Settings',
     url: '/dashboard/patient/settings',
     icon: Settings,
@@ -119,6 +125,12 @@ export const driverRoutes: SidebarRouteItem[] = [
     title: 'Shift History',
     url: '/dashboard/driver/shift-history',
     icon: History,
+    section: 'OPERATIONS',
+  },
+  {
+    title: 'Notifications',
+    url: '/dashboard/driver/notifications',
+    icon: Bell,
     section: 'OPERATIONS',
   },
   // FLEET & LEGAL

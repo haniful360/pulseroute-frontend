@@ -51,7 +51,7 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
     menuItems.forEach((item: any) => {
       if (item?.items?.length) {
         const isChildActive = item.items.some(
-          (sub: any) => pathname === sub.url || pathname.startsWith(sub.url),
+          (sub: any) => pathname === sub.url || pathname.startsWith(sub.url + '/'),
         );
         if (isChildActive || pathname === item.url) {
           setOpenMenus((prev) => ({ ...prev, [item.title]: true }));
@@ -84,20 +84,23 @@ function SidebarContentSection({ role }: { role: roleTypes }) {
           const hasSubItems = Boolean(item?.items && item?.items.length > 0);
           const isChildActive =
             hasSubItems &&
-            item.items.some((sub: any) => pathname === sub.url || pathname.startsWith(sub.url));
-          const isMedicalActive =
-            item?.url?.includes('medical-profile') &&
-            (pathname === '/dashboard/patient' ||
-              pathname.startsWith('/dashboard/patient/medical-profile'));
+            item.items.some((sub: any) => pathname === sub.url || pathname.startsWith(sub.url + '/'));
+
+          // Root dashboard/overview routes require exact match so they do not falsely highlight on sub-pages
+          const isRootDashboard =
+            item?.url === '/' ||
+            item?.url === '/dashboard' ||
+            item?.url === '/dashboard/patient' ||
+            item?.url === '/dashboard/driver' ||
+            item?.url === '/dashboard/super-admin' ||
+            item?.url === '/dashboard/admin' ||
+            item?.url === '/dashboard/enterprise' ||
+            Boolean(item?.url && item.url.endsWith('/overview'));
+
           const isActive =
             pathname === item?.url ||
-            (item?.url &&
-              item?.url !== '/' &&
-              item?.url !== '/dashboard/driver' &&
-              item?.url !== '/dashboard/super-admin' &&
-              pathname.startsWith(item?.url + '/')) ||
-            isChildActive ||
-            isMedicalActive;
+            (!isRootDashboard && item?.url && pathname.startsWith(item?.url + '/')) ||
+            isChildActive;
           const Icon = item?.icon;
           const isOpen = Boolean(openMenus[item?.title]);
 
