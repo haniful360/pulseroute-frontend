@@ -16,6 +16,12 @@ function ResetPasswordContent() {
 
   const paramEmail = searchParams.get('email') || '';
   const [email, setEmail] = useState(paramEmail);
+
+  React.useEffect(() => {
+    if (paramEmail) {
+      setEmail(paramEmail);
+    }
+  }, [paramEmail]);
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -143,12 +149,17 @@ function ResetPasswordContent() {
               type="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (emailError) setEmailError('');
-              }}
+              readOnly={true}
               icon={<Mail className="h-4 w-4" />}
               error={emailError}
+              rightElement={
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-semibold text-red-600 transition-colors hover:text-red-700 hover:underline"
+                >
+                  Change
+                </Link>
+              }
             />
 
             {/* 1. Verification Code */}
@@ -170,10 +181,10 @@ function ResetPasswordContent() {
                       <InputOTPSlot
                         key={index}
                         index={index}
-                        className={`h-11 w-11 rounded-xl text-base font-bold sm:h-12 sm:w-12 sm:text-lg ${
+                        className={`h-12 w-12 rounded-xl text-lg font-bold sm:h-14 sm:w-14 sm:text-2xl ${
                           codeError
-                            ? 'border-red-500 bg-red-50/40 text-red-600 focus:border-red-600'
-                            : 'border-slate-200 focus:border-red-600 focus:ring-1 focus:ring-red-600'
+                            ? '!border-red-500 bg-red-50/40 text-red-600 focus:!border-red-600'
+                            : 'border-slate-200 bg-slate-50/50 focus:border-red-600 focus:ring-1 focus:ring-red-600'
                         }`}
                       />
                     ))}

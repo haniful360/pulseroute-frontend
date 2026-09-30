@@ -31,7 +31,7 @@ export default function DriverRegisterPage() {
   const [documentsData, setDocumentsData] = useState<DriverDocumentsData>({
     nidNumber: '',
     nidFront: null,
-    nidBack: 'nid_back_v2.jpg',
+    nidBack: null,
     licenseNumber: '',
     licenseExpiry: '',
     licenseFront: null,
@@ -77,6 +77,28 @@ export default function DriverRegisterPage() {
   const handleStep3Complete = async () => {
     setIsSubmitting(true);
     try {
+      const licensePhotos = [
+        documentsData.licenseFront,
+        documentsData.licenseBack,
+      ].filter(Boolean) as string[];
+
+      const nidPhotos = [
+        documentsData.nidFront,
+        documentsData.nidBack,
+      ].filter(Boolean) as string[];
+
+      const vehiclePhotos = (vehicleData.photos || []).filter(Boolean) as string[];
+
+      const mapAmbulanceType = (type: string): AmbulanceType => {
+        const t = (type || '').toLowerCase();
+        if (t === 'bls' || t === 'basic') return 'BASIC' as AmbulanceType;
+        if (t === 'ac_transport' || t === 'ac') return 'AC' as AmbulanceType;
+        if (t === 'cardiac' || t === 'ccu') return 'CCU' as AmbulanceType;
+        if (t === 'freezer') return 'FREEZER' as AmbulanceType;
+        if (t === 'neonatal') return 'NEONATAL' as AmbulanceType;
+        return 'ICU' as AmbulanceType;
+      };
+
       const payload: IRegisterDriverPayload = {
         name: personalData.fullName.trim(),
         email: personalData.email.trim().toLowerCase(),
@@ -89,7 +111,7 @@ export default function DriverRegisterPage() {
         vehicleNumber:
           vehicleData.vehiclePlate.trim() ||
           `DHAKA-METRO-${Math.floor(10 + Math.random() * 89)}-${Math.floor(1000 + Math.random() * 8999)}`,
-        ambulanceType: (vehicleData.ambulanceType.toUpperCase() as AmbulanceType) || 'AC',
+        ambulanceType: mapAmbulanceType(vehicleData.ambulanceType),
         model: 'Emergency Ambulance',
         manufacturer: 'Toyota',
         year: 2023,
@@ -98,6 +120,13 @@ export default function DriverRegisterPage() {
         hasDefibrillator: vehicleData.equipment.defibrillator,
         hasSuctionMachine: vehicleData.equipment.suction,
         equipmentDetails: 'Stretcher, portable oxygen, emergency kit',
+        licensePhotos,
+        licensePhotoUrl: licensePhotos[0] || '',
+        nidPhotos,
+        nidPhotoUrl: nidPhotos[0] || '',
+        vehiclePhotos,
+        vehiclePhotoUrl: vehiclePhotos[0] || '',
+        avatarUrl: personalData.avatarUrl || undefined,
       };
 
       const res = await registerDriverAction(payload);
@@ -157,6 +186,7 @@ export default function DriverRegisterPage() {
               onUpdate={(fields) => setVehicleData((prev) => ({ ...prev, ...fields }))}
               onNext={handleStep3Complete}
               onBack={handleBack}
+              isSubmitting={isSubmitting}
             />
           )}
 

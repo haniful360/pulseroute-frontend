@@ -116,7 +116,12 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
             'relative flex items-center overflow-hidden transition-all',
             isDark
               ? 'rounded-md bg-[#0E182B]'
-              : 'rounded-xl border border-slate-200 bg-slate-50/50 focus-within:border-red-500 focus-within:bg-white focus-within:ring-1 focus-within:ring-red-500',
+              : cn(
+                  'rounded-xl border border-slate-200',
+                  readOnly
+                    ? 'bg-slate-100/80 cursor-not-allowed select-none'
+                    : 'bg-slate-50/50 focus-within:border-red-500 focus-within:bg-white focus-within:ring-1 focus-within:ring-red-500',
+                ),
             error && (isDark ? 'border-error' : 'border-red-500 ring-1 ring-red-500'),
           )}
         >
@@ -174,7 +179,7 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
                 : 'h-11 bg-transparent text-sm text-slate-900 placeholder:text-slate-400',
               icon && !prefix && 'pl-10',
               isPassword && 'pr-10',
-              readOnly && 'cursor-default opacity-60',
+              readOnly && 'cursor-not-allowed font-medium text-slate-700 select-all',
               isDate && !readOnly && 'cursor-pointer',
               className,
             )}

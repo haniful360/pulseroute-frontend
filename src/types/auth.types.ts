@@ -109,6 +109,13 @@ export interface IRegisterDriverPayload {
   hasDefibrillator?: boolean;
   hasSuctionMachine?: boolean;
   equipmentDetails?: string;
+  licensePhotoUrl?: string;
+  licensePhotos?: string[];
+  nidPhotoUrl?: string;
+  nidPhotos?: string[];
+  vehiclePhotoUrl?: string;
+  vehiclePhotos?: string[];
+  avatarUrl?: string;
 }
 
 export interface IVerifyOtpPayload {

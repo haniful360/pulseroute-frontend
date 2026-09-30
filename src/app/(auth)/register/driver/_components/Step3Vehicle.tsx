@@ -19,6 +19,7 @@ import {
   Stethoscope,
   X,
 } from 'lucide-react';
+import { compressImageFile } from '@/lib/image-compressor';
 
 export interface DriverVehicleData {
   vehiclePlate: string;
@@ -39,6 +40,7 @@ interface Step3Props {
   onUpdate: (data: Partial<DriverVehicleData>) => void;
   onNext: () => void;
   onBack: () => void;
+  isSubmitting?: boolean;
 }
 
 const AMBULANCE_TYPES = [
@@ -80,7 +82,13 @@ const AMBULANCE_TYPES = [
   },
 ];
 
-export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onBack }) => {
+export const Step3Vehicle: React.FC<Step3Props> = ({
+  data,
+  onUpdate,
+  onNext,
+  onBack,
+  isSubmitting = false,
+}) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -93,14 +101,22 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
     });
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const newPhotoUrls = Array.from(files).map((file) => URL.createObjectURL(file));
-      onUpdate({
-        photos: [...data.photos, ...newPhotoUrls],
-      });
-      if (errors.photos) setErrors((prev) => ({ ...prev, photos: '' }));
+      const fileList = Array.from(files);
+      const compressPromises = fileList.map((file) => compressImageFile(file, 1280, 1280, 0.8));
+
+      try {
+        const newPhotoUrls = await Promise.all(compressPromises);
+        onUpdate({
+          photos: [...data.photos, ...newPhotoUrls.filter(Boolean)],
+        });
+        if (errors.photos) setErrors((prev) => ({ ...prev, photos: '' }));
+      } catch {
+        setErrors((prev) => ({ ...prev, photos: 'Failed to process some vehicle photos' }));
+      }
+      e.target.value = '';
     }
   };
 
@@ -119,9 +135,8 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
     if (!data.ambulanceType) {
       newErrors.ambulanceType = 'Please select an ambulance category';
     }
-    if (data.photos.length < 1) {
-      // Default to sample if user hasn't uploaded, but notify
-      // We can also allow proceeding or require at least 1
+    if (!data.photos || data.photos.length === 0) {
+      newErrors.photos = 'Please upload at least one vehicle photo';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -306,7 +321,13 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
           </p>
         </div>
 
-        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-5 text-center">
+        <div
+          className={`rounded-2xl border-2 border-dashed p-5 text-center transition-colors ${
+            errors.photos
+              ? 'border-red-400 bg-red-50/30'
+              : 'border-slate-200 bg-slate-50/50'
+          }`}
+        >
           <input
             ref={photoInputRef}
             type="file"
@@ -366,6 +387,9 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
             </button>
           </div>
         </div>
+        {errors.photos && (
+          <p className="mt-1 text-xs font-semibold text-red-600">{errors.photos}</p>
+        )}
       </div>
 
       {/* Navigation Buttons */}
@@ -381,10 +405,17 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
 
         <button
           type="submit"
-          className="flex h-12 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold tracking-wide text-white shadow-md shadow-red-600/25 transition-all hover:bg-red-700"
+          disabled={isSubmitting}
+          className="flex h-12 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold tracking-wide text-white shadow-md shadow-red-600/25 transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span>Submit for Verification</span>
-          <ArrowRight className="h-4 w-4" />
+          {isSubmitting ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          ) : (
+            <>
+              <span>Submit for Verification</span>
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </button>
       </div>
     </form>
