@@ -14,6 +14,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { getOverviewAnalyticsAction, getRecentActivitiesAction } from '@/services/analytics.service';
 
@@ -212,17 +213,24 @@ export default function OverviewView() {
         {/* Right: Fleet Health */}
         <div className="rounded-2xl border bg-[#0b132b] p-5 text-white flex flex-col">
           <h3 className="text-[10px] font-bold tracking-widest text-[#94a3b8] uppercase mb-1">Fleet Health</h3>
-          <div className="text-2xl font-black mb-6">84 <span className="text-sm font-medium text-slate-400">vehicles</span></div>
+          <div className="text-2xl font-black mb-6">
+            {analytics?.totalAmbulances ?? 84} <span className="text-sm font-medium text-slate-400">vehicles</span>
+          </div>
           
           <div className="space-y-5 flex-1">
             {/* Online */}
             <div>
               <div className="flex justify-between text-xs mb-1.5">
                 <span className="font-medium text-slate-300">Online</span>
-                <span className="font-bold">62 (74%)</span>
+                <span className="font-bold">
+                  {onlineFleet} ({Math.round((onlineFleet / Math.max(1, analytics?.totalAmbulances ?? 84)) * 100)}%)
+                </span>
               </div>
               <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full bg-emerald-400 rounded-full" style={{ width: '74%' }}></div>
+                <div 
+                  className="h-full bg-emerald-400 rounded-full" 
+                  style={{ width: `${Math.min(100, Math.round((onlineFleet / Math.max(1, analytics?.totalAmbulances ?? 84)) * 100))}%` }}
+                ></div>
               </div>
             </div>
             
@@ -230,62 +238,77 @@ export default function OverviewView() {
             <div>
               <div className="flex justify-between text-xs mb-1.5">
                 <span className="font-medium text-slate-300">On Dispatch</span>
-                <span className="font-bold">12 (14%)</span>
+                <span className="font-bold">
+                  {onTripFleet} ({Math.round((onTripFleet / Math.max(1, analytics?.totalAmbulances ?? 84)) * 100)}%)
+                </span>
               </div>
               <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full bg-[#E63946] rounded-full" style={{ width: '14%' }}></div>
+                <div 
+                  className="h-full bg-[#E63946] rounded-full" 
+                  style={{ width: `${Math.min(100, Math.round((onTripFleet / Math.max(1, analytics?.totalAmbulances ?? 84)) * 100))}%` }}
+                ></div>
               </div>
             </div>
             
             {/* Maintenance */}
             <div>
               <div className="flex justify-between text-xs mb-1.5">
-                <span className="font-medium text-slate-300">Maintenance</span>
-                <span className="font-bold">6 (7%)</span>
+                <span className="font-medium text-slate-300">Audit / Maintenance</span>
+                <span className="font-bold">
+                  {Math.max(1, (analytics?.totalAmbulances ?? 84) - onlineFleet - onTripFleet)}
+                </span>
               </div>
               <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full bg-amber-400 rounded-full" style={{ width: '7%' }}></div>
-              </div>
-            </div>
-            
-            {/* Offline */}
-            <div>
-              <div className="flex justify-between text-xs mb-1.5">
-                <span className="font-medium text-slate-300">Offline</span>
-                <span className="font-bold">4 (5%)</span>
-              </div>
-              <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full bg-slate-500 rounded-full" style={{ width: '5%' }}></div>
+                <div className="h-full bg-amber-400 rounded-full" style={{ width: '8%' }}></div>
               </div>
             </div>
           </div>
           
           <div className="mt-6 rounded-xl bg-white/10 p-3 text-[10px] text-slate-300 leading-relaxed">
-            <span className="font-bold text-emerald-400 mr-1">●</span> System operating normally. All regional hubs connected.
+            <span className="font-bold text-emerald-400 mr-1">●</span> System telemetry live. Real-time fleet synchronization active.
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
-        <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Quick Actions</h3>
+        <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Quick Operations</h3>
         <div className="flex flex-wrap gap-3">
-          <button className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs">
+          <Link 
+            href="/dashboard/super-admin"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs cursor-pointer"
+          >
             <UserCheck className="h-4 w-4 text-slate-500" />
             View KYC Queue
-          </button>
-          <button className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs">
+          </Link>
+          <Link 
+            href="/dashboard/super-admin/radar"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs cursor-pointer"
+          >
             <Radio className="h-4 w-4 text-slate-500" />
-            Fleet Radar
-          </button>
-          <button className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs">
+            Live Fleet Radar
+          </Link>
+          <Link 
+            href="/dashboard/super-admin/fleet"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs cursor-pointer"
+          >
+            <Ambulance className="h-4 w-4 text-slate-500" />
+            Fleet Management
+          </Link>
+          <Link 
+            href="/dashboard/super-admin/revenue"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs cursor-pointer"
+          >
             <BarChart3 className="h-4 w-4 text-slate-500" />
-            Revenue Report
-          </button>
-          <button className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs">
+            Revenue & Payouts
+          </Link>
+          <Link 
+            href="/dashboard/super-admin/pricing"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs cursor-pointer"
+          >
             <DollarSign className="h-4 w-4 text-slate-500" />
-            Manage Pricing
-          </button>
+            Fare Schedules
+          </Link>
         </div>
       </div>
     </div>

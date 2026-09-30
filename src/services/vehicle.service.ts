@@ -60,7 +60,10 @@ export async function updateVehicleAction(
  */
 export async function verifyVehicleAction(
   id: string,
-  payload: { status: 'APPROVED' | 'REJECTED'; rejectionReason?: string }
+  payload: { status: 'APPROVED' | 'REJECTED' | 'PENDING'; reason?: string; rejectionReason?: string }
 ): Promise<ApiResponse<any>> {
-  return apiPatch(`/vehicles/${id}/verify`, payload);
+  return apiPatch(`/vehicles/${id}/verify`, {
+    status: payload.status,
+    reason: payload.reason || payload.rejectionReason,
+  });
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiDelete, apiGet, apiPatch, ApiResponse } from "./fetchClient";
+import { apiDelete, apiGet, apiPatch, apiPost, ApiResponse } from "./fetchClient";
 
 export interface INotificationItem {
   id: string;
@@ -18,6 +18,13 @@ export interface INotificationResponse {
   notifications: INotificationItem[];
   unreadCount: number;
   meta?: any;
+}
+
+export interface IBroadcastPayload {
+  title: string;
+  message: string;
+  targetAudience?: 'ALL' | 'DRIVERS' | 'USERS';
+  priority?: 'NORMAL' | 'URGENT' | 'CRITICAL';
 }
 
 /**
@@ -46,4 +53,20 @@ export async function markNotificationReadAction(id: string): Promise<ApiRespons
  */
 export async function deleteNotificationAction(id: string): Promise<ApiResponse<any>> {
   return apiDelete(`/notifications/${id}`);
+}
+
+/**
+ * 5. Super Admin: Dispatch emergency broadcast or platform announcement
+ */
+export async function createBroadcastAnnouncementAction(
+  payload: IBroadcastPayload
+): Promise<ApiResponse<any>> {
+  return apiPost("/notifications/broadcast", payload);
+}
+
+/**
+ * 6. Super Admin: Get past broadcast announcements
+ */
+export async function getBroadcastAnnouncementsAction(): Promise<ApiResponse<any[]>> {
+  return apiGet("/notifications/broadcasts");
 }

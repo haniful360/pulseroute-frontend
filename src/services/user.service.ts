@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { apiDelete, apiGet, apiPatch, ApiResponse } from "./fetchClient";
+import { apiDelete, apiGet, apiPatch, apiPost, ApiResponse } from "./fetchClient";
 
 export interface IUpdateProfilePayload {
   name?: string;
@@ -86,4 +86,22 @@ export async function updateUserStatusAction(
  */
 export async function deleteUserAction(id: string): Promise<ApiResponse<any>> {
   return apiDelete(`/users/${id}`);
+}
+
+export interface ICreateUserAdminPayload {
+  name: string;
+  email: string;
+  password?: string;
+  role: 'SUPER_ADMIN' | 'DRIVER' | 'USER';
+  contactNumber?: string;
+  status?: 'ACTIVE' | 'BLOCKED' | 'PENDING_APPROVAL';
+}
+
+/**
+ * 8. Super Admin: Create or Invite new user
+ */
+export async function createUserAction(
+  payload: ICreateUserAdminPayload
+): Promise<ApiResponse<any>> {
+  return apiPost("/users", payload);
 }
