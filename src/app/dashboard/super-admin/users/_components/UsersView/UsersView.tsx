@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
+import CustomTable from '@/components/dashboard/CustomTable/CustomTable';
+import { TColumn } from '@/types/custom-table.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -208,6 +210,97 @@ export default function UsersView() {
   const totalPatients = usersList.filter((u) => u.rawRole === 'USER').length;
   const totalSuspended = usersList.filter((u) => u.status === 'Suspended' || u.status === 'Pending').length;
 
+  const columns: TColumn<UserRow>[] = [
+    {
+      header: 'Name & Email',
+      cell: (user: UserRow) => (
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 text-xs font-bold text-[#E63946]">
+            {user.name.charAt(0)}
+          </div>
+          <div>
+            <div className="font-bold text-slate-900">{user.name}</div>
+            <div className="text-[10px] text-slate-500">
+              {user.email} • Joined {user.joined}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Role',
+      cell: (user: UserRow) => (
+        <span
+          className={cn(
+            'rounded-full px-2.5 py-0.5 text-[10px] font-bold',
+            user.rawRole === 'SUPER_ADMIN'
+              ? 'border border-purple-200 bg-purple-50 text-purple-700'
+              : user.rawRole === 'DRIVER'
+              ? 'border border-red-200 bg-red-50 text-[#E63946]'
+              : 'border border-slate-200 bg-slate-100 text-slate-700',
+          )}
+        >
+          {user.role}
+        </span>
+      ),
+    },
+    {
+      header: 'Region / Contact',
+      cell: (user: UserRow) => (
+        <div className="text-xs font-medium text-[#334155]">
+          <div>{user.region}</div>
+          <div className="text-[10px] text-slate-400">{user.contactNumber}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      cell: (user: UserRow) => (
+        <span
+          className={cn(
+            'rounded-full px-2.5 py-0.5 text-[10px] font-bold',
+            user.status === 'Active'
+              ? 'bg-emerald-50 text-emerald-600'
+              : user.status === 'Suspended'
+              ? 'bg-red-50 text-[#E63946]'
+              : 'bg-amber-50 text-amber-600',
+          )}
+        >
+          {user.status}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      cell: (user: UserRow) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleToggleStatus(user)}
+            className={cn(
+              'h-7 cursor-pointer rounded-lg px-2 text-[10px] font-bold',
+              user.status === 'Active'
+                ? 'text-amber-600 hover:bg-amber-50 hover:text-amber-700'
+                : 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700',
+            )}
+          >
+            {user.status === 'Active' ? 'Suspend' : 'Activate'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedUser(user)}
+            className="h-8 cursor-pointer rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          >
+            View
+            <ChevronRight className="ml-1 h-3 w-3" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -358,23 +451,27 @@ export default function UsersView() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[#f8fafc] text-[10px] tracking-wider text-[#64748b] uppercase border-b border-slate-100">
-              <tr>
-                <th className="px-5 py-4 font-bold">Name & Email</th>
-                <th className="px-5 py-4 font-bold">Role</th>
-                <th className="px-5 py-4 font-bold">Region / Contact</th>
-                <th className="px-5 py-4 font-bold">Status</th>
-                <th className="px-5 py-4 font-bold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                [1, 2, 3, 4, 5].map((idx) => (
-                  <tr key={idx} className="hover:bg-[#f8fafc]">
-                    <td className="px-5 py-4 whitespace-nowrap">
+        {/* CustomTable */}
+        {loading ? (
+          <div className="custom-scrollbar overflow-x-auto border-t border-slate-100">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="border-b border-slate-200 bg-slate-50/90">
+                <tr>
+                  {columns.map((col, idx) => (
+                    <th
+                      key={idx}
+                      scope="col"
+                      className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-nowrap text-slate-600"
+                    >
+                      {col.header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <Skeleton className="h-8 w-8 rounded-full bg-slate-200" />
                         <div className="space-y-1.5">
@@ -383,114 +480,30 @@ export default function UsersView() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <Skeleton className="h-5 w-24 rounded-full bg-slate-200" />
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap space-y-1">
+                    <td className="px-6 py-4 whitespace-nowrap space-y-1">
                       <Skeleton className="h-4 w-28 bg-slate-200" />
                       <Skeleton className="h-3 w-20 bg-slate-200" />
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <Skeleton className="h-5 w-16 rounded-full bg-slate-200" />
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Skeleton className="h-7 w-16 rounded-lg bg-slate-200" />
                         <Skeleton className="h-7 w-12 rounded-lg bg-slate-200" />
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-[#f8fafc] transition-colors group">
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-red-50 text-[#E63946] flex items-center justify-center text-xs font-bold shrink-0">
-                          {user.name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900">{user.name}</div>
-                          <div className="text-[10px] text-slate-500">{user.email} • Joined {user.joined}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className={cn(
-                        "rounded-full px-2.5 py-0.5 text-[10px] font-bold",
-                        user.rawRole === 'SUPER_ADMIN' ? "bg-purple-50 text-purple-700 border border-purple-200" :
-                        user.rawRole === 'DRIVER' ? "bg-red-50 text-[#E63946] border border-red-200" :
-                        "bg-slate-100 text-slate-700 border border-slate-200"
-                      )}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium text-xs">
-                      <div>{user.region}</div>
-                      <div className="text-[10px] text-slate-400">{user.contactNumber}</div>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className={cn(
-                        "rounded-full px-2.5 py-0.5 text-[10px] font-bold",
-                        user.status === 'Active' ? "bg-emerald-50 text-emerald-600" :
-                        user.status === 'Suspended' ? "bg-red-50 text-[#E63946]" :
-                        "bg-amber-50 text-amber-600"
-                      )}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleStatus(user)}
-                          className={cn(
-                            "h-7 text-[10px] font-bold rounded-lg px-2 cursor-pointer",
-                            user.status === 'Active'
-                              ? "text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-                              : "text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                          )}
-                        >
-                          {user.status === 'Active' ? 'Suspend' : 'Activate'}
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setSelectedUser(user)}
-                          className="h-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 font-bold text-xs cursor-pointer"
-                        >
-                          View
-                          <ChevronRight className="ml-1 h-3 w-3" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-slate-500 text-sm">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
-                        <Users className="h-5 w-5" />
-                      </div>
-                      <p className="font-semibold text-slate-800">No users found</p>
-                      <p className="text-xs text-slate-400 mt-0.5 mb-3">No registered users matched your current query.</p>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        className="rounded-xl text-xs font-bold"
-                        onClick={() => setIsInviteOpen(true)}
-                      >
-                        <Plus className="mr-1 h-3.5 w-3.5" /> Invite New User
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <CustomTable columns={columns} data={filteredUsers} />
+        )}
       </div>
 
       {/* Invite User Modal */}

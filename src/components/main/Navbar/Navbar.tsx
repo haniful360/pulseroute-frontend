@@ -343,14 +343,7 @@ export const Navbar: React.FC = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-1">
-                            <p className="truncate text-xs font-bold text-slate-900">{user.name}</p>
-                            <span
-                              className={`inline-flex items-center rounded-full border px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider shrink-0 ${roleBadgeBg}`}
-                            >
-                              {roleLabel}
-                            </span>
-                          </div>
+                          <p className="truncate text-xs font-bold text-slate-900">{user.name}</p>
                           <p className="truncate text-[11px] text-slate-500">{user.email}</p>
                         </div>
                       </div>
