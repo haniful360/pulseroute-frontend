@@ -96,7 +96,7 @@ export default function DriverSummaryPanel() {
           </h2>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs">
-          Nov 24, 2024
+          {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </div>
       </div>
 
@@ -109,7 +109,7 @@ export default function DriverSummaryPanel() {
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                {Number(overview?.todayEarnings ?? overview?.driver?.wallet?.balance ?? 12450).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {Number(overview?.todayEarnings ?? overview?.driver?.wallet?.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
               <span className="text-sm font-bold text-slate-400">BDT</span>
             </div>
@@ -142,7 +142,7 @@ export default function DriverSummaryPanel() {
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                {String(overview?.completedTripsCount ?? 8).padStart(2, '0')}
+                {String(overview?.completedTripsCount ?? 0).padStart(2, '0')}
               </span>
               <span className="text-xs font-semibold text-emerald-600">● 100% Success</span>
             </div>

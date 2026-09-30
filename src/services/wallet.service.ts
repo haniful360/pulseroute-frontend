@@ -48,3 +48,13 @@ export async function processPayoutRequestAction(
 ): Promise<ApiResponse<any>> {
   return apiPatch(`/wallets/admin/payouts/${id}`, payload);
 }
+
+/**
+ * 6. Driver: Download Earning & Ledger Statement CSV
+ */
+export async function exportDriverStatementAction(
+  params?: { startDate?: string; endDate?: string; type?: string }
+): Promise<ApiResponse<string>> {
+  return apiGet("/wallets/statement/export", { params });
+}
+

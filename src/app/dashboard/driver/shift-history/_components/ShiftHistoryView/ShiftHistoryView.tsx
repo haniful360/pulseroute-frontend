@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyTripsAction } from '@/services/trip.service';
+import { getDriverDashboardOverviewAction } from '@/services/driver.service';
+import { getMyReviewsAction } from '@/services/review.service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShiftLog {
   id: string;
@@ -30,42 +33,32 @@ interface ShiftLog {
   status: string;
 }
 
-const fallbackShiftData: ShiftLog[] = [
-  {
-    id: 'SFT-1049',
-    shiftDate: 'Sep 23, 2024',
-    startTime: '07:00 AM',
-    endTime: '03:30 PM',
-    duration: '8h 30m',
-    dispatches: 8,
-    avgResponse: '6.4 mins',
-    rating: '5.0',
-    status: 'Completed',
-  },
-  {
-    id: 'SFT-1048',
-    shiftDate: 'Sep 22, 2024',
-    startTime: '03:00 PM',
-    endTime: '11:00 PM',
-    duration: '8h 00m',
-    dispatches: 6,
-    avgResponse: '7.1 mins',
-    rating: '4.9',
-    status: 'Completed',
-  },
-];
-
 export default function ShiftHistoryView() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [shifts, setShifts] = useState<ShiftLog[]>(fallbackShiftData);
+  const [shifts, setShifts] = useState<ShiftLog[]>([]);
+  const [overview, setOverview] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadTrips() {
       try {
-        const res = await getMyTripsAction();
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const mapped: ShiftLog[] = res.data.map((trip: any, index: number) => ({
+        const [tripsRes, overviewRes, reviewsRes] = await Promise.all([
+          getMyTripsAction(),
+          getDriverDashboardOverviewAction(),
+          getMyReviewsAction(),
+        ]);
+
+        if (overviewRes?.success && overviewRes.data) {
+          setOverview(overviewRes.data);
+        }
+
+        if (reviewsRes?.success && Array.isArray(reviewsRes.data)) {
+          setReviews(reviewsRes.data);
+        }
+
+        if (tripsRes.success && Array.isArray(tripsRes.data)) {
+          const mapped: ShiftLog[] = tripsRes.data.map((trip: any) => ({
             id: `MSN-${trip.id.slice(-4).toUpperCase()}`,
             shiftDate: new Date(trip.createdAt).toLocaleDateString('en-US', {
               month: 'short',
@@ -85,7 +78,7 @@ export default function ShiftHistoryView() {
             duration: '45 mins',
             dispatches: 1,
             avgResponse: '4.8 mins',
-            rating: '5.0',
+            rating: trip.review?.rating ? Number(trip.review.rating).toFixed(1) : '5.0',
             status: trip.status === 'COMPLETED' ? 'Completed' : trip.status,
           }));
           setShifts(mapped);
@@ -153,6 +146,35 @@ export default function ShiftHistoryView() {
     },
   ];
 
+  const handleExportLogs = () => {
+    if (shifts.length === 0) {
+      toast.info('No recorded shift logs available to export.');
+      return;
+    }
+    const headers = ['Shift ID', 'Date', 'Start Time', 'End Time', 'Duration', 'Dispatches', 'Avg Response Time', 'Rating', 'Status'];
+    const rows = filteredShifts.map((s) => [
+      s.id,
+      `"${s.shiftDate}"`,
+      `"${s.startTime}"`,
+      `"${s.endTime}"`,
+      `"${s.duration}"`,
+      s.dispatches,
+      `"${s.avgResponse}"`,
+      s.rating,
+      `"${s.status}"`,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pulseroute_shift_logs_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Shift logs exported successfully.');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -164,7 +186,7 @@ export default function ShiftHistoryView() {
           variant="outline"
           icon={Download}
           iconPosition="left"
-          onClick={() => toast.success('Shift telemetry report exported.')}
+          onClick={handleExportLogs}
           label="Export Logs"
           className="self-start sm:self-auto"
         />
@@ -174,11 +196,15 @@ export default function ShiftHistoryView() {
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase">MONTHLY SHIFTS</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase">RECORDED SHIFTS</span>
             <Clock className="h-5 w-5 text-blue-500" />
           </div>
-          <p className="mt-2 text-3xl font-black text-slate-900">22</p>
-          <p className="mt-1 text-xs text-slate-500">176 Duty hours logged</p>
+          {loading ? (
+            <Skeleton className="h-9 w-16 mt-2" />
+          ) : (
+            <p className="mt-2 text-3xl font-black text-slate-900">{shifts.length}</p>
+          )}
+          <p className="mt-1 text-xs text-slate-500">{shifts.length * 8} duty hours logged</p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
@@ -186,7 +212,11 @@ export default function ShiftHistoryView() {
             <span className="text-[11px] font-bold text-slate-400 uppercase">AVG RESPONSE</span>
             <Timer className="h-5 w-5 text-emerald-500" />
           </div>
-          <p className="mt-2 text-3xl font-black text-emerald-600">6.4m</p>
+          {loading ? (
+            <Skeleton className="h-9 w-20 mt-2" />
+          ) : (
+            <p className="mt-2 text-3xl font-black text-emerald-600">4.8m</p>
+          )}
           <p className="mt-1 text-xs text-slate-500">Target &lt; 8.0 mins</p>
         </div>
 
@@ -195,8 +225,14 @@ export default function ShiftHistoryView() {
             <span className="text-[11px] font-bold text-slate-400 uppercase">MISSIONS COMPLETED</span>
             <Activity className="h-5 w-5 text-[#E63946]" />
           </div>
-          <p className="mt-2 text-3xl font-black text-slate-900">142</p>
-          <p className="mt-1 text-xs text-emerald-600">100% successful transports</p>
+          {loading ? (
+            <Skeleton className="h-9 w-16 mt-2" />
+          ) : (
+            <p className="mt-2 text-3xl font-black text-slate-900">
+              {overview?.trips?.completedTrips ?? shifts.filter(s => s.status === 'Completed').length}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-emerald-600">Successful transports</p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
@@ -204,8 +240,18 @@ export default function ShiftHistoryView() {
             <span className="text-[11px] font-bold text-slate-400 uppercase">PARAMEDIC SCORE</span>
             <Flame className="h-5 w-5 text-amber-500" />
           </div>
-          <p className="mt-2 text-3xl font-black text-slate-900">4.92</p>
-          <p className="mt-1 text-xs text-slate-500">Top 3% in Dhaka Central</p>
+          {loading ? (
+            <Skeleton className="h-9 w-20 mt-2" />
+          ) : (
+            <p className="mt-2 text-3xl font-black text-slate-900">
+              {overview?.driver?.rating
+                ? Number(overview.driver.rating).toFixed(2)
+                : reviews.length > 0
+                  ? (reviews.reduce((acc: number, r: any) => acc + (r.rating || 5), 0) / reviews.length).toFixed(2)
+                  : '5.00'}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-slate-500">Based on patient feedback</p>
         </div>
       </div>
 
@@ -214,7 +260,7 @@ export default function ShiftHistoryView() {
         <div className="flex flex-col gap-3 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900">Recorded Shift Logs</h3>
-            <p className="text-xs text-slate-500">Telemetry synced with Central PulseRoute Dispatche</p>
+            <p className="text-xs text-slate-500">Telemetry synced with Central PulseRoute Dispatch</p>
           </div>
           <div className="w-full sm:w-64">
             <InputField
@@ -226,7 +272,27 @@ export default function ShiftHistoryView() {
           </div>
         </div>
 
-        <CustomTable columns={columns} data={filteredShifts} />
+        {loading ? (
+          <div className="p-6 space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : filteredShifts.length > 0 ? (
+          <CustomTable columns={columns} data={filteredShifts} />
+        ) : (
+          <div className="p-10 text-center text-sm text-slate-500">
+            No shift logs recorded matching your search.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -23,10 +23,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyTripsAction } from '@/services/trip.service';
+import { exportInvoiceReceiptAction } from '@/services/invoice.service';
 
 interface PatientTrip {
   id: string;
   rawId: string;
+  invoiceId?: string;
   date: string;
   ambulance: string;
   pickup: string;
@@ -53,6 +55,7 @@ export default function TripHistoryView() {
           const mapped: PatientTrip[] = res.data.map((t: any) => ({
             id: `#${t.id.slice(-6).toUpperCase()}`,
             rawId: t.id,
+            invoiceId: t.invoice?.id || t.id,
             date: new Date(t.createdAt).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
@@ -77,6 +80,28 @@ export default function TripHistoryView() {
     }
     loadTrips();
   }, []);
+
+  const handleDownloadReceipt = async (trip: PatientTrip) => {
+    try {
+      toast.info('Downloading official medical trip receipt...');
+      const res = await exportInvoiceReceiptAction(trip.invoiceId || trip.rawId);
+      if (res.success && res.data) {
+        const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `pulseroute_receipt_${trip.rawId.slice(0, 8)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Medical receipt downloaded successfully.');
+      } else {
+        toast.error(res.message || 'Receipt not available yet for this trip.');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error downloading receipt');
+    }
+  };
 
   const filteredTrips = trips.filter(
     (trip) =>
@@ -256,7 +281,7 @@ export default function TripHistoryView() {
                 variant="danger"
                 icon={Download}
                 iconPosition="left"
-                onClick={() => toast.success(`Invoice for ${selectedTrip.id} downloaded.`)}
+                onClick={() => handleDownloadReceipt(selectedTrip)}
                 label="Download Receipt"
               />
             </div>

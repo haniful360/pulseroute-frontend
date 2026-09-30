@@ -6,7 +6,7 @@ import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wallet, TrendingUp, CreditCard, RefreshCcw, Download, Search, RefreshCw, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAllInvoicesAction } from '@/services/invoice.service';
+import { getAllInvoicesAction, exportInvoicesCsvAction } from '@/services/invoice.service';
 import { getOverviewAnalyticsAction } from '@/services/analytics.service';
 import { toast } from 'sonner';
 
@@ -61,33 +61,29 @@ export default function RevenueView() {
     });
   }, [invoices, activeTab, search]);
 
-  const handleExportCsv = () => {
-    if (filteredTransactions.length === 0) {
-      toast.info('No transactions available to export.');
-      return;
+  const handleExportCsv = async () => {
+    try {
+      toast.info('Downloading official financial audit CSV from server...');
+      const res = await exportInvoicesCsvAction({
+        paymentStatus: activeTab === 'Settled' ? 'PAID' : activeTab === 'Pending' ? 'PENDING' : activeTab === 'Refunded' ? 'REFUNDED' : undefined,
+      });
+
+      if (res.success && res.data) {
+        const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `pulseroute_financial_audit_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Financial audit CSV downloaded successfully.');
+      } else {
+        toast.error(res.message || 'Failed to download audit CSV');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error exporting CSV');
     }
-
-    const headers = ['Invoice Number', 'Date', 'Trip ID', 'Gross (BDT)', 'Commission (BDT)', 'Net Payout (BDT)', 'Status'];
-    const rows = filteredTransactions.map((t) => [
-      t.invoiceNumber || t.id,
-      new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      t.tripId || 'N/A',
-      t.totalAmount,
-      t.platformCommission,
-      t.driverEarning,
-      t.paymentStatus === 'PAID' ? 'Settled' : t.paymentStatus === 'PENDING' ? 'Pending' : t.paymentStatus,
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `pulseroute_invoices_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Invoices exported successfully.');
   };
 
   // Financial aggregates

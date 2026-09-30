@@ -79,7 +79,12 @@ async function request<T>(method: string, path: string, options: FetchOptions = 
       result = await res.json()
     } else {
       const text = await res.text()
-      result = { message: text || res.statusText }
+      result = {
+        success: res.ok,
+        statusCode: res.status,
+        message: res.ok ? "OK" : text || res.statusText,
+        data: text,
+      }
     }
 
     if (!res.ok) {

@@ -21,7 +21,9 @@ import {
   getMyWalletAction,
   getMyTransactionsAction,
   createPayoutRequestAction,
+  exportDriverStatementAction,
 } from '@/services/wallet.service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface LedgerItem {
   id: string;
@@ -33,33 +35,12 @@ interface LedgerItem {
   method: string;
 }
 
-const fallbackLedgerData: LedgerItem[] = [
-  {
-    id: '1',
-    date: 'Sep 24, 2024',
-    time: '11:42 AM',
-    tripId: 'TRP-8821',
-    amount: '+BDT 2,500',
-    status: 'Completed',
-    method: 'Stripe Express',
-  },
-  {
-    id: '2',
-    date: 'Sep 24, 2024',
-    time: '08:15 AM',
-    tripId: 'TRP-8816',
-    amount: '+BDT 1,800',
-    status: 'Completed',
-    method: 'Stripe Express',
-  },
-];
-
 export default function DriverWalletView() {
   const [wallet, setWallet] = useState<any>(null);
   const [ledger, setLedger] = useState<LedgerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [payoutOpen, setPayoutOpen] = useState(false);
-  const [payoutAmount, setPayoutAmount] = useState('1482.50');
+  const [payoutAmount, setPayoutAmount] = useState('0.00');
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -128,8 +109,26 @@ export default function DriverWalletView() {
     }
   };
 
-  const handleExportCSV = () => {
-    toast.info('Exporting earnings ledger CSV...');
+  const handleExportCSV = async () => {
+    try {
+      toast.info('Generating official driver statement CSV...');
+      const res = await exportDriverStatementAction();
+      if (res.success && res.data) {
+        const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `pulseroute_driver_statement_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Driver earnings statement downloaded successfully.');
+      } else {
+        toast.error(res.message || 'Failed to export statement');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error exporting statement');
+    }
   };
 
   const columns = [
@@ -199,9 +198,13 @@ export default function DriverWalletView() {
               <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 AVAILABLE BALANCE
               </p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                BDT {Number(wallet?.balance ?? 1482.5).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </h3>
+              {loading ? (
+                <Skeleton className="h-9 w-36 mt-2" />
+              ) : (
+                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  BDT {Number(wallet?.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </h3>
+              )}
               <p className="mt-2 text-xs text-slate-500">
                 Next auto-settlement: <b className="text-slate-700">End of week</b>
               </p>
@@ -216,11 +219,15 @@ export default function DriverWalletView() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-                THIS MONTH EARNINGS
+                TOTAL EARNINGS
               </p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                BDT {Number(wallet?.totalEarned ? wallet.totalEarned * 0.4 : 842.2).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </h3>
+              {loading ? (
+                <Skeleton className="h-9 w-36 mt-2" />
+              ) : (
+                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  BDT {Number(wallet?.totalEarned ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </h3>
+              )}
               <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
                 <TrendingUp className="h-3.5 w-3.5" />
                 <span>Paramedic duty earnings</span>
@@ -238,9 +245,13 @@ export default function DriverWalletView() {
               <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 TOTAL LIFETIME PAYOUTS
               </p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                BDT {Number(wallet?.totalWithdrawn ?? 14245.9).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </h3>
+              {loading ? (
+                <Skeleton className="h-9 w-36 mt-2" />
+              ) : (
+                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  BDT {Number(wallet?.totalWithdrawn ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </h3>
+              )}
               <p className="mt-2 text-xs text-slate-500">Processed through central banking</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
@@ -267,7 +278,27 @@ export default function DriverWalletView() {
           />
         </div>
 
-        <CustomTable columns={columns} data={ledger.length > 0 ? ledger : fallbackLedgerData} />
+        {loading ? (
+          <div className="p-6 space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : ledger.length > 0 ? (
+          <CustomTable columns={columns} data={ledger} />
+        ) : (
+          <div className="p-10 text-center text-sm text-slate-500">
+            No transactions recorded yet in your wallet ledger.
+          </div>
+        )}
       </div>
 
       {/* Payout Modal */}
@@ -280,13 +311,13 @@ export default function DriverWalletView() {
       >
         <form onSubmit={handlePayoutSubmit} className="space-y-4 pt-2">
           <InputField
-            label="Payout Amount ($)"
+            label="Payout Amount (BDT)"
             value={payoutAmount}
             onChange={(e) => setPayoutAmount(e.target.value)}
             type="number"
             step="0.01"
             required
-            helperText="Maximum withdrawable amount: $1,482.50"
+            helperText={`Maximum withdrawable amount: BDT ${Number(wallet?.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
           />
 
           <div>
