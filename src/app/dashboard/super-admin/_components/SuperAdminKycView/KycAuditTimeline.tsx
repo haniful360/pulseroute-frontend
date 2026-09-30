@@ -44,6 +44,8 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
                   ) : step.status === 'IN_PROGRESS' ? (
                     <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#E63946]" />
+                  ) : step.status === 'ERROR' ? (
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
                   ) : (
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
                   )}
@@ -56,6 +58,11 @@ export default function KycAuditTimeline({ applicant }: KycAuditTimelineProps) {
                       {step.status === 'SUCCESS' && (
                         <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
                           SUCCESS
+                        </span>
+                      )}
+                      {step.status === 'ERROR' && (
+                        <span className="rounded-full border border-rose-100 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600">
+                          REJECTED
                         </span>
                       )}
                     </div>

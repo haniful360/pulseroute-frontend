@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { 
@@ -38,116 +39,8 @@ interface VehicleRow {
   raw: any;
 }
 
-const fallbackFleet: VehicleRow[] = [
-  { 
-    id: 'DH-102', 
-    vehicleId: 'vh-1',
-    name: 'Pulse ICU 102', 
-    operator: 'PulseRoute Fleet', 
-    type: 'ICU', 
-    status: 'Online', 
-    verificationStatus: 'APPROVED',
-    lastService: 'Sep 15, 2026',
-    raw: {
-      ambulanceType: 'ICU',
-      vehicleNumber: 'DH-102',
-      hasOxygen: true,
-      hasVentilator: true,
-      hasDefibrillator: true,
-      hasSuctionMachine: false,
-      model: 'Toyota HiAce',
-      manufacturer: 'Toyota',
-      year: 2023,
-    }
-  },
-  { 
-    id: 'DH-204', 
-    vehicleId: 'vh-2',
-    name: 'Care AC 204', 
-    operator: 'Care Ambulance', 
-    type: 'AC', 
-    status: 'Online', 
-    verificationStatus: 'APPROVED',
-    lastService: 'Sep 10, 2026',
-    raw: {
-      ambulanceType: 'AC',
-      vehicleNumber: 'DH-204',
-      hasOxygen: true,
-      hasVentilator: false,
-      hasDefibrillator: false,
-      hasSuctionMachine: false,
-      model: 'Nissan Caravan',
-      manufacturer: 'Nissan',
-      year: 2022,
-    }
-  },
-  { 
-    id: 'DH-311', 
-    vehicleId: 'vh-3',
-    name: 'Metro BLS 311', 
-    operator: 'Metro Health', 
-    type: 'BASIC', 
-    status: 'Maintenance', 
-    verificationStatus: 'PENDING',
-    lastService: 'Aug 28, 2026',
-    raw: {
-      ambulanceType: 'BASIC',
-      vehicleNumber: 'DH-311',
-      hasOxygen: true,
-      hasVentilator: false,
-      hasDefibrillator: false,
-      hasSuctionMachine: false,
-      model: 'Toyota HiAce',
-      manufacturer: 'Toyota',
-      year: 2020,
-    }
-  },
-  { 
-    id: 'DH-418', 
-    vehicleId: 'vh-4',
-    name: 'Pulse CCU 418', 
-    operator: 'PulseRoute Fleet', 
-    type: 'CCU', 
-    status: 'Online', 
-    verificationStatus: 'APPROVED',
-    lastService: 'Sep 18, 2026',
-    raw: {
-      ambulanceType: 'CCU',
-      vehicleNumber: 'DH-418',
-      hasOxygen: true,
-      hasVentilator: true,
-      hasDefibrillator: true,
-      hasSuctionMachine: true,
-      model: 'Mercedes Sprinter',
-      manufacturer: 'Mercedes',
-      year: 2024,
-    }
-  },
-  { 
-    id: 'DH-105', 
-    vehicleId: 'vh-5',
-    name: 'Pulse ICU 105', 
-    operator: 'PulseRoute Fleet', 
-    type: 'ICU', 
-    status: 'On Dispatch', 
-    verificationStatus: 'APPROVED',
-    lastService: 'Sep 12, 2026',
-    raw: {
-      ambulanceType: 'ICU',
-      vehicleNumber: 'DH-105',
-      hasOxygen: true,
-      hasVentilator: true,
-      hasDefibrillator: true,
-      hasSuctionMachine: false,
-      model: 'Toyota HiAce',
-      manufacturer: 'Toyota',
-      year: 2023,
-    }
-  },
-];
-
 export default function FleetView() {
-  const [vehiclesList, setVehiclesList] = useState<VehicleRow[]>(fallbackFleet);
+  const [vehiclesList, setVehiclesList] = useState<VehicleRow[]>([]);
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -175,7 +68,7 @@ export default function FleetView() {
       const res = await getAllVehiclesAction();
       if (res.success && res.data) {
         const list = Array.isArray((res.data as any).data) ? (res.data as any).data : res.data;
-        if (Array.isArray(list) && list.length > 0) {
+        if (Array.isArray(list)) {
           const mapped: VehicleRow[] = list.map((v: any) => ({
             id: v.vehicleNumber || `VH-${v.id.slice(-4).toUpperCase()}`,
             vehicleId: v.id,
@@ -323,7 +216,11 @@ export default function FleetView() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">{totalCount}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{totalCount}</div>
+            )}
             <div className="mt-1 text-xs font-medium text-emerald-600">Active telemetry tracked</div>
           </div>
         </div>
@@ -337,7 +234,11 @@ export default function FleetView() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">{icuCount}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{icuCount}</div>
+            )}
             <div className="mt-1 text-xs font-medium text-amber-600">High acuity response ready</div>
           </div>
         </div>
@@ -351,7 +252,11 @@ export default function FleetView() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">{acCount}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{acCount}</div>
+            )}
             <div className="mt-1 text-xs font-medium text-emerald-600">All standard compliant</div>
           </div>
         </div>
@@ -365,7 +270,11 @@ export default function FleetView() {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-[#0b132b]">{maintenanceCount}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{maintenanceCount}</div>
+            )}
             <div className="mt-1 text-xs font-medium text-red-600">Under audit or maintenance</div>
           </div>
         </div>
@@ -400,92 +309,134 @@ export default function FleetView() {
         </div>
       </div>
 
-      {/* Vehicles Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredFleet.map((vehicle) => (
-          <div 
-            key={vehicle.id} 
-            onClick={() => setSelectedVehicle(vehicle)}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold bg-slate-100 group-hover:bg-red-50 group-hover:text-[#E63946] px-2.5 py-1 rounded-md text-slate-700 transition-colors">
-                  {vehicle.id}
-                </span>
-                {vehicle.verificationStatus === 'PENDING' && (
-                  <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-200">
-                    Audit Req.
+      {/* Vehicles Grid / Skeleton Loading State */}
+      {loading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((idx) => (
+            <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-24 rounded-md bg-slate-200" />
+                <Skeleton className="h-3 w-3 rounded-full bg-slate-200" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-3/4 bg-slate-200" />
+                <Skeleton className="h-3.5 w-1/2 bg-slate-200" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-4 w-16 rounded bg-slate-200" />
+                <Skeleton className="h-4 w-16 rounded bg-slate-200" />
+              </div>
+              <div className="border-t border-slate-100 pt-3 flex justify-between">
+                <Skeleton className="h-5 w-16 rounded-full bg-slate-200" />
+                <Skeleton className="h-5 w-16 rounded-full bg-slate-200" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredFleet.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredFleet.map((vehicle) => (
+            <div 
+              key={vehicle.id} 
+              onClick={() => setSelectedVehicle(vehicle)}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold bg-slate-100 group-hover:bg-red-50 group-hover:text-[#E63946] px-2.5 py-1 rounded-md text-slate-700 transition-colors">
+                    {vehicle.id}
+                  </span>
+                  {vehicle.verificationStatus === 'PENDING' && (
+                    <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-200">
+                      Audit Req.
+                    </span>
+                  )}
+                </div>
+                <div className="relative flex h-2.5 w-2.5">
+                  {(vehicle.status === 'Online' || vehicle.status === 'On Dispatch') && (
+                    <span className={cn(
+                      "absolute inline-flex h-full w-full rounded-full opacity-75 animate-pulse",
+                      vehicle.status === 'Online' ? 'bg-emerald-400' : 'bg-blue-400'
+                    )}></span>
+                  )}
+                  <span className={cn(
+                    "relative inline-flex h-2.5 w-2.5 rounded-full",
+                    vehicle.status === 'Online' && 'bg-emerald-500',
+                    vehicle.status === 'On Dispatch' && 'bg-blue-500',
+                    vehicle.status === 'Maintenance' && 'bg-amber-500',
+                    vehicle.status === 'Offline' && 'bg-slate-400'
+                  )}></span>
+                </div>
+              </div>
+              
+              <div className="mt-3">
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#E63946] transition-colors">{vehicle.name}</h3>
+                <p className="text-xs text-slate-500 mt-1">{vehicle.operator}</p>
+              </div>
+
+              {/* Equipment Pills */}
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {vehicle.raw?.hasOxygen && (
+                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">
+                    O₂ Oxygen
+                  </span>
+                )}
+                {vehicle.raw?.hasVentilator && (
+                  <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md">
+                    Ventilator
+                  </span>
+                )}
+                {vehicle.raw?.hasDefibrillator && (
+                  <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md">
+                    AED Defib
                   </span>
                 )}
               </div>
-              <div className="relative flex h-2.5 w-2.5">
-                {(vehicle.status === 'Online' || vehicle.status === 'On Dispatch') && (
-                  <span className={cn(
-                    "absolute inline-flex h-full w-full rounded-full opacity-75 animate-pulse",
-                    vehicle.status === 'Online' ? 'bg-emerald-400' : 'bg-blue-400'
-                  )}></span>
-                )}
+
+              <div className="border-t border-dashed border-slate-200 my-3"></div>
+
+              <div className="flex items-center justify-between">
                 <span className={cn(
-                  "relative inline-flex h-2.5 w-2.5 rounded-full",
-                  vehicle.status === 'Online' && 'bg-emerald-500',
-                  vehicle.status === 'On Dispatch' && 'bg-blue-500',
-                  vehicle.status === 'Maintenance' && 'bg-amber-500',
-                  vehicle.status === 'Offline' && 'bg-slate-400'
-                )}></span>
+                  "rounded-full px-2.5 py-0.5 text-[10px] font-bold border",
+                  vehicle.type === 'ICU' && "bg-red-50 text-[#E63946] border-red-200",
+                  vehicle.type === 'AC' && "bg-blue-50 text-blue-600 border-blue-200",
+                  vehicle.type === 'BASIC' && "bg-slate-100 text-slate-600 border-slate-200",
+                  vehicle.type === 'CCU' && "bg-purple-50 text-purple-600 border-purple-200"
+                )}>
+                  {vehicle.type}
+                </span>
+
+                <span className={cn(
+                  "rounded-full px-2.5 py-0.5 text-[10px] font-bold",
+                  vehicle.status === 'Online' && "bg-emerald-50 text-emerald-600",
+                  vehicle.status === 'On Dispatch' && "bg-blue-50 text-blue-600",
+                  vehicle.status === 'Maintenance' && "bg-amber-50 text-amber-600",
+                  vehicle.status === 'Offline' && "bg-slate-100 text-slate-600"
+                )}>
+                  {vehicle.status}
+                </span>
               </div>
             </div>
-            
-            <div className="mt-3">
-              <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#E63946] transition-colors">{vehicle.name}</h3>
-              <p className="text-xs text-slate-500 mt-1">{vehicle.operator}</p>
-            </div>
-
-            {/* Equipment Pills */}
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {vehicle.raw?.hasOxygen && (
-                <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">
-                  O₂ Oxygen
-                </span>
-              )}
-              {vehicle.raw?.hasVentilator && (
-                <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md">
-                  Ventilator
-                </span>
-              )}
-              {vehicle.raw?.hasDefibrillator && (
-                <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md">
-                  AED Defib
-                </span>
-              )}
-            </div>
-
-            <div className="border-t border-dashed border-slate-200 my-3"></div>
-
-            <div className="flex items-center justify-between">
-              <span className={cn(
-                "rounded-full px-2.5 py-0.5 text-[10px] font-bold border",
-                vehicle.type === 'ICU' && "bg-red-50 text-[#E63946] border-red-200",
-                vehicle.type === 'AC' && "bg-blue-50 text-blue-600 border-blue-200",
-                vehicle.type === 'BASIC' && "bg-slate-100 text-slate-600 border-slate-200",
-                vehicle.type === 'CCU' && "bg-purple-50 text-purple-600 border-purple-200"
-              )}>
-                {vehicle.type}
-              </span>
-
-              <span className={cn(
-                "rounded-full px-2.5 py-0.5 text-[10px] font-bold",
-                vehicle.status === 'Online' && "bg-emerald-50 text-emerald-600",
-                vehicle.status === 'On Dispatch' && "bg-blue-50 text-blue-600",
-                vehicle.status === 'Maintenance' && "bg-amber-50 text-amber-600",
-                vehicle.status === 'Offline' && "bg-slate-100 text-slate-600"
-              )}>
-                {vehicle.status}
-              </span>
-            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl bg-white border border-slate-200 shadow-xs">
+          <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-[#E63946] mb-3">
+            <Ambulance className="h-6 w-6" />
           </div>
-        ))}
-      </div>
+          <h3 className="text-base font-bold text-slate-900">No Ambulances Found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
+            No registered vehicles match your current filter. Add a new ambulance to the fleet to begin tracking.
+          </p>
+          <Button 
+            variant="danger" 
+            className="rounded-xl px-4 text-xs font-bold cursor-pointer"
+            onClick={() => setIsAddOpen(true)}
+          >
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Add First Ambulance
+          </Button>
+        </div>
+      )}
 
       {/* Add Vehicle Modal */}
       {isAddOpen && (

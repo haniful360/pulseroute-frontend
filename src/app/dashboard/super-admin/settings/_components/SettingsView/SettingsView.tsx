@@ -17,44 +17,52 @@ import {
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { getAllSettingsAction, upsertSettingAction } from '@/services/setting.service';
-
-const auditEvents = [
-  { action: 'Pricing updated', actor: 'Rahat Mahmud', time: '2 min ago', type: 'config' },
-  {
-    action: 'Driver #DRV-8821 approved',
-    actor: 'System (Auto-KYC)',
-    time: '15 min ago',
-    type: 'approval',
-  },
-  { action: 'Webhook endpoint changed', actor: 'Rahat Mahmud', time: '1 hr ago', type: 'config' },
-  {
-    action: 'Emergency broadcast sent',
-    actor: 'Rahat Mahmud',
-    time: '3 hrs ago',
-    type: 'broadcast',
-  },
-];
+import { getRecentActivitiesAction } from '@/services/analytics.service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SettingsView() {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [dispatchSla, setDispatchSla] = useState('8');
   const [radarRefresh, setRadarRefresh] = useState('15');
   const [maxRadius, setMaxRadius] = useState('25');
   const [reassignTimeout, setReassignTimeout] = useState('3');
+  const [auditEvents, setAuditEvents] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await getAllSettingsAction();
+        const [res, activitiesRes] = await Promise.all([
+          getAllSettingsAction(),
+          getRecentActivitiesAction(),
+        ]);
         if (res.success && Array.isArray(res.data)) {
           const sla = res.data.find((s: any) => s.key === 'DISPATCH_SLA_TIMEOUT');
           if (sla) setDispatchSla(String(sla.value));
           const rad = res.data.find((s: any) => s.key === 'MAX_DISPATCH_RADIUS');
           if (rad) setMaxRadius(String(rad.value));
         }
-      } catch {
-        // use defaults
+        if (activitiesRes?.data && Array.isArray(activitiesRes.data)) {
+          setAuditEvents(
+            activitiesRes.data.map((a: any) => ({
+              action: a.title || a.description || 'System event',
+              actor: a.user?.name || a.actor || 'System',
+              time: a.createdAt
+                ? new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : 'Recently',
+              type: a.type?.toLowerCase().includes('approval')
+                ? 'approval'
+                : a.type?.toLowerCase().includes('broadcast')
+                  ? 'broadcast'
+                  : 'config',
+            })),
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load settings data:', err);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadSettings();
@@ -359,27 +367,46 @@ export default function SettingsView() {
             </h3>
 
             <div className="flex flex-col gap-4">
-              {auditEvents.map((event, i) => (
-                <div key={i} className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2">
-                    <div
-                      className={cn(
-                        'mt-1 h-2 w-2 shrink-0 rounded-full',
-                        event.type === 'config'
-                          ? 'bg-blue-500'
-                          : event.type === 'approval'
-                            ? 'bg-emerald-500'
-                            : 'bg-amber-500',
-                      )}
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-slate-900">{event.action}</p>
-                      <p className="text-[11px] text-slate-500">{event.actor}</p>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2">
+                      <Skeleton className="mt-1 h-2 w-2 rounded-full" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-3.5 w-32" />
+                        <Skeleton className="h-2.5 w-20" />
+                      </div>
                     </div>
+                    <Skeleton className="h-2.5 w-12" />
                   </div>
-                  <span className="text-[11px] whitespace-nowrap text-slate-500">{event.time}</span>
+                ))
+              ) : auditEvents.length > 0 ? (
+                auditEvents.map((event, i) => (
+                  <div key={i} className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2">
+                      <div
+                        className={cn(
+                          'mt-1 h-2 w-2 shrink-0 rounded-full',
+                          event.type === 'config'
+                            ? 'bg-blue-500'
+                            : event.type === 'approval'
+                              ? 'bg-emerald-500'
+                              : 'bg-amber-500',
+                        )}
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{event.action}</p>
+                        <p className="text-[11px] text-slate-500">{event.actor}</p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] whitespace-nowrap text-slate-500">{event.time}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="py-4 text-center text-xs text-slate-400">
+                  No recent audit events recorded.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

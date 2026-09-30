@@ -28,6 +28,6 @@ export interface Applicant {
     title: string;
     desc: string;
     time: string;
-    status?: 'SUCCESS' | 'IN_PROGRESS' | 'INFO';
+    status?: 'SUCCESS' | 'IN_PROGRESS' | 'INFO' | 'ERROR';
   }[];
 }

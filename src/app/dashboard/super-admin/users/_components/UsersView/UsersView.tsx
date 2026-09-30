@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { 
@@ -40,16 +41,8 @@ interface UserRow {
   joined: string;
 }
 
-const fallbackUsers: UserRow[] = [
-  { id: 'USR-201', name: 'Rahim Uddin', email: 'rahim@example.com', role: 'Paramedic Driver', rawRole: 'DRIVER', region: 'Dhanmondi, Dhaka', contactNumber: '+8801711223344', status: 'Active', rawStatus: 'ACTIVE', joined: 'Sep 12, 2026' },
-  { id: 'USR-188', name: 'Kamal Hossain', email: 'kamal@example.com', role: 'Paramedic Driver', rawRole: 'DRIVER', region: 'Gulshan, Dhaka', contactNumber: '+8801711223355', status: 'Active', rawStatus: 'ACTIVE', joined: 'Aug 28, 2026' },
-  { id: 'USR-164', name: 'Square Hospital Desk', email: 'square@hospital.com', role: 'Patient', rawRole: 'USER', region: 'Panthapath, Dhaka', contactNumber: '+8801711223366', status: 'Active', rawStatus: 'ACTIVE', joined: 'Jul 15, 2026' },
-  { id: 'USR-142', name: 'Arif Hasan', email: 'arif@example.com', role: 'Paramedic Driver', rawRole: 'DRIVER', region: 'Mirpur, Dhaka', contactNumber: '+8801711223377', status: 'Suspended', rawStatus: 'BLOCKED', joined: 'Jun 02, 2026' },
-  { id: 'USR-138', name: 'Nusrat Jahan', email: 'nusrat@example.com', role: 'Patient', rawRole: 'USER', region: 'Uttara, Dhaka', contactNumber: '+8801711223388', status: 'Active', rawStatus: 'ACTIVE', joined: 'May 18, 2026' },
-];
-
 export default function UsersView() {
-  const [usersList, setUsersList] = useState<UserRow[]>(fallbackUsers);
+  const [usersList, setUsersList] = useState<UserRow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -73,7 +66,7 @@ export default function UsersView() {
       const res = await getAllUsersAction({ limit: 100 });
       if (res.success && res.data) {
         const list = Array.isArray((res.data as any).data) ? (res.data as any).data : res.data;
-        if (Array.isArray(list) && list.length > 0) {
+        if (Array.isArray(list)) {
           const mapped: UserRow[] = list.map((u: any) => ({
             id: u.id,
             name: u.name || 'PulseRoute User',
@@ -251,7 +244,11 @@ export default function UsersView() {
             </div>
           </div>
           <div className="flex items-end justify-between">
-            <div className="text-2xl font-black text-[#0b132b]">{totalUsers}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{totalUsers}</div>
+            )}
             <div className="text-xs font-bold text-emerald-600">
               Active platform accounts
             </div>
@@ -267,7 +264,11 @@ export default function UsersView() {
             </div>
           </div>
           <div className="flex items-end justify-between">
-            <div className="text-2xl font-black text-[#0b132b]">{totalParamedics}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{totalParamedics}</div>
+            )}
             <div className="text-xs font-medium text-slate-500">
               Licensed emergency crew
             </div>
@@ -283,7 +284,11 @@ export default function UsersView() {
             </div>
           </div>
           <div className="flex items-end justify-between">
-            <div className="text-2xl font-black text-[#0b132b]">{totalPatients}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{totalPatients}</div>
+            )}
             <div className="text-xs font-medium text-slate-500">
               Registered booking accounts
             </div>
@@ -299,7 +304,11 @@ export default function UsersView() {
             </div>
           </div>
           <div className="flex items-end justify-between">
-            <div className="text-2xl font-black text-[#0b132b]">{totalSuspended}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16 bg-slate-200 mt-1" />
+            ) : (
+              <div className="text-2xl font-black text-[#0b132b]">{totalSuspended}</div>
+            )}
             <div className="text-xs font-medium text-[#E63946]">
               Audit or restricted
             </div>
@@ -314,7 +323,9 @@ export default function UsersView() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold tracking-tight text-slate-900">User Directory</h3>
-              <p className="text-xs font-medium text-slate-500 mt-1">Showing {filteredUsers.length} of {usersList.length} registered accounts</p>
+              <p className="text-xs font-medium text-slate-500 mt-1">
+                {loading ? 'Fetching active accounts...' : `Showing ${filteredUsers.length} of ${usersList.length} registered accounts`}
+              </p>
             </div>
             
             {/* Tab Filter */}
@@ -360,7 +371,37 @@ export default function UsersView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredUsers.length > 0 ? (
+              {loading ? (
+                [1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="hover:bg-[#f8fafc]">
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full bg-slate-200" />
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-4 w-32 bg-slate-200" />
+                          <Skeleton className="h-3 w-44 bg-slate-200" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <Skeleton className="h-5 w-24 rounded-full bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap space-y-1">
+                      <Skeleton className="h-4 w-28 bg-slate-200" />
+                      <Skeleton className="h-3 w-20 bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <Skeleton className="h-5 w-16 rounded-full bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Skeleton className="h-7 w-16 rounded-lg bg-slate-200" />
+                        <Skeleton className="h-7 w-12 rounded-lg bg-slate-200" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-[#f8fafc] transition-colors group">
                     <td className="px-5 py-4 whitespace-nowrap">
@@ -428,8 +469,22 @@ export default function UsersView() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-slate-500 text-sm">
-                    No users found matching your filters.
+                  <td colSpan={5} className="px-5 py-12 text-center text-slate-500 text-sm">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
+                        <Users className="h-5 w-5" />
+                      </div>
+                      <p className="font-semibold text-slate-800">No users found</p>
+                      <p className="text-xs text-slate-400 mt-0.5 mb-3">No registered users matched your current query.</p>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="rounded-xl text-xs font-bold"
+                        onClick={() => setIsInviteOpen(true)}
+                      >
+                        <Plus className="mr-1 h-3.5 w-3.5" /> Invite New User
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               )}

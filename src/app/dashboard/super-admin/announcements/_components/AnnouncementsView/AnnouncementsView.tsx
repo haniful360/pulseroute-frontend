@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Megaphone, Radio, Send, Eye, CheckCircle2, Loader2 } from 'lucide-react';
+import { Megaphone, Radio, Send, Eye, CheckCircle2, Loader2, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { 
@@ -21,28 +22,22 @@ interface BroadcastItem {
   recipients: number;
 }
 
-const fallbackBroadcasts: BroadcastItem[] = [
-  { id: '1', title: 'Dhaka flood route advisory', message: 'Avoid Mirpur-10 to Farmgate corridor due to waterlogging. Use alternate routes via Mohakhali flyover.', time: '2 hrs ago', readRate: '96%', priority: 'Urgent', recipients: 58 },
-  { id: '2', title: 'Eid ul-Adha surge protocol', message: 'All available ICU and AC units report for extended shift coverage from Sep 25-28.', time: 'Yesterday', readRate: '92%', priority: 'Normal', recipients: 62 },
-  { id: '3', title: 'New hospital partner — Evercare', message: 'Evercare Hospital (Bashundhara) is now live on the dispatch network. Updated pickup zones deployed.', time: '3 days ago', readRate: '89%', priority: 'Normal', recipients: 55 },
-  { id: '4', title: 'Vehicle inspection deadline', message: 'All fleet operators must complete Q3 vehicle safety inspection by September 30th.', time: '5 days ago', readRate: '94%', priority: 'Normal', recipients: 60 },
-  { id: '5', title: 'Critical: Oxygen supply shortage', message: 'Temporary oxygen cylinder shortage at DMCH. Reroute critical patients to Square Hospital or United.', time: '1 week ago', readRate: '98%', priority: 'Urgent', recipients: 62 },
-];
-
 export default function AnnouncementsView() {
-  const [broadcasts, setBroadcasts] = useState<BroadcastItem[]>(fallbackBroadcasts);
+  const [broadcasts, setBroadcasts] = useState<BroadcastItem[]>([]);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [audience, setAudience] = useState('All Online Drivers');
   const [priority, setPriority] = useState<'Normal' | 'Urgent'>('Normal');
+  const [loading, setLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
 
   useEffect(() => {
     async function loadBroadcasts() {
+      setLoading(true);
       try {
         const res = await getBroadcastAnnouncementsAction();
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        if (res.success && Array.isArray(res.data)) {
           const mapped: BroadcastItem[] = res.data.map((item: any, idx: number) => ({
             id: item.id || `bc-${idx}`,
             title: item.title,
@@ -61,6 +56,8 @@ export default function AnnouncementsView() {
         }
       } catch (err) {
         console.error('Failed to load past broadcasts:', err);
+      } finally {
+        setLoading(false);
       }
     }
     loadBroadcasts();
@@ -134,10 +131,6 @@ export default function AnnouncementsView() {
             Dispatch fleet-wide notifications and emergency advisories.
           </p>
         </div>
-        <Button variant="danger" className="shrink-0 gap-2 rounded-2xl bg-[#E63946] px-5 py-3 text-xs font-bold text-white shadow-md shadow-red-500/20 transition-all hover:bg-red-700 active:scale-95">
-          <Megaphone className="h-4 w-4" />
-          New Broadcast
-        </Button>
       </div>
 
       {/* Stat Cards Grid */}
@@ -148,10 +141,14 @@ export default function AnnouncementsView() {
               <Radio className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Online recipients</div>
+              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Active Audience</div>
               <div className="flex items-end gap-2">
-                <div className="text-2xl font-black text-[#0b132b]">62</div>
-                <div className="text-xs font-medium text-slate-500 mb-1">Drivers currently online</div>
+                {loading ? (
+                  <Skeleton className="h-7 w-12 bg-slate-200 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">62+</div>
+                )}
+                <div className="text-xs font-medium text-slate-500 mb-1">Drivers & users online</div>
               </div>
             </div>
           </div>
@@ -163,10 +160,14 @@ export default function AnnouncementsView() {
               <Send className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Sent this month</div>
+              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Total Broadcasts</div>
               <div className="flex items-end gap-2">
-                <div className="text-2xl font-black text-[#0b132b]">28</div>
-                <div className="text-xs font-medium text-emerald-600 mb-1">+6 vs August</div>
+                {loading ? (
+                  <Skeleton className="h-7 w-12 bg-slate-200 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">{broadcasts.length}</div>
+                )}
+                <div className="text-xs font-medium text-emerald-600 mb-1">Network advisories</div>
               </div>
             </div>
           </div>
@@ -178,10 +179,14 @@ export default function AnnouncementsView() {
               <Eye className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Read rate</div>
+              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Delivery Rate</div>
               <div className="flex items-end gap-2">
-                <div className="text-2xl font-black text-[#0b132b]">94%</div>
-                <div className="text-xs font-medium text-slate-500 mb-1">Across fleet</div>
+                {loading ? (
+                  <Skeleton className="h-7 w-12 bg-slate-200 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">98.6%</div>
+                )}
+                <div className="text-xs font-medium text-slate-500 mb-1">Real-time socket push</div>
               </div>
             </div>
           </div>
@@ -195,7 +200,7 @@ export default function AnnouncementsView() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-black text-slate-900">Compose Broadcast</h2>
             <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" /> Draft saved
+              <CheckCircle2 className="h-3 w-3" /> Ready to dispatch
             </span>
           </div>
 
@@ -254,7 +259,7 @@ export default function AnnouncementsView() {
                   <button 
                     onClick={() => setPriority('Normal')}
                     className={cn(
-                      "flex-1 rounded-xl border px-4 py-3 text-xs font-bold transition-all flex items-center justify-center gap-2",
+                      "flex-1 rounded-xl border px-4 py-3 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
                       priority === 'Normal'
                         ? "border-slate-900 bg-slate-900 text-white"
                         : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -265,7 +270,7 @@ export default function AnnouncementsView() {
                   <button 
                     onClick={() => setPriority('Urgent')}
                     className={cn(
-                      "flex-1 rounded-xl border px-4 py-3 text-xs font-bold transition-all flex items-center justify-center gap-2",
+                      "flex-1 rounded-xl border px-4 py-3 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
                       priority === 'Urgent'
                         ? "border-[#E63946] bg-red-50 text-[#E63946]"
                         : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -280,7 +285,7 @@ export default function AnnouncementsView() {
               <div className="flex gap-3 pt-4 border-t border-slate-100">
                 <Button 
                   variant="danger" 
-                  className="flex-1 rounded-2xl bg-[#E63946] px-5 py-3 text-xs font-bold text-white shadow-md shadow-red-500/20 transition-all hover:bg-red-700 active:scale-95 h-auto"
+                  className="flex-1 rounded-2xl bg-[#E63946] px-5 py-3 text-xs font-bold text-white shadow-md shadow-red-500/20 transition-all hover:bg-red-700 active:scale-95 h-auto cursor-pointer"
                   onClick={handleSend}
                   disabled={isSending || !title || !message}
                 >
@@ -296,7 +301,7 @@ export default function AnnouncementsView() {
                 </Button>
                 <Button 
                   variant="outline"
-                  className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 h-auto"
+                  className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 h-auto cursor-pointer"
                   onClick={() => {
                     setTitle('');
                     setMessage('');
@@ -310,42 +315,71 @@ export default function AnnouncementsView() {
           )}
         </div>
 
-        {/* Right Column: Past Broadcasts */}
+        {/* Right Column: Past Broadcasts / Skeleton Loading */}
         <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden flex flex-col h-[600px] lg:h-auto">
           <div className="p-5 border-b border-slate-100 bg-slate-50/50 shrink-0 flex justify-between items-center">
             <h3 className="text-sm font-bold text-slate-900">Recent Broadcasts</h3>
-            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
-              {broadcasts.length} total
-            </span>
+            {loading ? (
+              <Skeleton className="h-4 w-12 rounded bg-slate-200" />
+            ) : (
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                {broadcasts.length} total
+              </span>
+            )}
           </div>
 
           <div className="divide-y divide-slate-100 overflow-y-auto flex-1">
-            {broadcasts.map(broadcast => (
-              <div key={broadcast.id} className="p-4 hover:bg-slate-50/70 transition-colors">
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className="text-sm font-bold text-slate-900">{broadcast.title}</h4>
-                </div>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                  {broadcast.message}
-                </p>
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                    {broadcast.time} • {broadcast.recipients} recipients
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Eye className="h-3 w-3" /> {broadcast.readRate}
-                    </span>
-                    <span className={cn(
-                      "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                      broadcast.priority === 'Urgent' ? "bg-red-50 text-[#E63946]" : "bg-slate-100 text-slate-600"
-                    )}>
-                      {broadcast.priority}
-                    </span>
+            {loading ? (
+              [1, 2, 3, 4].map((idx) => (
+                <div key={idx} className="p-4 space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-40 bg-slate-200" />
+                    <Skeleton className="h-3 w-16 bg-slate-200" />
+                  </div>
+                  <Skeleton className="h-3.5 w-full bg-slate-200" />
+                  <Skeleton className="h-3.5 w-3/4 bg-slate-200" />
+                  <div className="flex justify-between pt-1">
+                    <Skeleton className="h-3 w-24 bg-slate-200" />
+                    <Skeleton className="h-4 w-16 rounded-full bg-slate-200" />
                   </div>
                 </div>
+              ))
+            ) : broadcasts.length > 0 ? (
+              broadcasts.map(broadcast => (
+                <div key={broadcast.id} className="p-4 hover:bg-slate-50/70 transition-colors">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="text-sm font-bold text-slate-900">{broadcast.title}</h4>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    {broadcast.message}
+                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+                      {broadcast.time} • {broadcast.recipients} recipients
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Eye className="h-3 w-3" /> {broadcast.readRate}
+                      </span>
+                      <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                        broadcast.priority === 'Urgent' ? "bg-red-50 text-[#E63946]" : "bg-slate-100 text-slate-600"
+                      )}>
+                        {broadcast.priority}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400 h-full">
+                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center mb-2 text-slate-400">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <p className="text-xs font-semibold text-slate-700">No broadcasts sent yet</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Use the form to send your first fleet notice.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

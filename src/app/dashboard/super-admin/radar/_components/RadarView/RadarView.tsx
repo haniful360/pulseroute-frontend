@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import GoogleMapView, { MapMarkerItem } from '@/components/shared/GoogleMap/GoogleMapView';
 import { getAllDriversAction } from '@/services/driver.service';
 import { getOverviewAnalyticsAction } from '@/services/analytics.service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Standard Dhaka coverage coordinates for realistic fleet simulation if driver GPS is not yet active
 const DHAKA_LOCATIONS = [
@@ -109,9 +110,9 @@ export default function RadarView() {
       }));
   }, [normalizedDrivers]);
 
-  const totalRegistered = overview?.fleet?.totalAmbulances || normalizedDrivers.length || 84;
-  const onlineCount = normalizedDrivers.filter(d => d.dutyStatus === 'ONLINE').length || overview?.fleet?.onlineAmbulances || 1;
-  const onDispatchCount = normalizedDrivers.filter(d => d.dutyStatus === 'BUSY').length || overview?.fleet?.onTripAmbulances || 0;
+  const totalRegistered = overview?.fleet?.totalAmbulances ?? normalizedDrivers.length;
+  const onlineCount = normalizedDrivers.filter(d => d.dutyStatus === 'ONLINE').length || (overview?.fleet?.onlineAmbulances ?? 0);
+  const onDispatchCount = normalizedDrivers.filter(d => d.dutyStatus === 'BUSY').length || (overview?.fleet?.onTripAmbulances ?? 0);
   const offlineCount = Math.max(0, totalRegistered - onlineCount - onDispatchCount);
 
   const handleSelectDriver = (driver: any) => {
@@ -167,7 +168,11 @@ export default function RadarView() {
             <div>
               <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Registered fleet</div>
               <div className="flex items-end gap-2">
-                <div className="text-2xl font-black text-[#0b132b]">{totalRegistered}</div>
+                {isPending && drivers.length === 0 ? (
+                  <Skeleton className="h-7 w-14 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">{totalRegistered}</div>
+                )}
                 <div className="text-xs font-medium text-emerald-600 mb-1">active units</div>
               </div>
             </div>
@@ -182,7 +187,11 @@ export default function RadarView() {
             <div>
               <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Online now</div>
               <div className="flex items-end gap-2">
-                <div className="text-2xl font-black text-[#0b132b]">{onlineCount}</div>
+                {isPending && drivers.length === 0 ? (
+                  <Skeleton className="h-7 w-14 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">{onlineCount}</div>
+                )}
                 <div className="text-xs font-medium text-emerald-600 mb-1">ready for dispatch</div>
               </div>
             </div>
@@ -197,7 +206,11 @@ export default function RadarView() {
             <div>
               <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">On dispatch</div>
               <div className="flex items-end gap-2">
-                <div className="text-2xl font-black text-[#0b132b]">{onDispatchCount}</div>
+                {isPending && drivers.length === 0 ? (
+                  <Skeleton className="h-7 w-14 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">{onDispatchCount}</div>
+                )}
                 <div className="text-xs font-medium text-amber-600 mb-1">critical trips</div>
               </div>
             </div>
@@ -212,7 +225,11 @@ export default function RadarView() {
             <div>
               <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Offline</div>
               <div className="flex items-end gap-2">
-                <div className="text-2xl font-black text-[#0b132b]">{offlineCount}</div>
+                {isPending && drivers.length === 0 ? (
+                  <Skeleton className="h-7 w-14 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">{offlineCount}</div>
+                )}
                 <div className="text-xs font-medium text-slate-400 mb-1">standby / off-duty</div>
               </div>
             </div>
@@ -295,7 +312,23 @@ export default function RadarView() {
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-            {filteredVehicles.length > 0 ? (
+            {isPending && drivers.length === 0 ? (
+              <div className="p-4 space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="space-y-2 p-2">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-4 w-14" />
+                    </div>
+                    <Skeleton className="h-3 w-36" />
+                    <div className="flex items-center justify-between pt-1">
+                      <Skeleton className="h-4 w-10" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredVehicles.length > 0 ? (
               filteredVehicles.map((v) => {
                 const isSelected = selectedDriverId === v.id;
                 return (

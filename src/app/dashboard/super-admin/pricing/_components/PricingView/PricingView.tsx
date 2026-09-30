@@ -7,6 +7,7 @@ import { DollarSign, MapPin, HeartPulse, Percent, Check, ShieldCheck } from 'luc
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { getAllPricingConfigsAction, updatePricingConfigAction } from '@/services/pricing.service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PricingView() {
   const [configs, setConfigs] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export default function PricingView() {
   const [baseFare, setBaseFare] = useState('1200');
   const [perKmRate, setPerKmRate] = useState('45');
   const [minimumFare, setMinimumFare] = useState('1500');
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -31,6 +33,8 @@ export default function PricingView() {
         }
       } catch (err) {
         console.error('Failed to load pricing configs:', err);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadPricing();
@@ -92,7 +96,11 @@ export default function PricingView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Standard base fare</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">৳{Number(baseFare).toLocaleString()}</div>
+          {isLoading ? (
+            <Skeleton className="h-8 w-24 my-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">৳{Number(baseFare).toLocaleString()}</div>
+          )}
           <div className="text-xs font-medium text-slate-500 mt-1">Current schedule</div>
         </div>
         
@@ -104,7 +112,11 @@ export default function PricingView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Per kilometer</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">৳{perKmRate}</div>
+          {isLoading ? (
+            <Skeleton className="h-8 w-20 my-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">৳{perKmRate}</div>
+          )}
           <div className="text-xs font-medium text-slate-500 mt-1">Dhaka metro</div>
         </div>
 
@@ -116,7 +128,11 @@ export default function PricingView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Minimum fare</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">৳{Number(minimumFare).toLocaleString()}</div>
+          {isLoading ? (
+            <Skeleton className="h-8 w-24 my-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">৳{Number(minimumFare).toLocaleString()}</div>
+          )}
           <div className="text-xs font-medium text-slate-500 mt-1">Base threshold</div>
         </div>
 
@@ -128,7 +144,11 @@ export default function PricingView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Operator commission</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">12%</div>
+          {isLoading ? (
+            <Skeleton className="h-8 w-16 my-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">12%</div>
+          )}
           <div className="text-xs font-medium text-slate-500 mt-1">Across all trips</div>
         </div>
       </div>
@@ -150,32 +170,46 @@ export default function PricingView() {
           <div className="flex-1 space-y-6">
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Base Fares</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <InputField
-                  label="Base Fare (BDT)"
-                  value={baseFare}
-                  onChange={(e) => setBaseFare(e.target.value)}
-                />
-                <InputField
-                  label="Per Kilometer Rate (BDT)"
-                  value={perKmRate}
-                  onChange={(e) => setPerKmRate(e.target.value)}
-                />
-              </div>
+              {isLoading ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Skeleton className="h-11 w-full rounded-2xl" />
+                  <Skeleton className="h-11 w-full rounded-2xl" />
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InputField
+                    label="Base Fare (BDT)"
+                    value={baseFare}
+                    onChange={(e) => setBaseFare(e.target.value)}
+                  />
+                  <InputField
+                    label="Per Kilometer Rate (BDT)"
+                    value={perKmRate}
+                    onChange={(e) => setPerKmRate(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="h-px bg-slate-100" />
 
             <div>
               <h3 className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-4">Surcharges</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <InputField
-                  label="Minimum Trip Fare (BDT)"
-                  value={minimumFare}
-                  onChange={(e) => setMinimumFare(e.target.value)}
-                />
-                <InputField label="Night Surcharge (%)" value="25" disabled />
-              </div>
+              {isLoading ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Skeleton className="h-11 w-full rounded-2xl" />
+                  <Skeleton className="h-11 w-full rounded-2xl" />
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InputField
+                    label="Minimum Trip Fare (BDT)"
+                    value={minimumFare}
+                    onChange={(e) => setMinimumFare(e.target.value)}
+                  />
+                  <InputField label="Night Surcharge (%)" value="25" disabled />
+                </div>
+              )}
             </div>
 
             <div className="h-px bg-slate-100" />

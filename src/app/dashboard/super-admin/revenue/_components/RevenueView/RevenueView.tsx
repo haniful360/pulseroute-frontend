@@ -3,7 +3,8 @@
 import React, { useState, useMemo, useEffect, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
-import { Wallet, TrendingUp, CreditCard, RefreshCcw, Download, Search, RefreshCw } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Wallet, TrendingUp, CreditCard, RefreshCcw, Download, Search, RefreshCw, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAllInvoicesAction } from '@/services/invoice.service';
 import { getOverviewAnalyticsAction } from '@/services/analytics.service';
@@ -147,9 +148,13 @@ export default function RevenueView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Gross booking value</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">
-            {grossBilled > 0 ? formatBDT(grossBilled) : '৳4.82M'}
-          </div>
+          {isPending ? (
+            <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">
+              {formatBDT(grossBilled)}
+            </div>
+          )}
           <div className="text-xs font-medium text-emerald-600 mt-1">Total platform invoiced</div>
         </div>
 
@@ -161,10 +166,14 @@ export default function RevenueView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Platform revenue</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">
-            {platformRevenue > 0 ? formatBDT(platformRevenue) : '৳579K'}
-          </div>
-          <div className="text-xs font-medium text-slate-500 mt-1">12% standard commission</div>
+          {isPending ? (
+            <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">
+              {formatBDT(platformRevenue)}
+            </div>
+          )}
+          <div className="text-xs font-medium text-slate-500 mt-1">Platform fee collections</div>
         </div>
 
         {/* Stat 3 */}
@@ -175,9 +184,13 @@ export default function RevenueView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Pending payouts</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">
-            {pendingSettlement > 0 ? formatBDT(pendingSettlement) : '৳184K'}
-          </div>
+          {isPending ? (
+            <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">
+              {formatBDT(pendingSettlement)}
+            </div>
+          )}
           <div className="text-xs font-medium text-amber-600 mt-1">
             {pendingPayoutCount} pending operator requests
           </div>
@@ -191,9 +204,13 @@ export default function RevenueView() {
             </div>
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Settled Volume</div>
           </div>
-          <div className="text-2xl font-black text-[#0b132b]">
-            {totalPaid > 0 ? formatBDT(totalPaid) : '৳4.28M'}
-          </div>
+          {isPending ? (
+            <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
+          ) : (
+            <div className="text-2xl font-black text-[#0b132b]">
+              {formatBDT(totalPaid)}
+            </div>
+          )}
           <div className="text-xs font-medium text-emerald-600 mt-1">Processed transactions</div>
         </div>
       </div>
@@ -291,56 +308,89 @@ export default function RevenueView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredTransactions.map((tx) => {
-                const dateStr = new Date(tx.createdAt || Date.now()).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                });
-                const isPaid = tx.paymentStatus === 'PAID';
-                const isPendingTx = tx.paymentStatus === 'PENDING';
-                const isRefunded = tx.paymentStatus === 'REFUNDED';
-                const statusLabel = isPaid ? 'Settled' : isPendingTx ? 'Pending' : isRefunded ? 'Refunded' : tx.paymentStatus;
-
-                return (
-                  <tr key={tx.id} className="hover:bg-[#f8fafc] transition-colors">
+              {isPending ? (
+                [1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="hover:bg-[#f8fafc]">
                     <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="font-mono text-xs font-semibold text-slate-700">
-                        {tx.invoiceNumber || tx.id.slice(0, 10)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium">{dateStr}</td>
-                    <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium font-mono text-xs">
-                      {tx.tripId ? `TRP-${tx.tripId.slice(-6).toUpperCase()}` : 'TRP-DIRECT'}
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap font-semibold text-slate-900">
-                      ৳{Number(tx.totalAmount || 0).toLocaleString()}
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap font-semibold text-[#E63946]">
-                      ৳{Number(tx.platformCommission || 0).toLocaleString()}
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium">
-                      ৳{Number(tx.driverEarning || 0).toLocaleString()}
+                      <Skeleton className="h-4 w-24 bg-slate-200" />
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap">
-                      <span
-                        className={cn(
-                          'rounded-full px-2.5 py-0.5 text-[10px] font-bold',
-                          isPaid && 'bg-emerald-50 text-emerald-600',
-                          isPendingTx && 'bg-amber-50 text-amber-600',
-                          isRefunded && 'bg-slate-100 text-slate-600'
-                        )}
-                      >
-                        {statusLabel}
-                      </span>
+                      <Skeleton className="h-4 w-20 bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <Skeleton className="h-4 w-28 bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <Skeleton className="h-4 w-16 bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <Skeleton className="h-4 w-16 bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <Skeleton className="h-4 w-16 bg-slate-200" />
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <Skeleton className="h-5 w-16 rounded-full bg-slate-200" />
                     </td>
                   </tr>
-                );
-              })}
-              {filteredTransactions.length === 0 && (
+                ))
+              ) : filteredTransactions.length > 0 ? (
+                filteredTransactions.map((tx) => {
+                  const dateStr = new Date(tx.createdAt || Date.now()).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  });
+                  const isPaid = tx.paymentStatus === 'PAID';
+                  const isPendingTx = tx.paymentStatus === 'PENDING';
+                  const isRefunded = tx.paymentStatus === 'REFUNDED';
+                  const statusLabel = isPaid ? 'Settled' : isPendingTx ? 'Pending' : isRefunded ? 'Refunded' : tx.paymentStatus;
+
+                  return (
+                    <tr key={tx.id} className="hover:bg-[#f8fafc] transition-colors">
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="font-mono text-xs font-semibold text-slate-700">
+                          {tx.invoiceNumber || tx.id.slice(0, 10)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium">{dateStr}</td>
+                      <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium font-mono text-xs">
+                        {tx.tripId ? `TRP-${tx.tripId.slice(-6).toUpperCase()}` : 'TRP-DIRECT'}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap font-semibold text-slate-900">
+                        ৳{Number(tx.totalAmount || 0).toLocaleString()}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap font-semibold text-[#E63946]">
+                        ৳{Number(tx.platformCommission || 0).toLocaleString()}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium">
+                        ৳{Number(tx.driverEarning || 0).toLocaleString()}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span
+                          className={cn(
+                            'rounded-full px-2.5 py-0.5 text-[10px] font-bold',
+                            isPaid && 'bg-emerald-50 text-emerald-600',
+                            isPendingTx && 'bg-amber-50 text-amber-600',
+                            isRefunded && 'bg-slate-100 text-slate-600'
+                          )}
+                        >
+                          {statusLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-500">
-                    {isPending ? 'Loading transaction records...' : 'No transactions found.'}
+                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-slate-500">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <p className="font-semibold text-slate-800">No transactions found</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Dispatched trips with completed payments will appear in this ledger.</p>
+                    </div>
                   </td>
                 </tr>
               )}
