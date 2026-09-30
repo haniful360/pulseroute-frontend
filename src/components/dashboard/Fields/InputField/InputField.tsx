@@ -153,8 +153,13 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
             placeholder={placeholder}
             readOnly={readOnly}
             disabled={disabled}
-            {...(value !== undefined ? { value } : defaultValue !== undefined ? { defaultValue } : { value: '' })}
-            onChange={onChange}
+            {...(value !== undefined
+              ? { value, ...(onChange ? { onChange } : readOnly ? {} : { onChange: () => {} }) }
+              : defaultValue !== undefined
+              ? { defaultValue, ...(onChange ? { onChange } : {}) }
+              : onChange
+              ? { onChange }
+              : {})}
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             onKeyUp={onKeyUp}
