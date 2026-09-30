@@ -20,6 +20,7 @@ import { getMyTripsAction } from '@/services/trip/trip.service';
 import { getDriverDashboardOverviewAction } from '@/services/driver/driver.service';
 import { getMyReviewsAction } from '@/services/review/review.service';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ShiftHistorySkeleton } from '@/components/dashboard/skeletons/driver';
 
 interface ShiftLog {
   id: string;
@@ -174,6 +175,10 @@ export default function ShiftHistoryView() {
     document.body.removeChild(link);
     toast.success('Shift logs exported successfully.');
   };
+
+  if (loading) {
+    return <ShiftHistorySkeleton />;
+  }
 
   return (
     <div className="space-y-6">

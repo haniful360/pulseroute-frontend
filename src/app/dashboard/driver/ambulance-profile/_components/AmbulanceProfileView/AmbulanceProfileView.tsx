@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyDriverProfileAction } from '@/services/driver/driver.service';
+import { AmbulanceProfileSkeleton } from '@/components/dashboard/skeletons/driver';
 
 export default function AmbulanceProfileView() {
   const [driver, setDriver] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProfile() {
@@ -30,6 +32,8 @@ export default function AmbulanceProfileView() {
         }
       } catch (err) {
         console.error('Failed to load ambulance profile:', err);
+      } finally {
+        setLoading(false);
       }
     }
     loadProfile();
@@ -43,6 +47,10 @@ export default function AmbulanceProfileView() {
     { name: 'Dual Oxygen Cylinder Unit (4000L)', status: 'Operational', icon: HeartPulse, date: 'Pressure 150 bar' },
     { name: 'Suction Unit & Intubation Kit', status: 'Operational', icon: Activity, date: 'Sterilized' },
   ];
+
+  if (loading) {
+    return <AmbulanceProfileSkeleton />;
+  }
 
   return (
     <div className="space-y-6">

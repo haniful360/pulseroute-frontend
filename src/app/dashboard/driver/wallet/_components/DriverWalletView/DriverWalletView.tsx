@@ -24,6 +24,7 @@ import {
   exportDriverStatementAction,
 } from '@/services/wallet/wallet.service';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DriverWalletSkeleton } from '@/components/dashboard/skeletons/driver';
 
 interface LedgerItem {
   id: string;
@@ -172,6 +173,10 @@ export default function DriverWalletView() {
       ),
     },
   ];
+
+  if (loading) {
+    return <DriverWalletSkeleton />;
+  }
 
   return (
     <div className="space-y-6">

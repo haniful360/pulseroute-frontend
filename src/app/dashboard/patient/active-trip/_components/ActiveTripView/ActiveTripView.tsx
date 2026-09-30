@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 import { getTripByIdAction, getMyTripsAction, cancelTripAction } from '@/services/trip/trip.service';
 import { getUserDashboardOverviewAction } from '@/services/user/user.service';
 import { createReviewAction } from '@/services/review/review.service';
+import { ActiveTripSkeleton } from '@/components/dashboard/skeletons/patient';
 
 export default function ActiveTripView() {
   const searchParams = useSearchParams();
@@ -194,14 +195,7 @@ export default function ActiveTripView() {
   const activeStep = currentStatusIndex !== -1 ? currentStatusIndex : 1;
 
   if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <span className="h-10 w-10 animate-spin rounded-full border-3 border-red-500 border-t-transparent" />
-          <p className="text-sm font-bold text-slate-700">Connecting to Live Emergency Dispatch...</p>
-        </div>
-      </div>
-    );
+    return <ActiveTripSkeleton />;
   }
 
   if (!trip) {

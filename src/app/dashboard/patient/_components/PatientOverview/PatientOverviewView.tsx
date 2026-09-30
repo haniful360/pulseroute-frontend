@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { PatientOverviewSkeleton } from '@/components/dashboard/skeletons/patient';
+
 export default function PatientOverviewView() {
   const router = useRouter();
   const { user, profile } = useAuth();
@@ -49,6 +51,10 @@ export default function PatientOverviewView() {
     }
     loadDashboard();
   }, []);
+
+  if (loading) {
+    return <PatientOverviewSkeleton />;
+  }
 
   const patientName = profile?.name || user?.name || 'Valued Patient';
   const activeTrip = data?.activeTrip;

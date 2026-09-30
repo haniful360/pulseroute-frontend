@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { getMyTripsAction } from '@/services/trip/trip.service';
 import { exportInvoiceReceiptAction } from '@/services/invoice/invoice.service';
+import { TripHistorySkeleton } from '@/components/dashboard/skeletons/patient';
 
 interface PatientTrip {
   id: string;
@@ -153,6 +154,10 @@ export default function TripHistoryView() {
       ),
     },
   ];
+
+  if (loading) {
+    return <TripHistorySkeleton />;
+  }
 
   return (
     <div className="space-y-6">

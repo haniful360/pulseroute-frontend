@@ -16,9 +16,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyDriverProfileAction } from '@/services/driver/driver.service';
+import { DriverKycSkeleton } from '@/components/dashboard/skeletons/driver';
 
 export default function DriverKycView() {
   const [driver, setDriver] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadDriver() {
@@ -29,6 +31,8 @@ export default function DriverKycView() {
         }
       } catch (err) {
         console.error('Failed to load driver KYC profile:', err);
+      } finally {
+        setLoading(false);
       }
     }
     loadDriver();
@@ -67,6 +71,10 @@ export default function DriverKycView() {
       icon: FileCheck,
     },
   ];
+
+  if (loading) {
+    return <DriverKycSkeleton />;
+  }
 
   return (
     <div className="space-y-6">

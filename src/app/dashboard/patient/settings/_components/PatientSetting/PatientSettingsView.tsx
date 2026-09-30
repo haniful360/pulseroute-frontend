@@ -10,6 +10,7 @@ import { getMyProfileAction, updateMyProfileAction } from '@/services/user/user.
 import { changePasswordAction } from '@/services/auth/auth.service';
 import { Shield, User, Lock, MapPin, KeyRound, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PatientSettingsSkeleton } from '@/components/dashboard/skeletons/patient';
 
 export default function PatientSettingsView() {
   const { user: authUser, profile, refreshUser } = useAuth();
@@ -136,6 +137,10 @@ export default function PatientSettingsView() {
       toast.info('Settings form reset to saved profile.');
     }
   };
+
+  if (isLoading) {
+    return <PatientSettingsSkeleton />;
+  }
 
   return (
     <div className="space-y-6">

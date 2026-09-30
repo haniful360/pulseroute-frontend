@@ -30,6 +30,7 @@ import {
   updateTripStatusAction,
   getMyTripsAction,
 } from '@/services/trip/trip.service';
+import { ActiveDispatchSkeleton } from '@/components/dashboard/skeletons/driver';
 
 export default function ActiveDispatchView() {
   const router = useRouter();
@@ -123,6 +124,10 @@ export default function ActiveDispatchView() {
   };
 
   const currentAction = getNextAction(activeTrip?.status || 'EN_ROUTE');
+
+  if (loading) {
+    return <ActiveDispatchSkeleton />;
+  }
 
   return (
     <div className="-m-4 flex min-h-[calc(100vh-4rem)] flex-col bg-[#cdd2d6] sm:-m-6 lg:-m-8">

@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 import { createPaymentIntentAction, confirmPaymentAction } from '@/services/payment/payment.service';
 import { getMyInvoicesAction } from '@/services/invoice/invoice.service';
+import { PaymentMethodsSkeleton } from '@/components/dashboard/skeletons/patient';
 
 export default function PaymentMethodsView() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bkash' | 'insurance'>('card');
@@ -101,6 +102,10 @@ export default function PaymentMethodsView() {
     setAddCardModalOpen(false);
     toast.success('Payment card saved to your PulseRoute wallet.');
   };
+
+  if (loadingInvoices) {
+    return <PaymentMethodsSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
