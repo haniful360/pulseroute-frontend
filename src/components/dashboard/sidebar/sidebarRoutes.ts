@@ -4,6 +4,7 @@ import {
   AppWindow,
   Award,
   BarChart3,
+  Bell,
   Bookmark,
   BookOpen,
   Building2,
@@ -56,6 +57,11 @@ export interface SidebarRouteItem {
 // Patient Dashboard Routes (PulseRoute Figma 2:8109)
 export const patientRoutes: SidebarRouteItem[] = [
   {
+    title: 'Overview',
+    url: '/dashboard/patient',
+    icon: LayoutDashboard,
+  },
+  {
     title: 'Book Ambulance',
     url: '/dashboard/patient/book-ambulance',
     icon: Ambulance,
@@ -79,6 +85,11 @@ export const patientRoutes: SidebarRouteItem[] = [
     title: 'Medical Profile',
     url: '/dashboard/patient/medical-profile',
     icon: ShieldCheck,
+  },
+  {
+    title: 'Notifications',
+    url: '/dashboard/patient/notifications',
+    icon: Bell,
   },
   {
     title: 'Settings',
@@ -114,6 +125,12 @@ export const driverRoutes: SidebarRouteItem[] = [
     title: 'Shift History',
     url: '/dashboard/driver/shift-history',
     icon: History,
+    section: 'OPERATIONS',
+  },
+  {
+    title: 'Notifications',
+    url: '/dashboard/driver/notifications',
+    icon: Bell,
     section: 'OPERATIONS',
   },
   // FLEET & LEGAL

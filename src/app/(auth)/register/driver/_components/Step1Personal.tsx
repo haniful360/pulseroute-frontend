@@ -20,20 +20,23 @@ interface Step1Props {
   onNext: () => void;
 }
 
+import { compressImageFile } from '@/lib/image-compressor';
+
 export const Step1Personal: React.FC<Step1Props> = ({ data, onUpdate, onNext }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setErrors((prev) => ({ ...prev, avatar: 'Image size must be less than 2MB' }));
-        return;
+      try {
+        const compressed = await compressImageFile(file, 800, 800, 0.85);
+        onUpdate({ avatarUrl: compressed });
+        setErrors((prev) => ({ ...prev, avatar: '' }));
+      } catch {
+        setErrors((prev) => ({ ...prev, avatar: 'Failed to process image' }));
       }
-      const previewUrl = URL.createObjectURL(file);
-      onUpdate({ avatarUrl: previewUrl });
-      setErrors((prev) => ({ ...prev, avatar: '' }));
+      e.target.value = '';
     }
   };
 

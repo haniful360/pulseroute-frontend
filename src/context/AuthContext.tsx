@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
@@ -12,7 +13,7 @@ import {
   ApiResponse,
   IAuthData,
 } from '@/types/auth.types';
-import { getCurrentUserAction, loginUserAction, logoutAction } from '@/services/auth.service';
+import { getCurrentUserAction, loginUserAction, logoutAction } from '@/services/auth/auth.service';
 
 interface AuthContextType {
   user: IUser | null;
@@ -45,14 +46,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.success && res.data) {
         setUser(res.data.user);
         setProfile(res.data.profile);
+        if (typeof window !== 'undefined') {
+          try {
+            const address =
+              res.data.profile && 'address' in res.data.profile
+                ? (res.data.profile as IPatientProfile).address
+                : undefined;
+            localStorage.setItem(
+              'user',
+              JSON.stringify({
+                fullName: res.data.user.name,
+                email: res.data.user.email,
+                phone: res.data.user.phone,
+                address,
+                avatarUrl: res.data.user.avatarUrl,
+                role: res.data.user.role,
+              }),
+            );
+          } catch {
+            // ignore
+          }
+        }
       } else {
         setUser(null);
         setProfile(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('user');
+        }
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error fetching current user:', error);
       setUser(null);
       setProfile(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +100,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (res.data.patient) setProfile(res.data.patient);
         else if (res.data.driver) setProfile(res.data.driver);
         else if (res.data.admin) setProfile(res.data.admin);
+
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(
+              'user',
+              JSON.stringify({
+                fullName: res.data.user.name,
+                email: res.data.user.email,
+                phone: res.data.user.phone,
+                address: res.data.patient?.address,
+                avatarUrl: res.data.user.avatarUrl,
+                role: res.data.user.role,
+              }),
+            );
+          } catch {
+            // ignore
+          }
+        }
       }
       return res;
     } finally {
@@ -84,6 +131,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await logoutAction();
       setUser(null);
       setProfile(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+      }
       router.push('/login');
     } finally {
       setIsLoading(false);

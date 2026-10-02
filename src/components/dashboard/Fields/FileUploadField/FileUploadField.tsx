@@ -99,7 +99,7 @@ const FileUploadField = <T extends FieldValues>({
     disabled: isUploading || readOnly,
     maxFiles: 1,
     multiple: false,
-    onDrop: async (acceptedFiles) => {
+    onDrop: async (acceptedFiles: any) => {
       if (acceptedFiles && acceptedFiles[0]) {
         await uploadFile(acceptedFiles[0]);
       }

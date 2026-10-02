@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Phone, X, AlertCircle, ArrowLeft, Mail, RefreshCw } from 'lucide-react';
-import { verifyOtpAction, resendOtpAction } from '@/services/auth.service';
+import { verifyOtpAction, resendOtpAction } from '@/services/auth/auth.service';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 

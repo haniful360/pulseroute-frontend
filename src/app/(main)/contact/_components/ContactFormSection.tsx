@@ -1,5 +1,6 @@
 'use client';
 
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { CheckCircle2, MessageSquare, SendHorizonal } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -91,73 +92,48 @@ export const ContactFormSection: React.FC = () => {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* Full Name */}
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="fullName"
-                      className="block text-xs font-semibold text-slate-700"
-                    >
-                      Full name
-                    </label>
-                    <input
-                      id="fullName"
-                      type="text"
-                      required
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      placeholder="e.g. Tanvir Hossain"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:ring-1 focus:ring-red-600 focus:outline-none"
-                    />
-                  </div>
+                  <InputField
+                    id="fullName"
+                    label="Full name"
+                    required
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    placeholder="e.g. Tanvir Hossain"
+                    className="bg-white"
+                  />
 
-                  {/* Email */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="email" className="block text-xs font-semibold text-slate-700">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="name@example.com"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:ring-1 focus:ring-red-600 focus:outline-none"
-                    />
-                  </div>
+                  <InputField
+                    id="email"
+                    label="Email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="name@example.com"
+                    className="bg-white"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* Phone */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="phone" className="block text-xs font-semibold text-slate-700">
-                      Phone
-                    </label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+880 1..."
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:ring-1 focus:ring-red-600 focus:outline-none"
-                    />
-                  </div>
+                  <InputField
+                    id="phone"
+                    label="Phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+880 1..."
+                    className="bg-white"
+                  />
 
-                  {/* Subject */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="subject" className="block text-xs font-semibold text-slate-700">
-                      Subject
-                    </label>
-                    <input
-                      id="subject"
-                      type="text"
-                      required
-                      value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      placeholder="Trip enquiry, invoice, feedback..."
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:ring-1 focus:ring-red-600 focus:outline-none"
-                    />
-                  </div>
+                  <InputField
+                    id="subject"
+                    label="Subject"
+                    required
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    placeholder="Trip enquiry, invoice, feedback..."
+                    className="bg-white"
+                  />
                 </div>
 
                 {/* Message */}

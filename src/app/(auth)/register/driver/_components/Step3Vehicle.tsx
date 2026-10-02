@@ -19,6 +19,7 @@ import {
   Stethoscope,
   X,
 } from 'lucide-react';
+import { compressImageFile } from '@/lib/image-compressor';
 
 export interface DriverVehicleData {
   vehiclePlate: string;
@@ -39,6 +40,7 @@ interface Step3Props {
   onUpdate: (data: Partial<DriverVehicleData>) => void;
   onNext: () => void;
   onBack: () => void;
+  isSubmitting?: boolean;
 }
 
 const AMBULANCE_TYPES = [
@@ -80,7 +82,13 @@ const AMBULANCE_TYPES = [
   },
 ];
 
-export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onBack }) => {
+export const Step3Vehicle: React.FC<Step3Props> = ({
+  data,
+  onUpdate,
+  onNext,
+  onBack,
+  isSubmitting = false,
+}) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -93,14 +101,22 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
     });
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const newPhotoUrls = Array.from(files).map((file) => URL.createObjectURL(file));
-      onUpdate({
-        photos: [...data.photos, ...newPhotoUrls],
-      });
-      if (errors.photos) setErrors((prev) => ({ ...prev, photos: '' }));
+      const fileList = Array.from(files);
+      const compressPromises = fileList.map((file) => compressImageFile(file, 1280, 1280, 0.8));
+
+      try {
+        const newPhotoUrls = await Promise.all(compressPromises);
+        onUpdate({
+          photos: [...data.photos, ...newPhotoUrls.filter(Boolean)],
+        });
+        if (errors.photos) setErrors((prev) => ({ ...prev, photos: '' }));
+      } catch {
+        setErrors((prev) => ({ ...prev, photos: 'Failed to process some vehicle photos' }));
+      }
+      e.target.value = '';
     }
   };
 
@@ -119,9 +135,8 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
     if (!data.ambulanceType) {
       newErrors.ambulanceType = 'Please select an ambulance category';
     }
-    if (data.photos.length < 1) {
-      // Default to sample if user hasn't uploaded, but notify
-      // We can also allow proceeding or require at least 1
+    if (!data.photos || data.photos.length === 0) {
+      newErrors.photos = 'Please upload at least one vehicle photo';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -299,14 +314,33 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
 
       {/* 4. Vehicle Photos Multi-upload */}
       <div className="space-y-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-800 sm:text-base">Vehicle Photos</h3>
-          <p className="text-xs text-slate-500">
-            Upload photos of your vehicle&apos;s exterior and interior (min 3 photos)
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 sm:text-base">Vehicle Photos</h3>
+            <p className="text-xs text-slate-500">
+              Upload photos of your vehicle&apos;s exterior and interior (min 3 photos)
+            </p>
+          </div>
+          {data.photos.length > 0 && (
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                data.photos.length >= 3
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}
+            >
+              {data.photos.length} / 3 photos
+            </span>
+          )}
         </div>
 
-        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-5 text-center">
+        <div
+          className={`rounded-2xl border-2 border-dashed p-4 transition-colors ${
+            errors.photos
+              ? 'border-red-400 bg-red-50/30'
+              : 'border-slate-200 bg-slate-50/50'
+          }`}
+        >
           <input
             ref={photoInputRef}
             type="file"
@@ -316,56 +350,69 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
             className="hidden"
           />
 
-          <div
-            onClick={() => photoInputRef.current?.click()}
-            className="flex cursor-pointer flex-col items-center justify-center py-3"
-          >
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-red-600 shadow-sm">
-              <UploadCloud className="h-6 w-6" />
-            </div>
-            <p className="text-xs font-bold text-slate-800 sm:text-sm">Drop your photos here</p>
-            <p className="mt-1 text-xs text-slate-500">
-              or <span className="font-semibold text-red-600 underline">browse from computer</span>
-            </p>
-          </div>
-
-          {/* Thumbnails preview */}
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 border-t border-slate-200/60 pt-3">
-            {data.photos.map((url, index) => (
-              <div
-                key={index}
-                className="group relative h-16 w-16 overflow-hidden rounded-xl border border-slate-200 shadow-xs"
-              >
-                <Image
-                  src={url}
-                  alt={`Ambulance preview ${index + 1}`}
-                  width={64}
-                  height={64}
-                  unoptimized
-                  className="h-full w-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(index)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                  aria-label="Remove photo"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-
-            {/* Quick add thumbnail button */}
-            <button
-              type="button"
+          {data.photos.length === 0 ? (
+            <div
               onClick={() => photoInputRef.current?.click()}
-              className="flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-400 shadow-xs transition-colors hover:border-red-400 hover:text-red-600"
+              className="flex cursor-pointer flex-col items-center justify-center py-7"
             >
-              <Plus className="h-5 w-5" />
-              <span className="mt-0.5 text-[9px] font-bold">ADD</span>
-            </button>
-          </div>
+              <div className="mb-3 flex h-13 w-13 items-center justify-center rounded-2xl bg-white text-red-600 shadow-sm transition-transform hover:scale-105">
+                <UploadCloud className="h-6 w-6" />
+              </div>
+              <p className="text-xs font-bold text-slate-800 sm:text-sm">Drop your photos here</p>
+              <p className="mt-1 text-xs text-slate-500">
+                or <span className="font-semibold text-red-600 underline">browse from computer</span>
+              </p>
+              <p className="mt-1.5 text-[11px] text-slate-400">Exterior, interior & equipment (min 3 photos)</p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3.5 p-1">
+              {data.photos.map((url, index) => (
+                <div
+                  key={index}
+                  className="group relative h-24 w-24 sm:h-28 sm:w-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs"
+                >
+                  <Image
+                    src={url}
+                    alt={`Ambulance preview ${index + 1}`}
+                    width={112}
+                    height={112}
+                    unoptimized
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(index)}
+                    className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition-all hover:bg-red-700 cursor-pointer"
+                    aria-label="Remove photo"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-xs">
+                    Photo {index + 1}
+                  </span>
+                </div>
+              ))}
+
+              {/* Increased Add Button */}
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="flex h-24 w-24 sm:h-28 sm:w-28 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-red-300 bg-red-50/50 text-red-600 shadow-xs transition-all hover:border-red-500 hover:bg-red-100/60 hover:shadow-sm"
+              >
+                <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-600 shadow-xs">
+                  <Plus className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-bold">Add</span>
+                <span className="text-[10px] font-semibold text-slate-500">
+                  {data.photos.length}/3 min
+                </span>
+              </button>
+            </div>
+          )}
         </div>
+        {errors.photos && (
+          <p className="mt-1 text-xs font-semibold text-red-600">{errors.photos}</p>
+        )}
       </div>
 
       {/* Navigation Buttons */}
@@ -381,10 +428,17 @@ export const Step3Vehicle: React.FC<Step3Props> = ({ data, onUpdate, onNext, onB
 
         <button
           type="submit"
-          className="flex h-12 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold tracking-wide text-white shadow-md shadow-red-600/25 transition-all hover:bg-red-700"
+          disabled={isSubmitting}
+          className="flex h-12 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold tracking-wide text-white shadow-md shadow-red-600/25 transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span>Submit for Verification</span>
-          <ArrowRight className="h-4 w-4" />
+          {isSubmitting ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          ) : (
+            <>
+              <span>Submit for Verification</span>
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </button>
       </div>
     </form>

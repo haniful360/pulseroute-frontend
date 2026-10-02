@@ -1,0 +1,388 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Megaphone, Radio, Send, Eye, CheckCircle2, Loader2, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { 
+  createBroadcastAnnouncementAction, 
+  getBroadcastAnnouncementsAction 
+} from '@/services/notification/notification.service';
+
+interface BroadcastItem {
+  id: string | number;
+  title: string;
+  message: string;
+  time: string;
+  readRate: string;
+  priority: string;
+  recipients: number;
+}
+
+export default function AnnouncementsView() {
+  const [broadcasts, setBroadcasts] = useState<BroadcastItem[]>([]);
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [audience, setAudience] = useState('All Online Drivers');
+  const [priority, setPriority] = useState<'Normal' | 'Urgent'>('Normal');
+  const [loading, setLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+
+  useEffect(() => {
+    async function loadBroadcasts() {
+      setLoading(true);
+      try {
+        const res = await getBroadcastAnnouncementsAction();
+        if (res.success && Array.isArray(res.data)) {
+          const mapped: BroadcastItem[] = res.data.map((item: any, idx: number) => ({
+            id: item.id || `bc-${idx}`,
+            title: item.title,
+            message: item.message,
+            time: new Date(item.createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            readRate: '95%',
+            priority: item.title?.toLowerCase().includes('critical') || item.title?.toLowerCase().includes('emergency') ? 'Urgent' : 'Normal',
+            recipients: 60,
+          }));
+          setBroadcasts(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load past broadcasts:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBroadcasts();
+  }, []);
+
+  const handleSend = async () => {
+    if (!title.trim() || !message.trim()) {
+      toast.error('Please enter both announcement title and message body.');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const targetAudience = audience === 'All Online Drivers' 
+        ? 'DRIVERS' 
+        : audience === 'Patients & Users' 
+          ? 'USERS' 
+          : 'ALL';
+
+      const res = await createBroadcastAnnouncementAction({
+        title,
+        message,
+        targetAudience,
+        priority: priority === 'Urgent' ? 'URGENT' : 'NORMAL',
+      });
+
+      if (res.success) {
+        toast.success('Broadcast advisory dispatched to fleet and emergency personnel.');
+        setIsSent(true);
+
+        const newBroadcast: BroadcastItem = {
+          id: Date.now(),
+          title,
+          message,
+          time: 'Just now',
+          readRate: '100%',
+          priority,
+          recipients: audience === 'Patients & Users' ? 120 : 62,
+        };
+        setBroadcasts((prev) => [newBroadcast, ...prev]);
+
+        setTimeout(() => {
+          setIsSent(false);
+          setTitle('');
+          setMessage('');
+        }, 3000);
+      } else {
+        toast.error(res.message || 'Failed to dispatch broadcast');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error sending announcement');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const audienceOptions = ['All Online Drivers', 'Fleet & Patients (All)', 'Patients & Users'];
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#E63946]">
+            OPERATIONS CONTROL CENTER
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+            Fleet Announcements & Emergency Broadcasts
+          </h1>
+          <p className="text-sm font-medium text-slate-500">
+            Dispatch fleet-wide notifications and emergency advisories.
+          </p>
+        </div>
+      </div>
+
+      {/* Stat Cards Grid */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-red-50 p-2 text-[#e63946]">
+              <Radio className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Active Audience</div>
+              <div className="flex items-end gap-2">
+                {loading ? (
+                  <Skeleton className="h-7 w-12 bg-slate-200 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">62+</div>
+                )}
+                <div className="text-xs font-medium text-slate-500 mb-1">Drivers & users online</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-red-50 p-2 text-[#e63946]">
+              <Send className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Total Broadcasts</div>
+              <div className="flex items-end gap-2">
+                {loading ? (
+                  <Skeleton className="h-7 w-12 bg-slate-200 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">{broadcasts.length}</div>
+                )}
+                <div className="text-xs font-medium text-emerald-600 mb-1">Network advisories</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-red-50 p-2 text-[#e63946]">
+              <Eye className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Delivery Rate</div>
+              <div className="flex items-end gap-2">
+                {loading ? (
+                  <Skeleton className="h-7 w-12 bg-slate-200 mt-1" />
+                ) : (
+                  <div className="text-2xl font-black text-[#0b132b]">98.6%</div>
+                )}
+                <div className="text-xs font-medium text-slate-500 mb-1">Real-time socket push</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Layout */}
+      <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
+        {/* Left Column: Compose Form */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-black text-slate-900">Compose Broadcast</h2>
+            <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" /> Ready to dispatch
+            </span>
+          </div>
+
+          {isSent ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl bg-emerald-50 border border-emerald-100 h-[400px]">
+              <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Broadcast Sent!</h3>
+              <p className="text-sm text-slate-600">Your message has been delivered to {audience}.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div>
+                <InputField 
+                  label="Broadcast Title"
+                  placeholder="e.g., Emergency route advisory..." 
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-900 mb-2 block">Target Audience</label>
+                <div className="flex flex-wrap gap-2">
+                  {audienceOptions.map(opt => (
+                    <div 
+                      key={opt}
+                      onClick={() => setAudience(opt)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-bold cursor-pointer transition-all",
+                        audience === opt 
+                          ? "border-[#E63946] bg-red-50 text-[#E63946]" 
+                          : "border-slate-200 text-slate-500 hover:border-slate-300 bg-white"
+                      )}
+                    >
+                      {opt}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-900 mb-2 block">Message Body</label>
+                <textarea 
+                  placeholder="Type your broadcast message here..."
+                  className="w-full min-h-32 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E63946]/20 focus:border-[#E63946] transition-all resize-y"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-900 mb-2 block">Priority Level</label>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setPriority('Normal')}
+                    className={cn(
+                      "flex-1 rounded-xl border px-4 py-3 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
+                      priority === 'Normal'
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    Normal Priority
+                  </button>
+                  <button 
+                    onClick={() => setPriority('Urgent')}
+                    className={cn(
+                      "flex-1 rounded-xl border px-4 py-3 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
+                      priority === 'Urgent'
+                        ? "border-[#E63946] bg-red-50 text-[#E63946]"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    <Megaphone className="h-4 w-4" />
+                    Urgent Alert
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <Button 
+                  variant="danger" 
+                  className="flex-1 rounded-2xl bg-[#E63946] px-5 py-3 text-xs font-bold text-white shadow-md shadow-red-500/20 transition-all hover:bg-red-700 active:scale-95 h-auto cursor-pointer"
+                  onClick={handleSend}
+                  disabled={isSending || !title || !message}
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Broadcasting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" /> Send Broadcast
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 h-auto cursor-pointer"
+                  onClick={() => {
+                    setTitle('');
+                    setMessage('');
+                    toast.info('Draft cleared.');
+                  }}
+                >
+                  Clear Draft
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Past Broadcasts / Skeleton Loading */}
+        <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden flex flex-col h-[600px] lg:h-auto">
+          <div className="p-5 border-b border-slate-100 bg-slate-50/50 shrink-0 flex justify-between items-center">
+            <h3 className="text-sm font-bold text-slate-900">Recent Broadcasts</h3>
+            {loading ? (
+              <Skeleton className="h-4 w-12 rounded bg-slate-200" />
+            ) : (
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                {broadcasts.length} total
+              </span>
+            )}
+          </div>
+
+          <div className="divide-y divide-slate-100 overflow-y-auto flex-1">
+            {loading ? (
+              [1, 2, 3, 4].map((idx) => (
+                <div key={idx} className="p-4 space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-40 bg-slate-200" />
+                    <Skeleton className="h-3 w-16 bg-slate-200" />
+                  </div>
+                  <Skeleton className="h-3.5 w-full bg-slate-200" />
+                  <Skeleton className="h-3.5 w-3/4 bg-slate-200" />
+                  <div className="flex justify-between pt-1">
+                    <Skeleton className="h-3 w-24 bg-slate-200" />
+                    <Skeleton className="h-4 w-16 rounded-full bg-slate-200" />
+                  </div>
+                </div>
+              ))
+            ) : broadcasts.length > 0 ? (
+              broadcasts.map(broadcast => (
+                <div key={broadcast.id} className="p-4 hover:bg-slate-50/70 transition-colors">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="text-sm font-bold text-slate-900">{broadcast.title}</h4>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    {broadcast.message}
+                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+                      {broadcast.time} • {broadcast.recipients} recipients
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Eye className="h-3 w-3" /> {broadcast.readRate}
+                      </span>
+                      <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                        broadcast.priority === 'Urgent' ? "bg-red-50 text-[#E63946]" : "bg-slate-100 text-slate-600"
+                      )}>
+                        {broadcast.priority}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400 h-full">
+                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center mb-2 text-slate-400">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <p className="text-xs font-semibold text-slate-700">No broadcasts sent yet</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Use the form to send your first fleet notice.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

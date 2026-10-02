@@ -2,10 +2,25 @@
 
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
-import { Ambulance, Menu, Phone, X } from 'lucide-react';
+import {
+  Ambulance,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Phone,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  User as UserIcon,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useAuth } from '@/context/AuthContext';
+import { NavUserDropdown } from './NavUserDropdown';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 interface NavItem {
   label: string;
@@ -23,6 +38,8 @@ const NAV_ITEMS: NavItem[] = [
 const emptySubscribe = () => () => {};
 
 export const Navbar: React.FC = () => {
+  const router = useRouter();
+  const { user, role, isAuthenticated, logout } = useAuth();
   const isMounted = React.useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -31,6 +48,30 @@ export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lang, setLang] = useState<'EN' | 'BN'>('EN');
+
+  const userRole = (role as string)?.toUpperCase();
+  const isPatient = userRole === 'USER' || userRole === 'PATIENT';
+  const isDriver = userRole === 'DRIVER';
+  const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN';
+
+  const userDashboardUrl = isDriver
+    ? '/dashboard/driver'
+    : isSuperAdmin
+    ? '/dashboard/super-admin/overview'
+    : '/dashboard/patient';
+
+  const userProfileUrl = isDriver
+    ? '/dashboard/driver/ambulance-profile'
+    : isSuperAdmin
+    ? '/dashboard/super-admin/settings'
+    : '/dashboard/patient/medical-profile';
+
+  const roleLabel = isDriver ? 'Driver' : isSuperAdmin ? 'Admin' : 'Patient';
+  const roleBadgeBg = isDriver
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+    : isSuperAdmin
+    ? 'bg-purple-50 text-purple-700 border-purple-200/80'
+    : 'bg-blue-50 text-blue-700 border-blue-200/80';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -125,24 +166,30 @@ export const Navbar: React.FC = () => {
                 <span>24/7: 999</span>
               </DynamicActionButton>
 
-              {/* Drive with us (Driver Partner Link) */}
-              <Link
-                href="/join-driver"
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-all hover:border-red-200 hover:bg-red-50/60 hover:text-red-600"
-              >
-                <Ambulance className="h-3.5 w-3.5 text-red-600" />
-                <span>Drive with us</span>
-              </Link>
+              {/* Drive with us (Driver Partner Link - hide if already a driver) */}
+              {(!isMounted || !isAuthenticated || !isDriver) && (
+                <Link
+                  href="/join-driver"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-all hover:border-red-200 hover:bg-red-50/60 hover:text-red-600"
+                >
+                  <Ambulance className="h-3.5 w-3.5 text-red-600" />
+                  <span>Drive with us</span>
+                </Link>
+              )}
 
-              {/* Login Link */}
-              <DynamicActionButton
-                href="/login"
-                variant="default"
-                size="sm"
-                rounded="full"
-                label="Login"
-                className="px-5 text-xs font-semibold shadow-sm shadow-red-600/20"
-              />
+              {/* Login Link or Role-Aware User Dropdown */}
+              {isMounted && isAuthenticated && user ? (
+                <NavUserDropdown />
+              ) : (
+                <DynamicActionButton
+                  href="/login"
+                  variant="default"
+                  size="sm"
+                  rounded="full"
+                  label="Login"
+                  className="px-5 text-xs font-semibold shadow-sm shadow-red-600/20"
+                />
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -157,6 +204,14 @@ export const Navbar: React.FC = () => {
                 <Phone className="h-3 w-3" />
                 <span>999</span>
               </DynamicActionButton>
+
+              {/* Mobile Quick Dropdown */}
+              {isMounted && isAuthenticated && user && (
+                <div className="md:hidden">
+                  <NavUserDropdown />
+                </div>
+              )}
+
               <DynamicActionButton
                 type="button"
                 variant="ghost"
@@ -247,26 +302,72 @@ export const Navbar: React.FC = () => {
                   ))}
 
                   {/* Drive with us Card */}
-                  <div className="pt-3">
-                    <Link
-                      href="/join-driver"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-slate-50 p-3.5 text-slate-800 transition-all hover:border-red-200 hover:bg-red-50/60 hover:text-red-600"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600">
-                          <Ambulance className="h-5 w-5" />
+                  {/* Drive with us in Drawer */}
+                  {(!isMounted || !isAuthenticated || !isDriver) && (
+                    <div className="pt-3">
+                      <Link
+                        href="/join-driver"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-slate-50 p-3.5 text-slate-800 transition-all hover:border-red-200 hover:bg-red-50/60 hover:text-red-600"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                            <Ambulance className="h-5 w-5" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-slate-900">Drive with us</p>
+                            <p className="text-[11px] font-medium text-slate-500">
+                              Earn with your ambulance
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <p className="text-xs font-bold text-slate-900">Drive with us</p>
-                          <p className="text-[11px] font-medium text-slate-500">
-                            Earn with your ambulance
-                          </p>
+                        <span className="text-xs font-bold text-red-600">Apply →</span>
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Logged in User Card in Drawer */}
+                  {isMounted && isAuthenticated && user && (
+                    <div className="mt-4 rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-slate-100/70 p-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border-2 border-white shadow-xs">
+                          {user.avatarUrl && (
+                            <AvatarImage
+                              src={user.avatarUrl}
+                              alt={user.name || 'User'}
+                              className="object-cover"
+                            />
+                          )}
+                          <AvatarFallback className="bg-red-600 text-xs font-bold text-white">
+                            {user.name ? user.name.slice(0, 2).toUpperCase() : 'PR'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-bold text-slate-900">{user.name}</p>
+                          <p className="truncate text-[11px] text-slate-500">{user.email}</p>
                         </div>
                       </div>
-                      <span className="text-xs font-bold text-red-600">Apply →</span>
-                    </Link>
-                  </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-1.5">
+                        <Link
+                          href={userDashboardUrl}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-2.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-red-700"
+                        >
+                          <LayoutDashboard className="h-3.5 w-3.5" />
+                          <span>Dashboard</span>
+                        </Link>
+                        <Link
+                          href={userProfileUrl}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                        >
+                          <UserIcon className="h-3.5 w-3.5" />
+                          <span>Profile</span>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </nav>
               </div>
 
@@ -286,18 +387,38 @@ export const Navbar: React.FC = () => {
                   className="font-semibold shadow-md shadow-red-600/20"
                 />
 
-                {/* Login in Mobile Drawer */}
-                <div>
-                  <DynamicActionButton
-                    href="/login"
-                    variant="outline"
-                    rounded="lg"
-                    fullWidth
-                    onClick={() => setMobileMenuOpen(false)}
-                    label="Login"
-                    className="text-xs font-semibold"
-                  />
-                </div>
+                {/* Login or Logout in Mobile Drawer */}
+                {isMounted && isAuthenticated && user ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      try {
+                        await logout();
+                        toast.success('Logged out successfully');
+                        router.push('/login');
+                      } catch (err) {
+                        console.error('Logout error:', err);
+                      }
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50/60 py-2.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100/70 cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Log out</span>
+                  </button>
+                ) : (
+                  <div>
+                    <DynamicActionButton
+                      href="/login"
+                      variant="outline"
+                      rounded="lg"
+                      fullWidth
+                      onClick={() => setMobileMenuOpen(false)}
+                      label="Login"
+                      className="text-xs font-semibold"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>,

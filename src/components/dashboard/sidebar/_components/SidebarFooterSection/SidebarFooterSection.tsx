@@ -115,9 +115,9 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
             </div>
           )}
           {isPatient && (
-            <div>
+            <Link href="/dashboard/patient/active-trip" className="block group">
               {isExpanded ? (
-                <div className="relative overflow-hidden rounded-2xl bg-[#0B132B] p-4 text-white shadow-md">
+                <div className="relative overflow-hidden rounded-2xl bg-[#0B132B] p-4 text-white shadow-md transition-all hover:bg-[#111C3D]">
                   {/* Subtle watermark pulse in background */}
                   <div className="pointer-events-none absolute -right-3 -bottom-3 text-red-500/15">
                     <svg
@@ -135,17 +135,23 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
                   </div>
 
                   <div className="relative z-10">
-                    <span className="text-[11px] font-bold tracking-wider text-[#E63946] uppercase">
-                      LIVE TRACKING
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold tracking-wider text-[#E63946] uppercase">
+                        LIVE TRACKING
+                      </span>
+                      <span className="h-2 w-2 animate-ping rounded-full bg-red-500" />
+                    </div>
                     <p className="mt-1.5 text-xs leading-relaxed font-medium text-slate-200">
-                      Stay calm. Your medical crew is highly trained.
+                      Stay calm. Paramedic rapid response telemetry is active.
                     </p>
+                    <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-red-400 group-hover:underline">
+                      Open Live Cockpit &rarr;
+                    </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center">
-                  <div className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B132B] text-[#E63946] shadow-sm">
+                  <div className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B132B] text-[#E63946] shadow-sm transition-all hover:bg-[#111C3D]">
                     <svg
                       width="18"
                       height="18"
@@ -159,12 +165,12 @@ export default function SidebarFooterSection({ role }: { role: roleTypes }) {
                       <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                     </svg>
                     <div className="invisible absolute left-12 z-50 rounded-md border border-gray-700 bg-[#0B132B] px-2.5 py-1 text-xs whitespace-nowrap text-white group-hover:visible">
-                      Live Tracking Active
+                      Open Live Telemetry
                     </div>
                   </div>
                 </div>
               )}
-            </div>
+            </Link>
           )}
 
           {shouldShowUpgrade && (

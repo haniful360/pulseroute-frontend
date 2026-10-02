@@ -16,4 +16,7 @@ export type TColumn<T> =
 export interface ITableProps<T> {
   columns: TColumn<T>[];
   data: T[];
+  className?: string;
+  headerClassName?: string;
+  variant?: 'light' | 'dark';
 }

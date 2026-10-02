@@ -1,8 +1,20 @@
-export interface IGlobalErrorResponse {
-  statusCode: number;
-  message: string;
-  errorMessages?: Array<{ path: string | number; message: string }>;
-  data?: any;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type React from 'react';
+
+export interface TMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPage?: number;
+  totalPages?: number;
+}
+
+export interface TResponseRedux<T> {
+  data?: T;
+  meta?: TMeta;
+  success?: boolean;
+  message?: string;
+  statusCode?: number;
 }
 
 export type TQueryParam = {
@@ -10,14 +22,12 @@ export type TQueryParam = {
   value: boolean | React.Key;
 };
 
-export interface TResponseRedux<T> {
-  data?: T;
-  meta?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPage?: number;
-  };
-  success?: boolean;
-  message?: string;
+export interface IGlobalErrorResponse {
+  statusCode: number;
+  message: string;
+  errorMessages?: Array<{
+    path: string | number;
+    message: string;
+  }>;
+  data?: any;
 }

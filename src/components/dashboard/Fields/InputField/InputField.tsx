@@ -27,8 +27,12 @@ export interface InputFieldProps<T extends FieldValues = any> {
   rightElement?: React.ReactNode;
   helperText?: string;
   value?: string | number;
+  defaultValue?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyUp?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  autoFocus?: boolean;
   id?: string;
   autoComplete?: string;
   min?: number | string;
@@ -60,8 +64,12 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
       rightElement,
       helperText,
       value,
+      defaultValue,
       onChange,
       onBlur,
+      onKeyDown,
+      onKeyUp,
+      autoFocus,
       id,
       autoComplete,
       min,
@@ -108,7 +116,12 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
             'relative flex items-center overflow-hidden transition-all',
             isDark
               ? 'rounded-md bg-[#0E182B]'
-              : 'rounded-xl border border-slate-200 bg-slate-50/50 focus-within:border-red-500 focus-within:bg-white focus-within:ring-1 focus-within:ring-red-500',
+              : cn(
+                  'rounded-xl border border-slate-200',
+                  readOnly
+                    ? 'bg-slate-100/80 cursor-not-allowed select-none'
+                    : 'bg-slate-50/50 focus-within:border-red-500 focus-within:bg-white focus-within:ring-1 focus-within:ring-red-500',
+                ),
             error && (isDark ? 'border-error' : 'border-red-500 ring-1 ring-red-500'),
           )}
         >
@@ -140,9 +153,17 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
             placeholder={placeholder}
             readOnly={readOnly}
             disabled={disabled}
-            value={value ?? ''}
-            onChange={onChange}
+            {...(value !== undefined
+              ? { value, ...(onChange ? { onChange } : readOnly ? {} : { onChange: () => {} }) }
+              : defaultValue !== undefined
+              ? { defaultValue, ...(onChange ? { onChange } : {}) }
+              : onChange
+              ? { onChange }
+              : {})}
             onBlur={onBlur}
+            onKeyDown={onKeyDown}
+            onKeyUp={onKeyUp}
+            autoFocus={autoFocus}
             autoComplete={autoComplete}
             min={min}
             max={max}
@@ -163,7 +184,7 @@ const InputFieldBase = forwardRef<HTMLInputElement, BaseProps>(
                 : 'h-11 bg-transparent text-sm text-slate-900 placeholder:text-slate-400',
               icon && !prefix && 'pl-10',
               isPassword && 'pr-10',
-              readOnly && 'cursor-default opacity-60',
+              readOnly && 'cursor-not-allowed font-medium text-slate-700 select-all',
               isDate && !readOnly && 'cursor-pointer',
               className,
             )}

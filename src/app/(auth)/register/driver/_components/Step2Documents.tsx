@@ -4,13 +4,13 @@ import React, { useRef, useState } from 'react';
 import {
   FileText,
   Calendar,
-  Plus,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
   UploadCloud,
 } from 'lucide-react';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
+import { compressImageFile } from '@/lib/image-compressor';
 
 export interface DriverDocumentsData {
   nidNumber: string;
@@ -29,6 +29,17 @@ interface Step2Props {
   onBack: () => void;
 }
 
+const isImage = (val: string | null): boolean => {
+  if (!val) return false;
+  return (
+    val.startsWith('data:image') ||
+    val.startsWith('http://') ||
+    val.startsWith('https://') ||
+    val.startsWith('blob:') ||
+    /\.(jpg|jpeg|png|webp|gif|avif)$/i.test(val)
+  );
+};
+
 export const Step2Documents: React.FC<Step2Props> = ({ data, onUpdate, onNext, onBack }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -37,18 +48,20 @@ export const Step2Documents: React.FC<Step2Props> = ({ data, onUpdate, onNext, o
   const licenseFrontInput = useRef<HTMLInputElement>(null);
   const licenseBackInput = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (
+  const handleFileUpload = async (
     field: keyof DriverDocumentsData,
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors((prev) => ({ ...prev, [field]: 'File size must be under 5MB' }));
-        return;
+      try {
+        const compressed = await compressImageFile(file, 1280, 1280, 0.82);
+        onUpdate({ [field]: compressed });
+        setErrors((prev) => ({ ...prev, [field]: '' }));
+      } catch {
+        setErrors((prev) => ({ ...prev, [field]: 'Failed to process file' }));
       }
-      onUpdate({ [field]: file.name });
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+      e.target.value = '';
     }
   };
 
@@ -57,8 +70,10 @@ export const Step2Documents: React.FC<Step2Props> = ({ data, onUpdate, onNext, o
     const newErrors: Record<string, string> = {};
 
     if (!data.nidNumber.trim()) newErrors.nidNumber = 'NID number is required';
+    if (!data.nidFront) newErrors.nidFront = 'NID card photo (Front) is required';
     if (!data.licenseNumber.trim()) newErrors.licenseNumber = 'License number is required';
     if (!data.licenseExpiry.trim()) newErrors.licenseExpiry = 'License expiry date is required';
+    if (!data.licenseFront) newErrors.licenseFront = 'Driving license photo (Front) is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -67,6 +82,97 @@ export const Step2Documents: React.FC<Step2Props> = ({ data, onUpdate, onNext, o
 
     setErrors({});
     onNext();
+  };
+
+  const renderUploadCard = (
+    field: keyof DriverDocumentsData,
+    label: string,
+    subLabel: string,
+    inputRef: React.RefObject<HTMLInputElement | null>,
+  ) => {
+    const val = data[field];
+    const isImg = isImage(val);
+
+    return (
+      <div className="flex flex-col gap-1.5">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,.pdf"
+          onChange={(e) => handleFileUpload(field, e)}
+          className="hidden"
+        />
+
+        {val ? (
+          <div className="group relative flex min-h-[140px] w-full flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-emerald-500 bg-slate-900/5 transition-all">
+            {isImg ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={val}
+                alt={label}
+                className="h-[140px] w-full object-cover rounded-xl"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center p-4 text-center">
+                <CheckCircle2 className="mb-1.5 h-8 w-8 text-emerald-600" />
+                <span className="max-w-[200px] truncate text-xs font-bold text-emerald-800">
+                  {val.length > 50 ? 'Document Uploaded' : val}
+                </span>
+                <span className="mt-1 text-[10px] font-bold tracking-wider text-emerald-600 uppercase">
+                  Upload Successful
+                </span>
+              </div>
+            )}
+
+            {/* Hover Actions Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-800 shadow-md hover:bg-slate-100 cursor-pointer"
+              >
+                Change
+              </button>
+              <button
+                type="button"
+                onClick={() => onUpdate({ [field]: null })}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white shadow-md hover:bg-red-700 cursor-pointer"
+              >
+                Remove
+              </button>
+            </div>
+
+            {/* Bottom Status Tag */}
+            <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between rounded-lg bg-emerald-700/90 px-2.5 py-1 text-white backdrop-blur-xs text-[10px] font-semibold">
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                <span>{label}</span>
+              </span>
+              <span className="text-[9px] uppercase tracking-wider font-bold">Uploaded</span>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={() => inputRef.current?.click()}
+            className={`flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition-all ${
+              errors[field]
+                ? 'border-red-400 bg-red-50/30'
+                : 'border-slate-200 bg-slate-50/50 hover:border-red-400 hover:bg-slate-50'
+            }`}
+          >
+            <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-400 shadow-xs">
+              <UploadCloud className="h-5 w-5 text-red-600" />
+            </div>
+            <span className="text-xs font-bold text-slate-700">{label}</span>
+            <span className="mt-0.5 text-[11px] text-slate-400">{subLabel}</span>
+          </div>
+        )}
+
+        {errors[field] && (
+          <p className="text-[11px] font-medium text-red-600">{errors[field]}</p>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -95,79 +201,18 @@ export const Step2Documents: React.FC<Step2Props> = ({ data, onUpdate, onNext, o
 
         {/* NID Upload Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* NID Front */}
-          <div
-            onClick={() => nidFrontInput.current?.click()}
-            className={`flex min-h-[130px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition-all ${
-              data.nidFront
-                ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900'
-                : 'border-slate-200 bg-slate-50/50 hover:border-red-400 hover:bg-slate-50'
-            }`}
-          >
-            <input
-              ref={nidFrontInput}
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleFileUpload('nidFront', e)}
-              className="hidden"
-            />
-            {data.nidFront ? (
-              <>
-                <CheckCircle2 className="mb-1.5 h-7 w-7 text-emerald-600" />
-                <span className="max-w-[200px] truncate text-xs font-bold text-emerald-800">
-                  {data.nidFront}
-                </span>
-                <span className="mt-1 text-[10px] font-bold tracking-wider text-emerald-600 uppercase">
-                  Upload Successful
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400 shadow-xs">
-                  <Plus className="h-4 w-4" />
-                </div>
-                <span className="text-xs font-bold text-slate-700">NID Front Side</span>
-                <span className="mt-0.5 text-[11px] text-slate-400">Drag or click to upload</span>
-              </>
-            )}
-          </div>
-
-          {/* NID Back */}
-          <div
-            onClick={() => nidBackInput.current?.click()}
-            className={`flex min-h-[130px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition-all ${
-              data.nidBack
-                ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900'
-                : 'border-slate-200 bg-slate-50/50 hover:border-red-400 hover:bg-slate-50'
-            }`}
-          >
-            <input
-              ref={nidBackInput}
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleFileUpload('nidBack', e)}
-              className="hidden"
-            />
-            {data.nidBack ? (
-              <>
-                <CheckCircle2 className="mb-1.5 h-7 w-7 text-emerald-600" />
-                <span className="max-w-[200px] truncate text-xs font-bold text-emerald-800">
-                  {data.nidBack}
-                </span>
-                <span className="mt-1 text-[10px] font-bold tracking-wider text-emerald-600 uppercase">
-                  Upload Successful
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400 shadow-xs">
-                  <Plus className="h-4 w-4" />
-                </div>
-                <span className="text-xs font-bold text-slate-700">NID Back Side</span>
-                <span className="mt-0.5 text-[11px] text-slate-400">Drag or click to upload</span>
-              </>
-            )}
-          </div>
+          {renderUploadCard(
+            'nidFront',
+            'NID Front Side',
+            'Click or drag photo here',
+            nidFrontInput,
+          )}
+          {renderUploadCard(
+            'nidBack',
+            'NID Back Side',
+            'Click or drag photo here',
+            nidBackInput,
+          )}
         </div>
       </div>
 
@@ -210,79 +255,18 @@ export const Step2Documents: React.FC<Step2Props> = ({ data, onUpdate, onNext, o
 
         {/* License Upload Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* License Front */}
-          <div
-            onClick={() => licenseFrontInput.current?.click()}
-            className={`flex min-h-[130px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition-all ${
-              data.licenseFront
-                ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900'
-                : 'border-slate-200 bg-slate-50/50 hover:border-red-400 hover:bg-slate-50'
-            }`}
-          >
-            <input
-              ref={licenseFrontInput}
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleFileUpload('licenseFront', e)}
-              className="hidden"
-            />
-            {data.licenseFront ? (
-              <>
-                <CheckCircle2 className="mb-1.5 h-7 w-7 text-emerald-600" />
-                <span className="max-w-[200px] truncate text-xs font-bold text-emerald-800">
-                  {data.licenseFront}
-                </span>
-                <span className="mt-1 text-[10px] font-bold tracking-wider text-emerald-600 uppercase">
-                  Upload Successful
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400 shadow-xs">
-                  <UploadCloud className="h-4 w-4" />
-                </div>
-                <span className="text-xs font-bold text-slate-700">License Front</span>
-                <span className="mt-0.5 text-[11px] text-slate-400">Clear photo required</span>
-              </>
-            )}
-          </div>
-
-          {/* License Back */}
-          <div
-            onClick={() => licenseBackInput.current?.click()}
-            className={`flex min-h-[130px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition-all ${
-              data.licenseBack
-                ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900'
-                : 'border-slate-200 bg-slate-50/50 hover:border-red-400 hover:bg-slate-50'
-            }`}
-          >
-            <input
-              ref={licenseBackInput}
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleFileUpload('licenseBack', e)}
-              className="hidden"
-            />
-            {data.licenseBack ? (
-              <>
-                <CheckCircle2 className="mb-1.5 h-7 w-7 text-emerald-600" />
-                <span className="max-w-[200px] truncate text-xs font-bold text-emerald-800">
-                  {data.licenseBack}
-                </span>
-                <span className="mt-1 text-[10px] font-bold tracking-wider text-emerald-600 uppercase">
-                  Upload Successful
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400 shadow-xs">
-                  <UploadCloud className="h-4 w-4" />
-                </div>
-                <span className="text-xs font-bold text-slate-700">License Back</span>
-                <span className="mt-0.5 text-[11px] text-slate-400">Max size: 5MB</span>
-              </>
-            )}
-          </div>
+          {renderUploadCard(
+            'licenseFront',
+            'License Front',
+            'Clear photo of license front',
+            licenseFrontInput,
+          )}
+          {renderUploadCard(
+            'licenseBack',
+            'License Back',
+            'Clear photo of license back',
+            licenseBackInput,
+          )}
         </div>
       </div>
 

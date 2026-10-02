@@ -1,6 +1,7 @@
 'use client';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { roleTypes } from '../sidebar/sidebarRoutes';
 import { DynamicBreadcrumb } from './_components/DynamicBreadcrumb/DynamicBreadcrumb';
 import RightSection from './_components/RightSection/RightSection';
@@ -56,31 +57,19 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
         {/* Center Section: Search Bar */}
         {isPatient && (
           <div className="mx-2 hidden max-w-md flex-1 sm:block">
-            <div className="relative flex items-center">
-              <Search
-                className="pointer-events-none absolute left-3.5 h-4 w-4 text-slate-400"
-                size={16}
-              />
-              <input
-                type="text"
-                placeholder="Search for medical records..."
-                className="h-10 w-full rounded-xl border border-gray-200 bg-slate-50/70 pr-4 pl-10 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
-              />
-            </div>
+            <InputField
+              placeholder="Search for medical records..."
+              icon={<Search className="h-4 w-4 text-slate-400" />}
+            />
           </div>
         )}
 
         {isSuperAdmin && (
           <div className="mx-2 hidden max-w-lg flex-1 items-center gap-4 sm:flex">
-            <div className="relative flex-1">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400"
-                size={16}
-              />
-              <input
-                type="text"
+            <div className="flex-1">
+              <InputField
                 placeholder="Search by name, ID or license..."
-                className="h-10 w-full rounded-xl border border-gray-200 bg-slate-50/80 pr-4 pl-10 text-sm text-slate-800 transition placeholder:text-slate-400 focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                icon={<Search className="h-4 w-4 text-slate-400" />}
               />
             </div>
             <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-emerald-700">

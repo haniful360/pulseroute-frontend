@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { verifyOtpAction, resendOtpAction } from '@/services/auth.service';
+import { verifyOtpAction, resendOtpAction } from '@/services/auth/auth.service';
 import { toast } from 'sonner';
 
 interface Step4Props {

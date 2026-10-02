@@ -1,8 +1,9 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Minus, Plus, Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+
 
 interface FaqItem {
   id: string;
@@ -142,16 +143,14 @@ export const FaqSection: React.FC = () => {
 
         {/* Search Bar matching Figma */}
         <div className="mb-12 max-w-xl">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search questions — fare, insurance, sanitisation…"
-              className="h-11 rounded-xl border-slate-200/90 bg-white pl-10 text-sm shadow-xs focus:bg-white"
-            />
-          </div>
+          <InputField
+            type="text"
+            icon={<Search className="h-4 w-4" />}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search questions — fare, insurance, sanitisation…"
+            className="bg-white"
+          />
         </div>
 
         {/* Categories and Accordions */}

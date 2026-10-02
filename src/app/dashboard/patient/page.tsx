@@ -1,11 +1,11 @@
-import MedicalProfileView from '@/components/dashboard/patient/MedicalProfileView';
+import PatientOverviewView from '@/app/dashboard/patient/_components/PatientOverview/PatientOverviewView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Medical Profile & SOS Settings | PulseRoute',
-  description: 'Manage your vital medical information and emergency SOS settings on PulseRoute.',
+  title: 'Patient Emergency Cockpit | PulseRoute',
+  description: 'Real-time emergency ambulance dispatch, active trip telemetry, and medical SOS cockpit.',
 };
 
 export default function PatientDashboardPage() {
-  return <MedicalProfileView />;
+  return <PatientOverviewView />;
 }

@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLogout } from '@/hooks/useLogout';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { ChevronDown, LogOut } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
@@ -47,6 +48,7 @@ function getServerUserSnapshot(): string | null {
 
 export default function UserDropdown({ role }: UserDropdownProps) {
   const logout = useLogout();
+  const { user: authUser, profile } = useAuth();
   const userJson = useSyncExternalStore(subscribeUser, getUserSnapshot, getServerUserSnapshot);
 
   let user: UserData | null = null;
@@ -74,28 +76,40 @@ export default function UserDropdown({ role }: UserDropdownProps) {
   let fallbackEmail = 'admin@pulseroute.com';
 
   if (isPatient) {
-    fallbackName = 'Rashida Khatun';
-    fallbackSubtitle = 'Dhanmondi, Dhaka';
-    fallbackAvatar = '/assets/dashboard/patient/rashida-khatun.png';
-    fallbackEmail = 'rashida@pulseroute.com';
+    fallbackName = 'Patient Member';
+    fallbackSubtitle = 'Dhaka, Bangladesh';
+    fallbackAvatar = undefined;
+    fallbackEmail = 'patient@pulseroute.com';
   } else if (isDriver) {
-    fallbackName = 'Capt. Ariful Islam';
-    fallbackSubtitle = 'Advanced Paramedic • DH-102';
-    fallbackAvatar = '/assets/dashboard/driver/capt_ariful_avatar.png';
-    fallbackEmail = 'ariful.paramedic@pulseroute.com';
+    fallbackName = 'Emergency Driver';
+    fallbackSubtitle = 'Rapid Response Unit';
+    fallbackAvatar = undefined;
+    fallbackEmail = 'driver@pulseroute.com';
   } else if (isSuperAdmin) {
-    fallbackName = 'Rahat Mahmud';
-    fallbackSubtitle = 'Super Admin Executive';
-    fallbackAvatar = '/assets/dashboard/super-admin/rahat_admin_avatar.png';
-    fallbackEmail = 'rahat.admin@pulseroute.com';
+    fallbackName = 'Super Admin';
+    fallbackSubtitle = 'System Executive';
+    fallbackAvatar = undefined;
+    fallbackEmail = 'admin@pulseroute.com';
   }
 
   const displayName =
+    authUser?.name ||
+    (profile as any)?.fullName ||
     user?.fullName ||
     (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : null) ||
     fallbackName;
-  const displaySubtitle = isPatient && user?.address ? user.address : fallbackSubtitle;
-  const displayAvatar = user?.avatarUrl || fallbackAvatar;
+  const displaySubtitle =
+    (profile as any)?.address ||
+    (isPatient && user?.address ? user.address : null) ||
+    (authUser?.role ? `${authUser.role} Account` : null) ||
+    fallbackSubtitle;
+  const displayAvatar =
+    (profile as any)?.avatarUrl ||
+    (profile as any)?.profilePhoto ||
+    authUser?.avatarUrl ||
+    user?.avatarUrl ||
+    fallbackAvatar;
+  const displayEmail = authUser?.email || user?.email || fallbackEmail;
 
   return (
     <DropdownMenu>
@@ -168,7 +182,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
             Manage Profile
           </p>
           <p className={cn('mt-0.5 text-sm', isLight ? 'text-slate-700' : 'text-gray')}>
-            {user?.email || fallbackEmail}
+            {displayEmail}
           </p>
         </DropdownMenuLabel>
 

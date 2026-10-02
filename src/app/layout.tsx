@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { Toaster } from '@/components/ui/sonner';
 
 const poppins = Poppins({
@@ -28,8 +29,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} max-w-screen overflow-x-hidden font-sans antialiased`}>
         <AuthProvider>
-          {children}
-          <Toaster richColors position="top-right" />
+          <NotificationProvider>
+            {children}
+            <Toaster richColors position="top-right" />
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

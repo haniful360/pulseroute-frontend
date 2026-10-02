@@ -1,8 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
+import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import {
   Select,
   SelectContent,
@@ -20,6 +24,8 @@ import {
   Check,
   FileText,
 } from 'lucide-react';
+import { createTripAction, ICreateTripPayload } from '@/services/trip/trip.service';
+import { getAllPricingConfigsAction } from '@/services/pricing/pricing.service';
 
 interface VehicleOption {
   id: string;
@@ -36,10 +42,33 @@ const VEHICLE_TYPES: VehicleOption[] = [
   { id: 'freezer', label: 'Freezer', baseFare: '2,500 - 3,200' },
 ];
 
+interface HospitalOption {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+const HOSPITALS: HospitalOption[] = [
+  { id: 'square', name: 'Square Hospital, Panthapath', lat: 23.753, lng: 90.3817 },
+  { id: 'evercare', name: 'Evercare Hospital, Bashundhara', lat: 23.8151, lng: 90.4255 },
+  { id: 'united', name: 'United Hospital, Gulshan 2', lat: 23.7995, lng: 90.4182 },
+  { id: 'dmc', name: 'Dhaka Medical College Hospital (DMCH)', lat: 23.7258, lng: 90.3976 },
+  { id: 'bsmmu', name: 'BSMMU (PG Hospital), Shahbag', lat: 23.7381, lng: 90.3956 },
+  { id: 'labaid', name: 'Labaid Specialized Hospital, Dhanmondi', lat: 23.7461, lng: 90.3742 },
+];
+
 type SeverityLevel = 'stable' | 'urgent' | 'critical';
 
 export const HeroSection: React.FC = () => {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
   const [pickupAddress, setPickupAddress] = useState('');
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number }>({
+    lat: 23.7925,
+    lng: 90.4078, // Default to Dhaka central Banani/Gulshan
+  });
   const [selectedHospital, setSelectedHospital] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState('icu');
   const [severity, setSeverity] = useState<SeverityLevel>('critical');
@@ -49,33 +78,203 @@ export const HeroSection: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [booked, setBooked] = useState(false);
 
-  const handleUseCurrentLocation = () => {
-    setIsLocating(true);
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          setPickupAddress('House 42, Road 11, Banani, Dhaka');
-          setIsLocating(false);
-        },
-        () => {
-          setPickupAddress('House 42, Road 11, Banani, Dhaka');
-          setIsLocating(false);
-        },
-        { timeout: 3000 },
-      );
-    } else {
-      setPickupAddress('House 42, Road 11, Banani, Dhaka');
-      setIsLocating(false);
+  // Dynamic pricing & calculated route distance
+  const [pricingConfigs, setPricingConfigs] = useState<any[]>([]);
+  const [estimatedDist, setEstimatedDist] = useState<number>(2.4);
+  const [estimatedDuration, setEstimatedDuration] = useState<number>(8);
+  const [estimatedFareText, setEstimatedFareText] = useState<string>('3,500 - 4,320');
+
+  // 1. Fetch real pricing configs from backend
+  useEffect(() => {
+    async function loadPricing() {
+      try {
+        const res = await getAllPricingConfigsAction();
+        if (res.success && Array.isArray(res.data)) {
+          setPricingConfigs(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load pricing:', err);
+      }
     }
+    loadPricing();
+  }, []);
+
+  // 2. Dynamically calculate distance and fare estimate
+  useEffect(() => {
+    const hospital = HOSPITALS.find((h) => h.id === selectedHospital) || HOSPITALS[0];
+    const R = 6371;
+    const dLat = ((hospital.lat - pickupCoords.lat) * Math.PI) / 180;
+    const dLon = ((hospital.lng - pickupCoords.lng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((pickupCoords.lat * Math.PI) / 180) *
+        Math.cos((hospital.lat * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = Math.max(Number((R * c).toFixed(1)), 1.2);
+    const duration = Math.max(Math.ceil(dist * 2.5), 6);
+
+    setEstimatedDist(dist);
+    setEstimatedDuration(duration);
+
+    // Compute dynamic fare from pricing configs if available
+    const config = pricingConfigs.find(
+      (p) => p.ambulanceType?.toUpperCase() === selectedVehicle.toUpperCase()
+    );
+    if (config) {
+      const base = Number(config.baseFare) || 1500;
+      const perKm = Number(config.perKmRate) || 80;
+      const calcFare = Math.round(base + dist * perKm);
+      const surgeMax = Math.round(calcFare * 1.25);
+      setEstimatedFareText(`${calcFare.toLocaleString()} - ${surgeMax.toLocaleString()}`);
+    } else {
+      const v = VEHICLE_TYPES.find((item) => item.id === selectedVehicle);
+      setEstimatedFareText(v ? v.baseFare : '3,500 - 4,320');
+    }
+  }, [selectedVehicle, selectedHospital, pickupCoords, pricingConfigs]);
+
+  // 3. Real Geolocation
+  const handleUseCurrentLocation = () => {
+    if (!('geolocation' in navigator)) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setPickupCoords({ lat, lng });
+
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const road = data.address?.road || '';
+            const area =
+              data.address?.suburb ||
+              data.address?.neighbourhood ||
+              data.address?.city ||
+              'Dhaka';
+            const formatted = [road, area].filter(Boolean).join(', ');
+            if (formatted) {
+              setPickupAddress(formatted);
+              toast.success('Current location detected.');
+              setIsLocating(false);
+              return;
+            }
+          }
+        } catch {
+          // Ignore reverse geocode network issues
+        }
+
+        setPickupAddress(`GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        toast.success('Current GPS coordinates locked.');
+        setIsLocating(false);
+      },
+      (err) => {
+        console.warn('Geolocation failed or permission denied:', err);
+        setPickupCoords({ lat: 23.7925, lng: 90.4078 });
+        setPickupAddress('Road 11, Banani, Dhaka');
+        toast.info('Using default Banani location (location access denied).');
+        setIsLocating(false);
+      },
+      { timeout: 7000, enableHighAccuracy: true }
+    );
   };
 
-  const handleFindAmbulance = (e: React.FormEvent) => {
+  // 4. Real Emergency Trip Creation
+  const handleFindAmbulance = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!pickupAddress.trim()) {
+      toast.error('Please specify your pickup location or click Use current location.');
+      return;
+    }
+
+    const hospitalObj = HOSPITALS.find((h) => h.id === selectedHospital);
+    const destinationAddress = hospitalObj ? hospitalObj.name : undefined;
+    const destinationLatitude = hospitalObj ? hospitalObj.lat : undefined;
+    const destinationLongitude = hospitalObj ? hospitalObj.lng : undefined;
+
+    const ambulanceTypeUpper = selectedVehicle.toUpperCase() as
+      | 'BASIC'
+      | 'AC'
+      | 'ICU'
+      | 'CCU'
+      | 'NEONATAL'
+      | 'FREEZER';
+
+    const severityUpper =
+      severity === 'critical' ? 'CRITICAL' : severity === 'urgent' ? 'HIGH' : 'LOW';
+
+    // If unauthenticated, preserve draft booking and redirect to login
+    if (!isAuthenticated) {
+      toast.info('Please log in or register to dispatch an emergency ambulance.');
+      const bookingData = {
+        pickup: pickupAddress.trim(),
+        pickupLat: pickupCoords.lat,
+        pickupLng: pickupCoords.lng,
+        dest: destinationAddress,
+        destLat: destinationLatitude,
+        destLng: destinationLongitude,
+        type: ambulanceTypeUpper,
+        severity: severityUpper,
+        notes: patientNotes.trim() || undefined,
+      };
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('pending_ambulance_booking', JSON.stringify(bookingData));
+      }
+      const queryParams = new URLSearchParams({
+        pickup: pickupAddress.trim(),
+        type: ambulanceTypeUpper,
+        severity: severityUpper,
+        ...(destinationAddress ? { dest: destinationAddress } : {}),
+      });
+      router.push(
+        `/login?redirect=${encodeURIComponent(
+          `/dashboard/patient/book-ambulance?${queryParams.toString()}`
+        )}`
+      );
+      return;
+    }
+
+    // Authenticated trip dispatch
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const payload: ICreateTripPayload = {
+        ambulanceType: ambulanceTypeUpper,
+        emergencySeverity: severityUpper,
+        pickupAddress: pickupAddress.trim(),
+        pickupLatitude: pickupCoords.lat,
+        pickupLongitude: pickupCoords.lng,
+        destinationAddress,
+        destinationLatitude,
+        destinationLongitude,
+        patientNotes: patientNotes.trim() ? patientNotes.trim() : undefined,
+      };
+
+      const res = await createTripAction(payload);
+      if (res.success && res.data) {
+        const trip = res.data.trip || res.data;
+        toast.success(`🚨 Emergency dispatch initiated! Trip Code: ${trip.tripCode || 'Active'}`);
+        setBooked(true);
+        if (trip.id) {
+          router.push(`/dashboard/patient/active-trip?tripId=${trip.id}`);
+        } else {
+          router.push('/dashboard/patient/trips');
+        }
+      } else {
+        toast.error(res.message || 'Failed to dispatch ambulance. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Trip creation error:', err);
+      toast.error(err?.message || 'Emergency dispatch failed. Please check network connection.');
+    } finally {
       setIsSubmitting(false);
-      setBooked(true);
-    }, 1200);
+    }
   };
 
   const activeVehicle = VEHICLE_TYPES.find((v) => v.id === selectedVehicle) || VEHICLE_TYPES[2];
@@ -181,19 +380,14 @@ export const HeroSection: React.FC = () => {
                 <form onSubmit={handleFindAmbulance} className="mt-4 space-y-4">
                   {/* Pickup Address */}
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-600">
-                      Pickup address
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={pickupAddress}
-                        onChange={(e) => setPickupAddress(e.target.value)}
-                        placeholder="Building, road, area"
-                        required
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pr-3 pl-3.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-                      />
-                    </div>
+                    <InputField
+                      label="Pickup address"
+                      type="text"
+                      value={pickupAddress}
+                      onChange={(e) => setPickupAddress(e.target.value)}
+                      placeholder="Building, road, area"
+                      required
+                    />
                     {/* Use Current Location trigger */}
                     <button
                       type="button"
@@ -338,12 +532,14 @@ export const HeroSection: React.FC = () => {
                         Estimated fare - {activeVehicle.label}
                       </span>
                       <span className="text-base font-extrabold text-slate-900">
-                        BDT {activeVehicle.baseFare}
+                        BDT {estimatedFareText}
                       </span>
                     </div>
                     <div className="text-right">
                       <span className="block text-slate-400">Route</span>
-                      <span className="font-semibold text-slate-700">1.9 km ~8 min</span>
+                      <span className="font-semibold text-slate-700">
+                        {estimatedDist} km ~{estimatedDuration} min
+                      </span>
                     </div>
                   </div>
 

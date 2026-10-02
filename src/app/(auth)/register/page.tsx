@@ -18,7 +18,7 @@ import {
 import { Lock, Mail, User, Phone, Droplet, ArrowRight } from 'lucide-react';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 
-import { registerUserAction, googleLoginAction } from '@/services/auth.service';
+import { registerUserAction, googleLoginAction } from '@/services/auth/auth.service';
 import { toast } from 'sonner';
 import { Gender } from '@/types/auth.types';
 

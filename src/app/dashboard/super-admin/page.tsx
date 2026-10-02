@@ -1,4 +1,4 @@
-import SuperAdminKycView from '@/components/dashboard/super-admin/SuperAdminKycView';
+import SuperAdminKycView from '@/app/dashboard/super-admin/_components/SuperAdminKycView/SuperAdminKycView';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
