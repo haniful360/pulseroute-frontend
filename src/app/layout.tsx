@@ -16,7 +16,12 @@ export const metadata: Metadata = {
   description:
     'Next-generation emergency ambulance dispatch network with real-time GPS tracking and certified paramedic care.',
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/favicon.svg',
   },
 };
 
