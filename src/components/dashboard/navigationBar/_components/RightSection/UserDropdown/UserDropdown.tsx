@@ -71,23 +71,19 @@ export default function UserDropdown({ role }: UserDropdownProps) {
   const isLight = isPatient || isDriver || isSuperAdmin || isAdmin;
 
   let fallbackName = 'Admin User';
-  let fallbackSubtitle = 'Emergency Dispatch';
   let fallbackAvatar: string | undefined = undefined;
   let fallbackEmail = 'admin@pulseroute.com';
 
   if (isPatient) {
     fallbackName = 'Patient Member';
-    fallbackSubtitle = 'Dhaka, Bangladesh';
     fallbackAvatar = undefined;
     fallbackEmail = 'patient@pulseroute.com';
   } else if (isDriver) {
     fallbackName = 'Emergency Driver';
-    fallbackSubtitle = 'Rapid Response Unit';
     fallbackAvatar = undefined;
     fallbackEmail = 'driver@pulseroute.com';
   } else if (isSuperAdmin) {
     fallbackName = 'Super Admin';
-    fallbackSubtitle = 'System Executive';
     fallbackAvatar = undefined;
     fallbackEmail = 'admin@pulseroute.com';
   }
@@ -98,11 +94,34 @@ export default function UserDropdown({ role }: UserDropdownProps) {
     user?.fullName ||
     (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : null) ||
     fallbackName;
-  const displaySubtitle =
-    (profile as any)?.address ||
-    (isPatient && user?.address ? user.address : null) ||
-    (authUser?.role ? `${authUser.role} Account` : null) ||
-    fallbackSubtitle;
+
+  const rawRole =
+    authUser?.role ||
+    (profile as any)?.role ||
+    role ||
+    (user as any)?.role ||
+    (isPatient ? 'PATIENT' : isDriver ? 'DRIVER' : isSuperAdmin ? 'SUPER_ADMIN' : 'ADMIN');
+
+  const displayRole = (() => {
+    if (!rawRole) return 'Patient';
+    const normalized = String(rawRole).toUpperCase().replace('-', '_');
+    switch (normalized) {
+      case 'SUPER_ADMIN':
+        return 'Super Admin';
+      case 'ADMIN':
+        return 'Administrator';
+      case 'DRIVER':
+        return 'Emergency Driver';
+      case 'PATIENT':
+      case 'USER':
+        return 'Patient';
+      case 'ENTERPRISE':
+        return 'Enterprise Partner';
+      default:
+        return String(rawRole).charAt(0).toUpperCase() + String(rawRole).slice(1).replace('-', ' ');
+    }
+  })();
+
   const displayAvatar =
     (profile as any)?.avatarUrl ||
     (profile as any)?.profilePhoto ||
@@ -139,7 +158,7 @@ export default function UserDropdown({ role }: UserDropdownProps) {
                   : 'text-gray mt-1 text-[10px] font-semibold tracking-widest uppercase',
               )}
             >
-              {displaySubtitle}
+              {displayRole}
             </span>
           </div>
 

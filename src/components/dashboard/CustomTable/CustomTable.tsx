@@ -12,8 +12,13 @@ const CustomTable = <T extends object>({
   const isLight = variant === 'light';
 
   return (
-    <div className={cn('custom-scrollbar overflow-x-auto border-t border-slate-100', className)}>
-      <table className="min-w-full divide-y divide-slate-100">
+    <div
+      className={cn(
+        'custom-scrollbar w-full max-w-full min-w-0 overflow-x-auto border-t border-slate-100',
+        className,
+      )}
+    >
+      <table className="w-full min-w-full divide-y divide-slate-100">
         <thead
           className={cn(
             isLight

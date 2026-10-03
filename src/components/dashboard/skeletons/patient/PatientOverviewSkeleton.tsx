@@ -5,18 +5,21 @@ export function PatientOverviewSkeleton() {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* 1. Header Banner Skeleton */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 sm:p-8">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-[#0B132B] via-[#1C2541] to-[#0B132B] p-6 text-white shadow-xl sm:p-8">
+        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="space-y-3">
-            <Skeleton className="h-6 w-52 rounded-full bg-slate-700/60" />
-            <Skeleton className="h-9 w-72 rounded-xl bg-slate-700/80 sm:w-96" />
-            <Skeleton className="h-4 w-full max-w-lg rounded-lg bg-slate-700/50" />
+            <Skeleton className="h-6 w-52 rounded-full bg-white/20 border border-white/10" />
+            <Skeleton className="h-9 w-72 rounded-xl bg-white/25 sm:w-96" />
+            <Skeleton className="h-4 w-full max-w-lg rounded-lg bg-white/15" />
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Skeleton className="h-11 w-44 rounded-xl bg-slate-700/70" />
-            <Skeleton className="h-11 w-44 rounded-xl bg-slate-700/40" />
+            <Skeleton className="h-11 w-44 rounded-2xl bg-white/25 border border-white/15" />
+            <Skeleton className="h-11 w-44 rounded-2xl bg-white/15 border border-white/10" />
           </div>
         </div>
+
+        {/* Background accent glow */}
+        <div className="pointer-events-none absolute -top-12 -right-12 h-64 w-64 rounded-full bg-red-600/15 blur-3xl" />
       </div>
 
       {/* 2. Stat KPI Cards Skeleton (4 Grid) */}

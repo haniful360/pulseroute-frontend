@@ -125,8 +125,22 @@ export default function TripHistoryView() {
         <DynamicBadge text={trip.ambulance} color="#e63946" size="xs" />
       ),
     },
-    { header: 'Destination', accessor: 'destination' as keyof PatientTrip },
-    { header: 'Paramedic Driver', accessor: 'driver' as keyof PatientTrip },
+    {
+      header: 'Destination',
+      cell: (trip: PatientTrip) => (
+        <span className="block max-w-[200px] truncate text-slate-700" title={trip.destination}>
+          {trip.destination}
+        </span>
+      ),
+    },
+    {
+      header: 'Paramedic Driver',
+      cell: (trip: PatientTrip) => (
+        <span className="block max-w-[150px] truncate text-slate-700" title={trip.driver}>
+          {trip.driver}
+        </span>
+      ),
+    },
     {
       header: 'Fare',
       cell: (trip: PatientTrip) => <span className="font-bold text-slate-900">{trip.fare}</span>,
@@ -160,24 +174,26 @@ export default function TripHistoryView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <DynamicPageHeader
-          title="Patient Trip History"
-          description="View records, paramedic telemetry logs, and hospital invoices of your previous emergency responses."
-        />
+        <div className="flex-1 min-w-0">
+          <DynamicPageHeader
+            title="Patient Trip History"
+            description="View records, paramedic telemetry logs, and hospital invoices of your previous emergency responses."
+          />
+        </div>
         <DynamicActionButton
           variant="outline"
           icon={Download}
           iconPosition="left"
           onClick={() => toast.success('Trip log history exported as PDF.')}
           label="Download Invoice Logs"
-          className="self-start sm:self-auto"
+          className="self-start sm:self-auto shrink-0"
         />
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-5 sm:grid-cols-3">
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
           <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
             TOTAL DISPATCHES
@@ -210,14 +226,14 @@ export default function TripHistoryView() {
       </div>
 
       {/* Table Container */}
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
+      <div className="w-full min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
         <div className="flex flex-col gap-3 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold text-slate-900">Completed Emergency Dispatches</h3>
             <p className="text-xs text-slate-500">Official hospital arrival telemetry and invoice details</p>
           </div>
 
-          <div className="w-full sm:w-72">
+          <div className="w-full sm:w-72 shrink-0">
             <InputField
               value={query}
               onChange={(e) => setQuery(e.target.value)}
