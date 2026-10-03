@@ -6,19 +6,42 @@ declare global {
   interface Window {
     google?: any;
     __googleMapsLoadingPromise?: Promise<void>;
+    __googleMapsAuthFailed?: boolean;
+    gm_authFailure?: () => void;
   }
 }
 
 export function useGoogleMaps() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return Boolean(window.__googleMapsAuthFailed);
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const handleAuthFailure = () => {
+      console.warn(
+        '[PulseRoute] Google Maps authentication failure detected (e.g. BillingNotEnabled or InvalidKey). Activating OpenStreetMap fallback.'
+      );
+      window.__googleMapsAuthFailed = true;
+      setAuthError(true);
+    };
+
+    window.gm_authFailure = handleAuthFailure;
+
+    const onAuthEvent = () => setAuthError(true);
+    window.addEventListener('google-maps-auth-failure', onAuthEvent);
+
     if (window.google?.maps) {
       setIsLoaded(true);
-      return;
+      return () => {
+        window.removeEventListener('google-maps-auth-failure', onAuthEvent);
+      };
     }
 
     const apiKey =
@@ -27,7 +50,10 @@ export function useGoogleMaps() {
 
     if (!apiKey) {
       setLoadError('Missing Google Maps API key');
-      return;
+      setAuthError(true);
+      return () => {
+        window.removeEventListener('google-maps-auth-failure', onAuthEvent);
+      };
     }
 
     if (!window.__googleMapsLoadingPromise) {
@@ -57,8 +83,18 @@ export function useGoogleMaps() {
       .catch((err) => {
         console.error('Failed to load Google Maps script:', err);
         setLoadError('Failed to load Google Maps script');
+        setAuthError(true);
       });
+
+    return () => {
+      window.removeEventListener('google-maps-auth-failure', onAuthEvent);
+    };
   }, []);
 
-  return { isLoaded, loadError, google: typeof window !== 'undefined' ? window.google : undefined };
+  return {
+    isLoaded,
+    loadError,
+    authError,
+    google: typeof window !== 'undefined' ? window.google : undefined,
+  };
 }
