@@ -10,7 +10,7 @@ export function getSocket(token?: string | null): Socket | null {
   const socketUrl =
     process.env.NEXT_PUBLIC_SOCKET_URL ||
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    'http://localhost:5001';
+    'http://localhost:5000';
 
   if (!socket) {
     socket = io(socketUrl, {

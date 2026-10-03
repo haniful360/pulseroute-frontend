@@ -25,7 +25,7 @@ function buildUrl(path: string, params?: Record<string, unknown>): string {
   const baseUrl = (
     process.env.BACKEND_API_URL ||
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-    "http://localhost:5001/api/v1"
+    "http://localhost:5000/api/v1"
   ).replace(/\/+$/, "")
   const cleanPath = path.startsWith("/") ? path : `/${path}`
   const url = new URL(`${baseUrl}${cleanPath}`)
