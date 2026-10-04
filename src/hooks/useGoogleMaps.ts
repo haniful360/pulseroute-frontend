@@ -46,7 +46,8 @@ export function useGoogleMaps() {
 
     const apiKey =
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-      'AIzaSyByIQpfN1f9S3Xy58i9u5orxStnnWnbNX0';
+      'AIzaSyBzpo1ASSczdRIRVy-gs20KalRmW4wI3AY';
+      
 
     if (!apiKey) {
       setLoadError('Missing Google Maps API key');
