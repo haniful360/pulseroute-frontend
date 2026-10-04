@@ -88,6 +88,12 @@ export function middleware(request: NextRequest) {
         decoded.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/patient';
       return NextResponse.redirect(new URL(target, request.url));
     }
+
+    if (pathname.startsWith('/dashboard/patient') && decoded.role !== 'USER') {
+      const target =
+        decoded.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/driver';
+      return NextResponse.redirect(new URL(target, request.url));
+    }
   }
 
   return NextResponse.next();

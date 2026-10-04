@@ -19,7 +19,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
-import { loginUserAction, logoutAction } from '@/services/auth/auth.service';
+import { loginSuperAdminAction } from '@/services/auth/auth.service';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
@@ -84,14 +84,14 @@ function SuperAdminLoginForm() {
     setGeneralError('');
 
     try {
-      const res = await loginUserAction({
+      const res = await loginSuperAdminAction({
         email: email.trim(),
         password,
       });
 
       if (!res.success || !res.data) {
         const errorMsg =
-          res.message || 'Authentication failed. Please verify root administrative credentials.';
+          res.message || 'Access Denied: Only Super Administrators can log in through this portal.';
         setGeneralError(errorMsg);
         toast.error(errorMsg);
         return;
@@ -100,8 +100,6 @@ function SuperAdminLoginForm() {
       // STRICT ROLE VERIFICATION: Only allow SUPER_ADMIN
       const userRole = res.data.user.role;
       if (userRole !== 'SUPER_ADMIN') {
-        // Immediately revoke session
-        await logoutAction();
         const unauthorizedMsg =
           'Access Denied: The authenticated account does not possess Super Administrator clearance.';
         setGeneralError(unauthorizedMsg);
@@ -239,29 +237,6 @@ function SuperAdminLoginForm() {
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <span>Master Gateway v3.4</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="font-mono text-[11px] text-slate-400">{timeStr || 'LIVE UTC'}</span>
-            <div className="flex items-center space-x-3">
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-400 transition-colors hover:text-white"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-4 w-4" />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-slate-400 transition-colors hover:text-white"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
         </div>
       </aside>
 
@@ -359,11 +334,11 @@ function SuperAdminLoginForm() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  <span>Verifying Root Clearance...</span>
+                  <span>Verifying..</span>
                 </div>
               ) : (
                 <>
-                  <span>Authorize & Enter Master Console</span>
+                  <span>Login</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}

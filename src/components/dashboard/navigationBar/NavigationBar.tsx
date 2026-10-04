@@ -72,10 +72,6 @@ export default function NavigationBar({ role }: { role: roleTypes }) {
                 icon={<Search className="h-4 w-4 text-slate-400" />}
               />
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-emerald-700">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-              <span>Verification Queue Live</span>
-            </div>
           </div>
         )}
 

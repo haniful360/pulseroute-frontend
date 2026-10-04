@@ -129,6 +129,39 @@ export async function loginUserAction(
 }
 
 /**
+ * 7b. Super Admin Dedicated Login
+ * Strictly enforces that only users with the SUPER_ADMIN role can authenticate.
+ * Session cookies are only set if role verification is successful.
+ */
+export async function loginSuperAdminAction(
+  payload: ILoginUserPayload
+): Promise<ApiResponse<IAuthData>> {
+  const res = await apiPost<ApiResponse<IAuthData>>("/auth/login", {
+    email: payload.email,
+    password: payload.password,
+    role: "SUPER_ADMIN",
+  });
+
+  if (!res.success || !res.data) {
+    return res;
+  }
+
+  if (res.data.user?.role !== "SUPER_ADMIN") {
+    return {
+      success: false,
+      statusCode: 403,
+      message: "Access Denied: Only Super Administrators can log in through this portal.",
+    };
+  }
+
+  if (res.data.accessToken) {
+    await setAuthCookies(res.data.accessToken, res.data.refreshToken);
+  }
+
+  return res;
+}
+
+/**
  * 8. Google Sign-In / Login
  */
 export async function googleLoginAction(
