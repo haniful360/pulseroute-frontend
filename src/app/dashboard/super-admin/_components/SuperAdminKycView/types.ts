@@ -10,10 +10,13 @@ export interface Applicant {
   submittedAt: string;
   rawSubmittedDate: string;
   driverId: string;
+  vehicleId?: string;
   division: string;
   phone: string;
   licenseExpiry: string;
   status: 'Awaiting Verification' | 'Approved' | 'Rejected';
+  driverVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  vehicleVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   statusCategory: QueueStatus;
   documents: {
     licenseFront: string;

@@ -5,17 +5,20 @@ import { useState } from 'react';
 import { Check, Maximize2, Phone, ShieldCheck, X } from 'lucide-react';
 import { Applicant } from './types';
 import DynamicModal from '@/components/dashboard/DynamicModal/DynamicModal';
+import { cn } from '@/lib/utils';
 
 interface KycApplicantDetailsProps {
   applicant: Applicant;
   onApprove: (id: string) => void;
   onReject: (id: string, reason: string) => void;
+  onVerifyVehicle?: (vehicleId: string, status: 'APPROVED' | 'REJECTED', reason?: string) => void;
 }
 
 export default function KycApplicantDetails({
   applicant,
   onApprove,
   onReject,
+  onVerifyVehicle,
 }: KycApplicantDetailsProps) {
   // Lightbox modal state
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
@@ -46,11 +49,54 @@ export default function KycApplicantDetails({
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl font-black text-slate-900 sm:text-2xl">{applicant.name}</h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
-                  {applicant.status.toUpperCase()}
+                {/* Driver Verification Status Badge */}
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold',
+                    applicant.driverVerificationStatus === 'APPROVED'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : applicant.driverVerificationStatus === 'REJECTED'
+                        ? 'border-rose-200 bg-rose-50 text-rose-700'
+                        : 'border-amber-200 bg-amber-50 text-amber-700',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full',
+                      applicant.driverVerificationStatus === 'APPROVED'
+                        ? 'bg-emerald-500'
+                        : applicant.driverVerificationStatus === 'REJECTED'
+                          ? 'bg-rose-500'
+                          : 'animate-pulse bg-amber-500',
+                    )}
+                  />
+                  DRIVER: {applicant.driverVerificationStatus || applicant.status.toUpperCase()}
+                </span>
+
+                {/* Vehicle Verification Status Badge */}
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold',
+                    applicant.vehicleVerificationStatus === 'APPROVED'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : applicant.vehicleVerificationStatus === 'REJECTED'
+                        ? 'border-rose-200 bg-rose-50 text-rose-700'
+                        : 'border-amber-200 bg-amber-50 text-amber-700',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full',
+                      applicant.vehicleVerificationStatus === 'APPROVED'
+                        ? 'bg-emerald-500'
+                        : applicant.vehicleVerificationStatus === 'REJECTED'
+                          ? 'bg-rose-500'
+                          : 'animate-pulse bg-amber-500',
+                    )}
+                  />
+                  VEHICLE: {applicant.vehicleVerificationStatus || 'PENDING'}
                 </span>
               </div>
 
@@ -224,11 +270,56 @@ export default function KycApplicantDetails({
 
         {/* Vehicle Photos Section */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold tracking-tight text-slate-900">Vehicle Photos</h2>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-sm font-bold tracking-tight text-slate-900">Vehicle Photos &amp; Fleet Compliance</h2>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold',
+                  applicant.vehicleVerificationStatus === 'APPROVED'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : applicant.vehicleVerificationStatus === 'REJECTED'
+                      ? 'border-rose-200 bg-rose-50 text-rose-700'
+                      : 'border-amber-200 bg-amber-50 text-amber-700',
+                )}
+              >
+                <span
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full',
+                    applicant.vehicleVerificationStatus === 'APPROVED'
+                      ? 'bg-emerald-500'
+                      : applicant.vehicleVerificationStatus === 'REJECTED'
+                        ? 'bg-rose-500'
+                        : 'animate-pulse bg-amber-500',
+                  )}
+                />
+                Vehicle Status: {applicant.vehicleVerificationStatus || 'PENDING'}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {applicant.vehicleVerificationStatus !== 'APPROVED' && applicant.vehicleId && onVerifyVehicle && (
+                <button
+                  type="button"
+                  onClick={() => onVerifyVehicle(applicant.vehicleId!, 'APPROVED')}
+                  className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-700 active:scale-95"
+                >
+                  <Check className="h-3 w-3 stroke-[3]" />
+                  <span>Verify Vehicle</span>
+                </button>
+              )}
+              {applicant.vehicleVerificationStatus !== 'REJECTED' && applicant.vehicleId && onVerifyVehicle && (
+                <button
+                  type="button"
+                  onClick={() => onVerifyVehicle(applicant.vehicleId!, 'REJECTED', 'Failed ambulance inspection')}
+                  className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 shadow-xs transition-all hover:bg-rose-100 active:scale-95"
+                >
+                  <X className="h-3 w-3" />
+                  <span>Reject Vehicle</span>
+                </button>
+              )}
               <span className="rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-bold text-[#E63946]">
-                ICU TYPE
+                {applicant.vehicleType}
               </span>
               <span className="rounded-full bg-slate-100 px-2.5 py-0.5 font-mono text-xs font-semibold text-slate-500">
                 Reg: {applicant.licensePlate}

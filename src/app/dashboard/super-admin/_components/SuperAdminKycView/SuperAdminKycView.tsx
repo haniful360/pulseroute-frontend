@@ -6,9 +6,10 @@ import { ShieldCheck, UserCheck, Clock, FileCheck2 } from 'lucide-react';
 import KycQueueList from './KycQueueList';
 import KycApplicantDetails from './KycApplicantDetails';
 import KycAuditTimeline from './KycAuditTimeline';
-import { Applicant } from './types';
+import { Applicant, QueueStatus } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getAllDriversAction, verifyDriverAction } from '@/services/driver/driver.service';
+import { verifyVehicleAction } from '@/services/vehicle/vehicle.service';
 
 export default function SuperAdminKycView() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -24,41 +25,71 @@ export default function SuperAdminKycView() {
           const list = Array.isArray((res.data as any).data) ? (res.data as any).data : res.data;
           if (list.length > 0) {
             const mapped: Applicant[] = list.map((drv: any, idx: number) => {
-              const statusCat = drv.verificationStatus === 'APPROVED'
+              const driverStatus = drv.verificationStatus || 'PENDING';
+              const vehicleStatus =
+                drv.currentVehicle?.verificationStatus ||
+                drv.vehicles?.[0]?.verificationStatus ||
+                'PENDING';
+              const vehicleId =
+                drv.currentVehicle?.id ||
+                drv.currentVehicleId ||
+                drv.vehicles?.[0]?.id ||
+                '';
+
+              const isBothApproved =
+                driverStatus === 'APPROVED' && vehicleStatus === 'APPROVED';
+              const isAnyRejected =
+                driverStatus === 'REJECTED' || vehicleStatus === 'REJECTED';
+              const statusCat: QueueStatus = isBothApproved
                 ? 'Approved'
-                : drv.verificationStatus === 'REJECTED'
+                : isAnyRejected
                   ? 'Rejected'
                   : 'Pending';
+
               return {
                 id: drv.id,
                 name: drv.name || drv.user?.name || `Driver ${idx + 1}`,
                 avatarUrl: drv.user?.avatarUrl || '/assets/dashboard/driver/dhaka_radar_map.png',
-                urgency: drv.verificationStatus === 'PENDING' ? 'Urgent' : 'Standard',
-                vehicleType: drv.currentVehicle?.ambulanceType || 'ICU Ambulance',
-                licensePlate: drv.currentVehicle?.vehicleNumber || drv.licenseNumber || 'DHA-129-EMG',
+                urgency: (driverStatus === 'PENDING' || vehicleStatus === 'PENDING') ? 'Urgent' : 'Standard',
+                vehicleType: drv.currentVehicle?.ambulanceType || drv.vehicles?.[0]?.ambulanceType || 'ICU Ambulance',
+                licensePlate: drv.currentVehicle?.vehicleNumber || drv.vehicles?.[0]?.vehicleNumber || drv.licenseNumber || 'DHA-129-EMG',
                 submittedAt: new Date(drv.createdAt).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
                 }),
                 rawSubmittedDate: drv.createdAt,
                 driverId: drv.id,
+                vehicleId: vehicleId,
                 division: 'Dhaka Central',
                 phone: drv.contactNumber || drv.user?.phone || '+880 1712 345678',
                 licenseExpiry: 'Exp: 2028',
-                status: drv.verificationStatus === 'APPROVED'
+                status: isBothApproved
                   ? 'Approved'
-                  : drv.verificationStatus === 'REJECTED'
+                  : isAnyRejected
                     ? 'Rejected'
                     : 'Awaiting Verification',
+                driverVerificationStatus: driverStatus,
+                vehicleVerificationStatus: vehicleStatus,
                 statusCategory: statusCat,
                 documents: {
                   licenseFront: drv.licensePhotoUrl || '',
                   licenseBack: '',
                   nidFront: drv.nidPhotoUrl || '',
                   nidBack: '',
-                  vehicleExterior: drv.currentVehicle?.vehiclePhotoUrl || '',
-                  vehicleInterior: '',
-                  vehicleCabin: '',
+                  vehicleExterior:
+                    drv.currentVehicle?.photoUrl ||
+                    drv.currentVehicle?.photos?.[0] ||
+                    drv.vehicles?.[0]?.photoUrl ||
+                    drv.vehicles?.[0]?.photos?.[0] ||
+                    '',
+                  vehicleInterior:
+                    drv.currentVehicle?.photos?.[1] ||
+                    drv.vehicles?.[0]?.photos?.[1] ||
+                    '',
+                  vehicleCabin:
+                    drv.currentVehicle?.photos?.[2] ||
+                    drv.vehicles?.[0]?.photos?.[2] ||
+                    '',
                 },
                 timeline: [
                   {
@@ -92,12 +123,20 @@ export default function SuperAdminKycView() {
     applicants.find((app) => app.id === selectedApplicantId) || applicants[0];
 
   const handleApprove = async (id: string) => {
-    if (!selectedApplicant) return;
+    const applicant = applicants.find((a) => a.id === id) || selectedApplicant;
+    if (!applicant) return;
     try {
-      const res = await verifyDriverAction(selectedApplicant.driverId || id, {
-        status: 'APPROVED',
-      });
-      if (res.success) {
+      const driverId = applicant.driverId || id;
+      const vehicleId = applicant.vehicleId;
+
+      const driverPromise = verifyDriverAction(driverId, { status: 'APPROVED' });
+      const vehiclePromise = vehicleId
+        ? verifyVehicleAction(vehicleId, { status: 'APPROVED' })
+        : Promise.resolve({ success: true });
+
+      const [driverRes, vehicleRes] = await Promise.all([driverPromise, vehiclePromise]);
+
+      if (driverRes.success && (vehicleRes as any).success !== false) {
         setApplicants((prev) =>
           prev.map((app) =>
             app.id === id
@@ -105,11 +144,13 @@ export default function SuperAdminKycView() {
                   ...app,
                   status: 'Approved',
                   statusCategory: 'Approved',
+                  driverVerificationStatus: 'APPROVED',
+                  vehicleVerificationStatus: 'APPROVED',
                   timeline: [
                     ...app.timeline,
                     {
-                      title: 'Administrative Approval Granted',
-                      desc: `Super Admin approved driver credentials and verified fleet compliance.`,
+                      title: 'Driver & Vehicle Approved',
+                      desc: `Super Admin approved driver credentials and verified fleet ambulance compliance.`,
                       time: 'Just now',
                       status: 'SUCCESS',
                     },
@@ -119,10 +160,10 @@ export default function SuperAdminKycView() {
           ),
         );
         toast.success(
-          `Driver & Vehicle approved! ${selectedApplicant.name} is now active on the dispatch network.`,
+          `Driver & Vehicle approved! ${applicant.name} is now active on the dispatch network.`,
         );
       } else {
-        toast.error(res.message || 'Failed to approve driver');
+        toast.error(driverRes.message || (vehicleRes as any)?.message || 'Failed to approve application');
       }
     } catch (err: any) {
       toast.error(err?.message || 'Error executing verification approval');
@@ -130,13 +171,23 @@ export default function SuperAdminKycView() {
   };
 
   const handleReject = async (id: string, reason: string) => {
-    if (!selectedApplicant) return;
+    const applicant = applicants.find((a) => a.id === id) || selectedApplicant;
+    if (!applicant) return;
     try {
-      const res = await verifyDriverAction(selectedApplicant.driverId || id, {
+      const driverId = applicant.driverId || id;
+      const vehicleId = applicant.vehicleId;
+
+      const driverPromise = verifyDriverAction(driverId, {
         status: 'REJECTED',
         reason,
       });
-      if (res.success) {
+      const vehiclePromise = vehicleId
+        ? verifyVehicleAction(vehicleId, { status: 'REJECTED', reason })
+        : Promise.resolve({ success: true });
+
+      const [driverRes] = await Promise.all([driverPromise, vehiclePromise]);
+
+      if (driverRes.success) {
         setApplicants((prev) =>
           prev.map((app) =>
             app.id === id
@@ -144,6 +195,8 @@ export default function SuperAdminKycView() {
                   ...app,
                   status: 'Rejected',
                   statusCategory: 'Rejected',
+                  driverVerificationStatus: 'REJECTED',
+                  vehicleVerificationStatus: 'REJECTED',
                   timeline: [
                     ...app.timeline,
                     {
@@ -157,12 +210,68 @@ export default function SuperAdminKycView() {
               : app,
           ),
         );
-        toast.error(`Application rejected for ${selectedApplicant.name}. Rejection notice dispatched.`);
+        toast.error(`Application rejected for ${applicant.name}. Rejection notice dispatched.`);
       } else {
-        toast.error(res.message || 'Failed to reject driver');
+        toast.error(driverRes.message || 'Failed to reject application');
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Error rejecting driver');
+      toast.error(err?.message || 'Error rejecting application');
+    }
+  };
+
+  const handleVerifyVehicle = async (
+    vehicleId: string,
+    status: 'APPROVED' | 'REJECTED',
+    reason?: string,
+  ) => {
+    if (!vehicleId) return;
+    try {
+      const res = await verifyVehicleAction(vehicleId, { status, reason });
+      if (res.success) {
+        setApplicants((prev) =>
+          prev.map((app) => {
+            if (app.vehicleId === vehicleId || app.id === selectedApplicantId) {
+              const updatedVehicleStatus = status;
+              const updatedDriverStatus = app.driverVerificationStatus;
+              const isBothApproved =
+                updatedDriverStatus === 'APPROVED' && updatedVehicleStatus === 'APPROVED';
+              const isAnyRejected =
+                updatedDriverStatus === 'REJECTED' || updatedVehicleStatus === 'REJECTED';
+              const newCat: QueueStatus = isBothApproved
+                ? 'Approved'
+                : isAnyRejected
+                  ? 'Rejected'
+                  : 'Pending';
+
+              return {
+                ...app,
+                vehicleVerificationStatus: updatedVehicleStatus,
+                status: isBothApproved
+                  ? 'Approved'
+                  : isAnyRejected
+                    ? 'Rejected'
+                    : 'Awaiting Verification',
+                statusCategory: newCat,
+                timeline: [
+                  ...app.timeline,
+                  {
+                    title: `Ambulance Fleet Status: ${status}`,
+                    desc: `Ambulance ${app.licensePlate} verification marked as ${status}.`,
+                    time: 'Just now',
+                    status: status === 'APPROVED' ? 'SUCCESS' : 'ERROR',
+                  },
+                ],
+              };
+            }
+            return app;
+          }),
+        );
+        toast.success(`Vehicle verification status updated to ${status}`);
+      } else {
+        toast.error(res.message || 'Failed to update vehicle status');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error updating vehicle status');
     }
   };
 
@@ -262,6 +371,7 @@ export default function SuperAdminKycView() {
                   applicant={selectedApplicant}
                   onApprove={handleApprove}
                   onReject={handleReject}
+                  onVerifyVehicle={handleVerifyVehicle}
                 />
 
                 <KycAuditTimeline applicant={selectedApplicant} />

@@ -20,12 +20,17 @@ export default function KycQueueList({
   const [activeTab, setActiveTab] = useState<QueueStatus>('Pending');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const pendingCount = applicants.filter((a) => a.statusCategory === 'Pending').length;
+  const approvedCount = applicants.filter((a) => a.statusCategory === 'Approved').length;
+  const rejectedCount = applicants.filter((a) => a.statusCategory === 'Rejected').length;
+
   const filteredApplicants = applicants.filter((app) => {
     const matchesTab = app.statusCategory === activeTab;
     const matchesSearch =
       app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.vehicleType.toLowerCase().includes(searchQuery.toLowerCase());
+      app.vehicleType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.licensePlate.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
@@ -47,7 +52,7 @@ export default function KycQueueList({
                 : 'text-slate-500 hover:text-slate-800',
             )}
           >
-            Pending (42)
+            Pending ({pendingCount})
           </button>
           <button
             type="button"
@@ -59,7 +64,7 @@ export default function KycQueueList({
                 : 'text-slate-500 hover:text-slate-800',
             )}
           >
-            Approved
+            Approved ({approvedCount})
           </button>
           <button
             type="button"
@@ -71,7 +76,7 @@ export default function KycQueueList({
                 : 'text-slate-500 hover:text-slate-800',
             )}
           >
-            Rejected
+            Rejected ({rejectedCount})
           </button>
         </div>
 
@@ -123,8 +128,37 @@ export default function KycQueueList({
                   </span>
                 </div>
 
-                <div className="mt-1 text-xs font-semibold text-slate-600">
-                  {applicant.vehicleType}
+                <div className="mt-1 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-600">{applicant.vehicleType}</span>
+                  <span className="font-mono text-[11px] text-slate-500">{applicant.licensePlate}</span>
+                </div>
+
+                {/* Status Badges for Driver & Vehicle */}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                      applicant.driverVerificationStatus === 'APPROVED'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : applicant.driverVerificationStatus === 'REJECTED'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-amber-100 text-amber-800',
+                    )}
+                  >
+                    D: {applicant.driverVerificationStatus || 'PENDING'}
+                  </span>
+                  <span
+                    className={cn(
+                      'rounded px-1.5 py-0.5 text-[10px] font-bold',
+                      applicant.vehicleVerificationStatus === 'APPROVED'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : applicant.vehicleVerificationStatus === 'REJECTED'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-amber-100 text-amber-800',
+                    )}
+                  >
+                    V: {applicant.vehicleVerificationStatus || 'PENDING'}
+                  </span>
                 </div>
 
                 <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400">
@@ -132,7 +166,7 @@ export default function KycQueueList({
                     <Clock className="h-3 w-3" />
                     {applicant.submittedAt}
                   </span>
-                  <span className="font-mono font-semibold text-slate-500">ID: {applicant.id}</span>
+                  <span className="font-mono font-semibold text-slate-500">ID: {applicant.id.slice(0, 8)}...</span>
                 </div>
               </button>
             );
