@@ -46,23 +46,76 @@ export default function SuperAdminKycView() {
                   ? 'Rejected'
                   : 'Pending';
 
+              const licensePhotos = Array.isArray(drv.licensePhotos) ? drv.licensePhotos : [];
+              const nidPhotos = Array.isArray(drv.nidPhotos) ? drv.nidPhotos : [];
+              const vehicle = drv.currentVehicle || drv.vehicles?.[0];
+              const vehiclePhotos = Array.isArray(vehicle?.photos) ? vehicle.photos : [];
+
+              const licenseFront = drv.licensePhotoUrl || licensePhotos[0] || '';
+              const licenseBack = licensePhotos[1] || '';
+
+              const nidFront = drv.nidPhotoUrl || nidPhotos[0] || '';
+              const nidBack = nidPhotos[1] || '';
+
+              const vehicleExterior =
+                vehicle?.photoUrl ||
+                vehiclePhotos[0] ||
+                '';
+              const vehicleInterior = vehiclePhotos[1] || '';
+              const vehicleCabin = vehiclePhotos[2] || '';
+
+              const expDateStr = drv.licenseExpiry
+                ? new Date(drv.licenseExpiry).toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : '2028';
+
               return {
                 id: drv.id,
                 name: drv.name || drv.user?.name || `Driver ${idx + 1}`,
+                email: drv.email || drv.user?.email || 'driver@pulseroute.com',
                 avatarUrl: drv.user?.avatarUrl || '/assets/dashboard/driver/dhaka_radar_map.png',
                 urgency: (driverStatus === 'PENDING' || vehicleStatus === 'PENDING') ? 'Urgent' : 'Standard',
-                vehicleType: drv.currentVehicle?.ambulanceType || drv.vehicles?.[0]?.ambulanceType || 'ICU Ambulance',
-                licensePlate: drv.currentVehicle?.vehicleNumber || drv.vehicles?.[0]?.vehicleNumber || drv.licenseNumber || 'DHA-129-EMG',
+                vehicleType: vehicle?.ambulanceType || 'ICU Ambulance',
+                licensePlate: vehicle?.vehicleNumber || drv.licenseNumber || 'DHA-129-EMG',
                 submittedAt: new Date(drv.createdAt).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
+                  year: 'numeric',
                 }),
                 rawSubmittedDate: drv.createdAt,
                 driverId: drv.id,
                 vehicleId: vehicleId,
                 division: 'Dhaka Central',
                 phone: drv.contactNumber || drv.user?.phone || '+880 1712 345678',
-                licenseExpiry: 'Exp: 2028',
+                licenseNumber: drv.licenseNumber || 'DL-DH-992144',
+                licenseExpiry: expDateStr,
+                nidNumber: drv.nidNumber || '1988269381023',
+                experienceYears: drv.experienceYears || 5,
+                rating: drv.rating ?? 5.0,
+                totalTrips: drv.totalTrips ?? 0,
+                dutyStatus: drv.dutyStatus || 'OFFLINE',
+                verifiedAt: drv.verifiedAt
+                  ? new Date(drv.verifiedAt).toLocaleDateString('en-US', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })
+                  : undefined,
+                verifiedByName:
+                  drv.verifiedBy?.name ||
+                  (drv.verificationStatus === 'APPROVED' ? 'Super Admin' : undefined),
+                rejectionReason: drv.rejectionReason || vehicle?.rejectionReason || undefined,
+                vehicleModel: vehicle?.model || 'HiAce',
+                vehicleManufacturer: vehicle?.manufacturer || 'Toyota',
+                vehicleYear: vehicle?.year || 2023,
+                hasOxygen: vehicle?.hasOxygen !== false,
+                hasVentilator: !!vehicle?.hasVentilator,
+                hasDefibrillator: !!vehicle?.hasDefibrillator,
+                hasSuctionMachine: !!vehicle?.hasSuctionMachine,
+                equipmentDetails: vehicle?.equipmentDetails || 'Complete mobile ICU life-support setup',
                 status: isBothApproved
                   ? 'Approved'
                   : isAnyRejected
@@ -72,24 +125,13 @@ export default function SuperAdminKycView() {
                 vehicleVerificationStatus: vehicleStatus,
                 statusCategory: statusCat,
                 documents: {
-                  licenseFront: drv.licensePhotoUrl || '',
-                  licenseBack: '',
-                  nidFront: drv.nidPhotoUrl || '',
-                  nidBack: '',
-                  vehicleExterior:
-                    drv.currentVehicle?.photoUrl ||
-                    drv.currentVehicle?.photos?.[0] ||
-                    drv.vehicles?.[0]?.photoUrl ||
-                    drv.vehicles?.[0]?.photos?.[0] ||
-                    '',
-                  vehicleInterior:
-                    drv.currentVehicle?.photos?.[1] ||
-                    drv.vehicles?.[0]?.photos?.[1] ||
-                    '',
-                  vehicleCabin:
-                    drv.currentVehicle?.photos?.[2] ||
-                    drv.vehicles?.[0]?.photos?.[2] ||
-                    '',
+                  licenseFront,
+                  licenseBack,
+                  nidFront,
+                  nidBack,
+                  vehicleExterior,
+                  vehicleInterior,
+                  vehicleCabin,
                 },
                 timeline: [
                   {

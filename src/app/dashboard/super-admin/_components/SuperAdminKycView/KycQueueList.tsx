@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Clock } from 'lucide-react';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Applicant, QueueStatus } from './types';
@@ -23,6 +23,12 @@ export default function KycQueueList({
   const pendingCount = applicants.filter((a) => a.statusCategory === 'Pending').length;
   const approvedCount = applicants.filter((a) => a.statusCategory === 'Approved').length;
   const rejectedCount = applicants.filter((a) => a.statusCategory === 'Rejected').length;
+
+  useEffect(() => {
+    if (activeTab === 'Pending' && pendingCount === 0 && approvedCount > 0) {
+      setActiveTab('Approved');
+    }
+  }, [pendingCount, approvedCount]);
 
   const filteredApplicants = applicants.filter((app) => {
     const matchesTab = app.statusCategory === activeTab;
