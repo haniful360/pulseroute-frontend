@@ -35,6 +35,7 @@ export function middleware(request: NextRequest) {
 
   const isAuthRoute =
     pathname === '/login' ||
+    pathname === '/super-admin/login' ||
     pathname.startsWith('/register') ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
@@ -54,6 +55,11 @@ export function middleware(request: NextRequest) {
 
   // 2. If user is not logged in and tries to access dashboard, redirect to login
   if (!isTokenValid && isDashboardRoute) {
+    if (pathname.startsWith('/dashboard/super-admin')) {
+      const adminLoginUrl = new URL('/super-admin/login', request.url);
+      adminLoginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(adminLoginUrl);
+    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
@@ -91,6 +97,7 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/login',
+    '/super-admin/login',
     '/register/:path*',
     '/forgot-password',
     '/reset-password',

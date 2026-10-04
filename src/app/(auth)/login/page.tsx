@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Phone, X, Twitter, Linkedin, AlertCircle } from 'lucide-react';
+import { Phone, X, Twitter, Linkedin, AlertCircle, ShieldAlert } from 'lucide-react';
 import { InputField } from '@/components/dashboard/Fields/InputField/InputField';
 import { PulseRouteLogo } from '@/components/shared/Logo/PulseRouteLogo';
 import { loginUserAction, googleLoginAction } from '@/services/auth/auth.service';
@@ -430,6 +430,17 @@ function LoginForm() {
               className="font-bold text-red-600 transition-colors hover:text-red-700"
             >
               Register
+            </Link>
+          </div>
+
+          {/* Super Admin Access Link */}
+          <div className="mt-4 flex items-center justify-center border-t border-slate-100 pt-4">
+            <Link
+              href="/super-admin/login"
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-slate-500 transition-colors hover:text-red-600"
+            >
+              <ShieldAlert className="h-3.5 w-3.5 text-slate-400" />
+              <span>Super Admin & Master Dispatch Access &rarr;</span>
             </Link>
           </div>
 
