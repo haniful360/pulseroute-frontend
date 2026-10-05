@@ -93,7 +93,15 @@ export default function SuperAdminKycView() {
                 licenseNumber: drv.licenseNumber || 'DL-DH-992144',
                 licenseExpiry: expDateStr,
                 nidNumber: drv.nidNumber || '1988269381023',
-                experienceYears: drv.experienceYears || 5,
+                experienceYears: (() => {
+                  const raw = Number(drv.experienceYears);
+                  if (isNaN(raw) || raw <= 0) return 5;
+                  if (raw >= 1950 && raw <= new Date().getFullYear()) {
+                    return new Date().getFullYear() - raw;
+                  }
+                  if (raw > 60) return 35;
+                  return raw;
+                })(),
                 rating: drv.rating ?? 5.0,
                 totalTrips: drv.totalTrips ?? 0,
                 dutyStatus: drv.dutyStatus || 'OFFLINE',
