@@ -32,9 +32,13 @@ export default function DriverSummaryPanel() {
         const res = await getDriverDashboardOverviewAction();
         if (res.success && res.data) {
           setOverview(res.data);
-          if (res.data.driver?.dutyStatus) {
-            setDutyStatus(res.data.driver.dutyStatus);
-            setIsShiftEnded(res.data.driver.dutyStatus === 'OFFLINE');
+          const currentDuty =
+            res.data.duty?.dutyStatus ||
+            res.data.driver?.dutyStatus ||
+            res.data.dutyStatus;
+          if (currentDuty) {
+            setDutyStatus(currentDuty);
+            setIsShiftEnded(currentDuty === 'OFFLINE');
           }
         }
       } catch (err) {

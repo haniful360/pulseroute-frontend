@@ -14,12 +14,14 @@ import {
   Crosshair,
   Hospital,
   Map,
+  MapPin,
   Navigation,
   Phone,
   Radio,
   Send,
   Siren,
   Users,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -29,14 +31,19 @@ import {
 import {
   updateTripStatusAction,
   getMyTripsAction,
+  getMyOffersAction,
+  acceptDispatchOfferAction,
+  rejectDispatchOfferAction,
 } from '@/services/trip/trip.service';
 import { ActiveDispatchSkeleton } from '@/components/dashboard/skeletons/driver';
 
 export default function ActiveDispatchView() {
   const router = useRouter();
   const [activeTrip, setActiveTrip] = useState<any>(null);
+  const [pendingOffer, setPendingOffer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isAcceptingOffer, setIsAcceptingOffer] = useState(false);
   const [incidentModalOpen, setIncidentModalOpen] = useState(false);
   const [incidentType, setIncidentType] = useState('Traffic Congestion');
   const [incidentNotes, setIncidentNotes] = useState('');
@@ -45,15 +52,31 @@ export default function ActiveDispatchView() {
     async function loadActiveDispatch() {
       try {
         const res = await getDriverDashboardOverviewAction();
-        if (res.success && res.data?.activeTrip) {
-          setActiveTrip(res.data.activeTrip);
+        let currentTrip = null;
+        if (res.success && res.data?.live?.activeTrip) {
+          currentTrip = res.data.live.activeTrip;
+        } else if (res.success && res.data?.activeTrip) {
+          currentTrip = res.data.activeTrip;
         } else {
           const tripsRes = await getMyTripsAction();
           if (tripsRes.success && Array.isArray(tripsRes.data)) {
-            const current = tripsRes.data.find((t: any) =>
+            currentTrip = tripsRes.data.find((t: any) =>
               ['ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'IN_TRANSIT'].includes(t.status)
             );
-            if (current) setActiveTrip(current);
+          }
+        }
+
+        if (currentTrip) {
+          setActiveTrip(currentTrip);
+          setPendingOffer(null);
+        } else {
+          setActiveTrip(null);
+          // Check if there is an unaccepted pending offer waiting for this driver
+          const offersRes = await getMyOffersAction({ status: 'PENDING' });
+          if (offersRes.success && Array.isArray(offersRes.data) && offersRes.data.length > 0) {
+            setPendingOffer(offersRes.data[0]);
+          } else {
+            setPendingOffer(null);
           }
         }
       } catch (err) {
@@ -63,9 +86,46 @@ export default function ActiveDispatchView() {
       }
     }
     loadActiveDispatch();
-    const interval = setInterval(loadActiveDispatch, 6000);
+    const interval = setInterval(loadActiveDispatch, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleAcceptPendingOffer = async () => {
+    if (!pendingOffer) return;
+    setIsAcceptingOffer(true);
+    try {
+      const res = await acceptDispatchOfferAction(pendingOffer.id);
+      if (res.success) {
+        toast.success('Emergency dispatch accepted! Route navigation engaged.');
+        // Refresh active trip immediately
+        const tripsRes = await getMyTripsAction();
+        if (tripsRes.success && Array.isArray(tripsRes.data)) {
+          const current = tripsRes.data.find((t: any) =>
+            ['ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'IN_TRANSIT'].includes(t.status)
+          );
+          if (current) setActiveTrip(current);
+        }
+        setPendingOffer(null);
+      } else {
+        toast.error(res.message || 'Failed to accept dispatch offer');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Error accepting dispatch offer');
+    } finally {
+      setIsAcceptingOffer(false);
+    }
+  };
+
+  const handleDeclinePendingOffer = async () => {
+    if (!pendingOffer) return;
+    try {
+      await rejectDispatchOfferAction(pendingOffer.id);
+      toast.info('Dispatch offer declined.');
+      setPendingOffer(null);
+    } catch {
+      // Ignored
+    }
+  };
 
   const getNextAction = (status: string) => {
     switch (status) {
@@ -127,6 +187,138 @@ export default function ActiveDispatchView() {
 
   if (loading) {
     return <ActiveDispatchSkeleton />;
+  }
+
+  // 1. If there's an incoming pending offer, allow direct acceptance here
+  if (!activeTrip && pendingOffer) {
+    return (
+      <div className="flex min-h-[75vh] flex-col items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-red-200 bg-white shadow-2xl">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-[#0b132b] to-[#1e293b] p-6 text-white">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 rounded-full bg-red-500/20 px-3 py-1 text-xs font-bold text-red-400">
+                <span className="h-2 w-2 animate-ping rounded-full bg-red-500" />
+                <span>INCOMING EMERGENCY DISPATCH</span>
+              </span>
+              <span className="font-mono text-xs font-bold text-amber-300">
+                {pendingOffer?.trip?.tripCode || 'TRIP-REQ'}
+              </span>
+            </div>
+            <h2 className="mt-3 text-xl font-black text-white sm:text-2xl">
+              {pendingOffer?.trip?.ambulanceType || 'ICU'} Ambulance Requested
+            </h2>
+            <p className="mt-1 text-xs text-slate-300">
+              Immediate patient transfer requested in your sector.
+            </p>
+          </div>
+
+          {/* Details */}
+          <div className="space-y-4 p-6 text-xs sm:text-sm">
+            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 border border-slate-100">
+              <MapPin className="h-5 w-5 text-[#E63946] shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Pickup Location
+                </span>
+                <p className="font-bold text-slate-900 mt-0.5">
+                  {pendingOffer?.trip?.pickupAddress || 'Patient Pickup Location'}
+                </p>
+                {pendingOffer?.distanceToPickupKm && (
+                  <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                    Approx. {pendingOffer.distanceToPickupKm} km from your current coordinates
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 border border-slate-100">
+              <Hospital className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Destination Hospital
+                </span>
+                <p className="font-bold text-slate-900 mt-0.5">
+                  {pendingOffer?.trip?.destinationAddress || 'Hospital Destination'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3.5 text-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                  Estimated Fare
+                </span>
+                <p className="text-lg font-black text-emerald-900 mt-0.5">
+                  BDT {pendingOffer?.trip?.estimatedFare ? Number(pendingOffer.trip.estimatedFare).toLocaleString() : '2,650'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-3.5 text-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                  Severity
+                </span>
+                <p className="text-lg font-black text-amber-900 mt-0.5">
+                  {pendingOffer?.trip?.emergencySeverity || 'HIGH'}
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-3">
+              <Button
+                variant="outline"
+                onClick={handleDeclinePendingOffer}
+                disabled={isAcceptingOffer}
+                className="h-12 rounded-2xl border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+              >
+                <X className="h-4 w-4 mr-1 text-slate-400" />
+                Decline
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleAcceptPendingOffer}
+                disabled={isAcceptingOffer}
+                className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-lg shadow-emerald-600/25"
+              >
+                <Check className="h-4 w-4 mr-1 stroke-[3]" />
+                {isAcceptingOffer ? 'Accepting...' : 'Accept Dispatch'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. If no active trip and no pending offers, show clear Standby state
+  if (!activeTrip) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center p-6 text-center">
+        <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-3xl border border-slate-200 bg-white shadow-md">
+          <Radio className="h-10 w-10 animate-pulse text-[#E63946]" />
+          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-4 w-4 rounded-full bg-emerald-500" />
+          </span>
+        </div>
+        <h2 className="text-xl font-black text-slate-900 sm:text-2xl">
+          No Active Dispatch Mission
+        </h2>
+        <p className="mt-2 max-w-md text-xs font-medium leading-relaxed text-slate-500 sm:text-sm">
+          You are currently in standby mode on the central dispatch network. When an emergency ambulance call arrives, accept it from the <strong>Live Duty Radar</strong> to engage live GPS route navigation.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Button
+            variant="danger"
+            onClick={() => router.push('/dashboard/driver')}
+            className="flex items-center gap-2 rounded-2xl px-6 py-3 text-xs font-bold shadow-md shadow-red-500/20"
+          >
+            <Radio className="h-4 w-4" />
+            <span>Go to Live Duty Radar</span>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (

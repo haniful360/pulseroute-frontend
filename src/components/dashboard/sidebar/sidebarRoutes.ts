@@ -111,8 +111,6 @@ export const driverRoutes: SidebarRouteItem[] = [
     title: 'Active Dispatch',
     url: '/dashboard/driver/active-dispatch',
     icon: Navigation,
-    badge: '1',
-    badgeVariant: 'red',
     section: 'OPERATIONS',
   },
   {
