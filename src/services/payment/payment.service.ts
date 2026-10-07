@@ -8,7 +8,9 @@ export interface ICreatePaymentIntentPayload {
 }
 
 export interface IConfirmPaymentPayload {
+  invoiceId: string;
   paymentIntentId: string;
+  paymentMethodId?: string;
 }
 
 /**

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBackBtn from '@/components/dashboard/DynamicBackBtn/DynamicBackBtn';
@@ -12,6 +13,7 @@ import {
   AlertTriangle,
   Ambulance,
   Check,
+  CreditCard,
   Hospital,
   MapPin,
   MessageSquare,
@@ -456,6 +458,27 @@ export default function ActiveTripView() {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Pay Invoice Shortcut for Completed Trip */}
+            {trip.status === 'COMPLETED' && (
+              <Link
+                href={`/dashboard/patient/payment-methods?tripId=${trip.id}`}
+                className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#e63946] to-[#b91c1c] p-4 text-white shadow-md hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+                    <CreditCard className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold leading-tight">Pay Trip Invoice</p>
+                    <p className="text-[10px] text-white/80">Stripe Card Payment</p>
+                  </div>
+                </div>
+                <span className="rounded-lg bg-white/20 px-2.5 py-1 text-[11px] font-bold">
+                  Checkout →
+                </span>
+              </Link>
             )}
 
             {/* Cancel Button */}

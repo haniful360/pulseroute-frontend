@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBackBtn from '@/components/dashboard/DynamicBackBtn/DynamicBackBtn';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
@@ -18,13 +21,20 @@ import {
   Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createPaymentIntentAction, confirmPaymentAction } from '@/services/payment/payment.service';
 import { getMyInvoicesAction } from '@/services/invoice/invoice.service';
 import { PaymentMethodsSkeleton } from '@/components/dashboard/skeletons/patient';
+import StripeCardPaymentForm from '@/components/payment/StripeCardPaymentForm';
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+    'pk_test_51UCG2ZGq4WtGBuFRXigLeicjwUgsp5lM1grFEx7Iyy2jOGuSdQanfYt8hxwLaopeuiDlHoCWoN1N3K0w7oPRzXBk00F9KAzs0o'
+);
 
 export default function PaymentMethodsView() {
-  const [paymentMethod] = useState<'card'>('card');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const searchParams = useSearchParams();
+  const queryInvoiceId = searchParams.get('invoiceId');
+  const queryTripId = searchParams.get('tripId');
+
   const [paid, setPaid] = useState(false);
   const [addCardModalOpen, setAddCardModalOpen] = useState(false);
 
@@ -33,68 +43,61 @@ export default function PaymentMethodsView() {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
 
-  // Add Card State
+  // Add Card State (for future tokenized vaulting)
   const [cardHolder, setCardHolder] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
 
   // Fetch real invoices
-  useEffect(() => {
-    async function loadInvoices() {
-      setLoadingInvoices(true);
-      try {
-        const res = await getMyInvoicesAction();
-        if (res.success && Array.isArray(res.data)) {
-          setInvoices(res.data);
-          const unpaid = res.data.find(
-            (inv) => inv.paymentStatus === 'UNPAID' || inv.paymentStatus === 'PENDING'
-          );
-          if (unpaid) {
-            setSelectedInvoice(unpaid);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load invoices:', err);
-      } finally {
-        setLoadingInvoices(false);
-      }
-    }
-    loadInvoices();
-  }, []);
-
-  const dueAmount = selectedInvoice ? Number(selectedInvoice.totalAmount || 3500) : 3500;
-  const tripVehicle = selectedInvoice?.trip?.vehicle?.ambulanceType || selectedInvoice?.trip?.ambulanceType || 'ICU Life Support';
-  const tripRoute = selectedInvoice?.trip?.destinationAddress
-    ? `${selectedInvoice.trip.pickupAddress || 'Pickup'} to ${selectedInvoice.trip.destinationAddress}`
-    : 'Emergency Dispatch Route';
-
-  const handlePay = async () => {
-    setIsProcessing(true);
+  const loadInvoices = useCallback(async () => {
+    setLoadingInvoices(true);
     try {
-      if (selectedInvoice?.id) {
-        const intentRes = await createPaymentIntentAction({ invoiceId: selectedInvoice.id });
-        if (intentRes.success && intentRes.data?.paymentIntentId) {
-          const confirmRes = await confirmPaymentAction({
-            paymentIntentId: intentRes.data.paymentIntentId,
-          });
-          if (confirmRes.success) {
-            setPaid(true);
-            toast.success('Payment successfully settled and recorded via Stripe!');
+      const res = await getMyInvoicesAction();
+      if (res.success && Array.isArray(res.data)) {
+        setInvoices(res.data);
+        if (queryInvoiceId) {
+          const match = res.data.find((inv) => inv.id === queryInvoiceId);
+          if (match) {
+            setSelectedInvoice(match);
             return;
           }
         }
+        if (queryTripId) {
+          const match = res.data.find((inv) => inv.tripId === queryTripId);
+          if (match) {
+            setSelectedInvoice(match);
+            return;
+          }
+        }
+        const unpaid = res.data.find(
+          (inv) => inv.paymentStatus === 'UNPAID' || inv.paymentStatus === 'PENDING'
+        );
+        if (unpaid) {
+          setSelectedInvoice(unpaid);
+        } else if (res.data.length > 0) {
+          setSelectedInvoice(res.data[0]);
+        }
       }
-      // Fallback gateway simulation
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setPaid(true);
-      toast.success('Payment authorized via Stripe Gateway! Emergency dispatch priority locked.');
-    } catch (err: any) {
-      toast.error(err?.message || 'Payment processing failed');
+    } catch (err) {
+      console.error('Failed to load invoices:', err);
     } finally {
-      setIsProcessing(false);
+      setLoadingInvoices(false);
     }
-  };
+  }, [queryInvoiceId, queryTripId]);
+
+  useEffect(() => {
+    loadInvoices();
+  }, [loadInvoices]);
+
+  const dueAmount = selectedInvoice ? Number(selectedInvoice.totalAmount || 0) : 0;
+  const tripVehicle =
+    selectedInvoice?.trip?.vehicle?.ambulanceType ||
+    selectedInvoice?.trip?.ambulanceType ||
+    'ICU Life Support';
+  const tripRoute = selectedInvoice?.trip?.destinationAddress
+    ? `${selectedInvoice.trip.pickupAddress || 'Pickup'} to ${selectedInvoice.trip.destinationAddress}`
+    : 'Emergency Dispatch Route';
 
   const handleSaveCard = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,43 +154,47 @@ export default function PaymentMethodsView() {
                 </div>
               </div>
 
-              {/* Card Details Form */}
-              <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Card Information
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400">
-                    Test Mode (Stripe)
-                  </span>
-                </div>
-                <InputField
-                  label="Card Number"
-                  placeholder="4242 4242 4242 4242"
-                  icon={<CreditCard className="h-4 w-4 text-slate-400" />}
-                  value="•••• •••• •••• 4242"
-                  readOnly
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <InputField label="Expiration Date" placeholder="12 / 28" value="12 / 28" readOnly />
-                  <InputField label="Security CVC" placeholder="•••" value="•••" readOnly />
-                </div>
-              </div>
+              {/* Real Stripe Elements Form with Auto-Selected Invoice Price */}
+              {selectedInvoice ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <div>
+                      <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                        Invoice Reference
+                      </span>
+                      <p className="font-mono text-xs font-bold text-slate-900">
+                        {selectedInvoice.invoiceNumber || 'INV-PENDING'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                        Auto-Selected Amount
+                      </span>
+                      <p className="text-sm font-black text-[#e63946]">
+                        BDT {dueAmount.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
 
-              {/* Pay Action Button */}
-              <DynamicActionButton
-                variant="danger"
-                onClick={handlePay}
-                isLoading={isProcessing}
-                className="h-12 text-sm font-bold uppercase tracking-wider shadow-lg shadow-red-500/25"
-                fullWidth
-                label={paid ? 'Payment Authorized ✓' : `Authorize BDT ${dueAmount.toLocaleString()}`}
-              />
-
-              <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
-                <LockKeyhole className="h-3.5 w-3.5 text-slate-400" />
-                Payments are end-to-end 256-bit encrypted.
-              </p>
+                  <Elements stripe={stripePromise}>
+                    <StripeCardPaymentForm
+                      invoice={selectedInvoice}
+                      onPaymentSuccess={() => {
+                        setPaid(true);
+                        loadInvoices();
+                      }}
+                    />
+                  </Elements>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-8 text-center space-y-2">
+                  <CreditCard className="mx-auto h-8 w-8 text-slate-300" />
+                  <p className="text-xs font-bold text-slate-700">No Pending Invoices</p>
+                  <p className="text-[11px] text-slate-400">
+                    All your emergency ambulance dispatches are currently settled.
+                  </p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -282,14 +289,26 @@ export default function PaymentMethodsView() {
                     <span className="text-sm font-black text-slate-900">
                       BDT {Number(inv.totalAmount || 0).toLocaleString()}
                     </span>
-                    {inv.paymentStatus !== 'PAID' && (
+                    {inv.paymentStatus !== 'PAID' ? (
                       <button
                         type="button"
-                        onClick={() => setSelectedInvoice(inv)}
-                        className="rounded-lg bg-red-50 px-3 py-1 text-xs font-bold text-[#e63946] hover:bg-red-100"
+                        onClick={() => {
+                          setSelectedInvoice(inv);
+                          setPaid(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                          selectedInvoice?.id === inv.id
+                            ? 'bg-[#e63946] text-white shadow-xs'
+                            : 'bg-red-50 text-[#e63946] hover:bg-red-100'
+                        }`}
                       >
-                        Pay Invoice
+                        {selectedInvoice?.id === inv.id ? 'Selected ✓' : 'Pay Invoice'}
                       </button>
+                    ) : (
+                      <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                        <Check className="h-3.5 w-3.5" /> Settled
+                      </span>
                     )}
                   </div>
                 </div>
