@@ -15,7 +15,6 @@ import {
   LockKeyhole,
   Plus,
   ShieldCheck,
-  Smartphone,
   Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,7 +23,7 @@ import { getMyInvoicesAction } from '@/services/invoice/invoice.service';
 import { PaymentMethodsSkeleton } from '@/components/dashboard/skeletons/patient';
 
 export default function PaymentMethodsView() {
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bkash' | 'insurance'>('card');
+  const [paymentMethod] = useState<'card'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paid, setPaid] = useState(false);
   const [addCardModalOpen, setAddCardModalOpen] = useState(false);
@@ -130,78 +129,50 @@ export default function PaymentMethodsView() {
             </div>
 
             <div className="space-y-6">
-              {/* Payment Method Tabs */}
+              {/* Payment Method Selector (Stripe Only) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-                  Select Payment Method
+                  Payment Method
                 </label>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {[
-                    { id: 'card', label: 'Debit / Credit Card', sub: '•••• 4242', icon: CreditCard },
-                    { id: 'bkash', label: 'bKash Wallet', sub: 'Instant Mobile Pay', icon: Smartphone },
-                    { id: 'insurance', label: 'Health Insurance', sub: 'Pre-Authorization', icon: ShieldCheck },
-                  ].map((item) => {
-                    const Icon = item.icon;
-                    const isSelected = paymentMethod === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setPaymentMethod(item.id as any)}
-                        className={`flex flex-col justify-between rounded-2xl border p-4 text-left transition ${
-                          isSelected
-                            ? 'border-[#e63946] bg-red-50/50 text-[#e63946] shadow-xs'
-                            : 'border-slate-200 text-slate-700 hover:border-red-200'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <Icon className="h-5 w-5" />
-                          {isSelected && <Check className="h-4 w-4 text-[#e63946]" />}
-                        </div>
-                        <div className="mt-3">
-                          <p className="text-xs font-bold">{item.label}</p>
-                          <p className="text-[10px] text-slate-400">{item.sub}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center justify-between rounded-2xl border border-[#e63946] bg-red-50/50 p-4 text-left shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-red-100 text-[#e63946] shadow-xs">
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">Debit / Credit Card (Stripe Gateway)</p>
+                      <p className="text-[11px] text-slate-500">Supports Visa, Mastercard, AMEX &amp; International Cards</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                    <Check className="h-3 w-3" />
+                    <span>Active Gateway</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Form Content by Method */}
-              {paymentMethod === 'card' && (
-                <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-                  <InputField
-                    label="Card Number"
-                    placeholder="4242 4242 4242 4242"
-                    icon={<CreditCard className="h-4 w-4 text-slate-400" />}
-                    value="•••• •••• •••• 4242"
-                    readOnly
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputField label="Expiration Date" placeholder="12 / 28" value="12 / 28" readOnly />
-                    <InputField label="Security CVC" placeholder="•••" value="•••" readOnly />
-                  </div>
+              {/* Card Details Form */}
+              <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    Card Information
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">
+                    Test Mode (Stripe)
+                  </span>
                 </div>
-              )}
-
-              {paymentMethod === 'bkash' && (
-                <div className="rounded-2xl border border-pink-100 bg-pink-50 p-5 text-sm text-[#831843]">
-                  <p className="font-bold">bKash Seamless Gateway</p>
-                  <p className="mt-1 text-xs text-pink-700">
-                    You will be redirected to bKash OTP verification to authorize this emergency transaction.
-                  </p>
+                <InputField
+                  label="Card Number"
+                  placeholder="4242 4242 4242 4242"
+                  icon={<CreditCard className="h-4 w-4 text-slate-400" />}
+                  value="•••• •••• •••• 4242"
+                  readOnly
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <InputField label="Expiration Date" placeholder="12 / 28" value="12 / 28" readOnly />
+                  <InputField label="Security CVC" placeholder="•••" value="•••" readOnly />
                 </div>
-              )}
-
-              {paymentMethod === 'insurance' && (
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm text-emerald-800">
-                  <p className="font-bold">Guardian Health Plus (GH-992-0045-881)</p>
-                  <p className="mt-1 text-xs text-emerald-700">
-                    Your insurance policy provides 100% cashless coverage for emergency ICU transport.
-                  </p>
-                </div>
-              )}
+              </div>
 
               {/* Pay Action Button */}
               <DynamicActionButton
