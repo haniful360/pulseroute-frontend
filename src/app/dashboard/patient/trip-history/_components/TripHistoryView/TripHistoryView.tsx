@@ -46,6 +46,7 @@ export default function TripHistoryView() {
   const [selectedTrip, setSelectedTrip] = useState<PatientTrip | null>(null);
   const [trips, setTrips] = useState<PatientTrip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadTrips() {
@@ -53,24 +54,34 @@ export default function TripHistoryView() {
       try {
         const res = await getMyTripsAction();
         if (res.success && Array.isArray(res.data)) {
-          const mapped: PatientTrip[] = res.data.map((t: any) => ({
-            id: `#${t.id.slice(-6).toUpperCase()}`,
-            rawId: t.id,
-            invoiceId: t.invoice?.id || t.id,
-            date: new Date(t.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }),
-            ambulance: t.ambulanceType || 'ICU',
-            pickup: t.pickupAddress || 'Current Location',
-            destination: t.destinationAddress || 'Hospital',
-            driver: t.driver?.name || 'Assigned Driver',
-            driverPhone: t.driver?.contactNumber,
-            fare: `BDT ${Number(t.fare || 0).toLocaleString()}`,
-            status: t.status === 'COMPLETED' ? 'Completed' : t.status === 'CANCELLED' ? 'Cancelled' : t.status,
-            rawFare: Number(t.fare || 0),
-          }));
+          const mapped: PatientTrip[] = res.data.map((t: any) => {
+            const calculatedFare = Number(
+              t.invoice?.totalAmount ?? t.estimatedFare ?? t.fare ?? 0
+            );
+            return {
+              id: `#${t.id.slice(-6).toUpperCase()}`,
+              rawId: t.id,
+              invoiceId: t.invoice?.id || t.id,
+              date: new Date(t.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }),
+              ambulance: t.ambulanceType || 'ICU',
+              pickup: t.pickupAddress || 'Current Location',
+              destination: t.destinationAddress || 'Hospital',
+              driver: t.driver?.name || 'Assigned Driver',
+              driverPhone: t.driver?.contactNumber,
+              fare: `BDT ${calculatedFare.toLocaleString()}`,
+              status:
+                t.status === 'COMPLETED'
+                  ? 'Completed'
+                  : t.status === 'CANCELLED'
+                    ? 'Cancelled'
+                    : t.status,
+              rawFare: calculatedFare,
+            };
+          });
           setTrips(mapped);
         }
       } catch (err) {
@@ -84,14 +95,19 @@ export default function TripHistoryView() {
 
   const handleDownloadReceipt = async (trip: PatientTrip) => {
     try {
+      setDownloadingId(trip.rawId);
       toast.info('Downloading official medical trip receipt...');
-      const res = await exportInvoiceReceiptAction(trip.invoiceId || trip.rawId);
+      const targetId = trip.invoiceId || trip.rawId;
+      const res = await exportInvoiceReceiptAction(targetId);
       if (res.success && res.data) {
         const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', `pulseroute_receipt_${trip.rawId.slice(0, 8)}.csv`);
+        link.setAttribute(
+          'download',
+          `pulseroute_receipt_${trip.rawId.slice(0, 8)}.csv`
+        );
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -101,7 +117,51 @@ export default function TripHistoryView() {
       }
     } catch (err: any) {
       toast.error(err?.message || 'Error downloading receipt');
+    } finally {
+      setDownloadingId(null);
     }
+  };
+
+  const handleExportAllTrips = () => {
+    if (!trips.length) {
+      toast.error('No trips available to export.');
+      return;
+    }
+    const headers = [
+      'Trip ID',
+      'Date',
+      'Ambulance Tier',
+      'Pickup',
+      'Destination',
+      'Paramedic Driver',
+      'Fare',
+      'Status',
+    ];
+    const rows = trips.map((t) => [
+      t.id,
+      t.date,
+      t.ambulance,
+      `"${t.pickup.replace(/"/g, '""')}"`,
+      `"${t.destination.replace(/"/g, '""')}"`,
+      `"${t.driver.replace(/"/g, '""')}"`,
+      `"${t.fare}"`,
+      t.status,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join(
+      '\n'
+    );
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `pulseroute_trip_history_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Trip history logs exported successfully.');
   };
 
   const filteredTrips = trips.filter(
@@ -186,7 +246,7 @@ export default function TripHistoryView() {
           variant="outline"
           icon={Download}
           iconPosition="left"
-          onClick={() => toast.success('Trip log history exported as PDF.')}
+          onClick={handleExportAllTrips}
           label="Download Invoice Logs"
           className="self-start sm:self-auto shrink-0"
         />
@@ -302,6 +362,7 @@ export default function TripHistoryView() {
                 variant="danger"
                 icon={Download}
                 iconPosition="left"
+                isLoading={downloadingId === selectedTrip.rawId}
                 onClick={() => handleDownloadReceipt(selectedTrip)}
                 label="Download Receipt"
               />
