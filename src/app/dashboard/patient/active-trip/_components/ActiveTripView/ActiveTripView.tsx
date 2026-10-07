@@ -30,7 +30,7 @@ import {
 import { toast } from 'sonner';
 import { getTripByIdAction, getMyTripsAction, cancelTripAction } from '@/services/trip/trip.service';
 import { getUserDashboardOverviewAction } from '@/services/user/user.service';
-import { createReviewAction } from '@/services/review/review.service';
+import { createReviewAction, getMyReviewsAction } from '@/services/review/review.service';
 import { ActiveTripSkeleton } from '@/components/dashboard/skeletons/patient';
 
 export default function ActiveTripView() {
@@ -67,13 +67,82 @@ export default function ActiveTripView() {
       if (res.success) {
         toast.success('Thank you! Your feedback has been submitted.');
         setReviewSubmitted(true);
+        setTrip((prev: any) =>
+          prev
+            ? {
+                ...prev,
+                review: res.data || { rating, comment: reviewComment },
+              }
+            : prev
+        );
       } else {
-        toast.error(res.message || 'Could not submit review');
+        const msg = res.message || '';
+        if (
+          msg.toLowerCase().includes('already been reviewed') ||
+          msg.toLowerCase().includes('already reviewed')
+        ) {
+          toast.info('This trip has already been reviewed.');
+          setReviewSubmitted(true);
+          setTrip((prev: any) =>
+            prev
+              ? {
+                  ...prev,
+                  review: { rating, comment: reviewComment },
+                }
+              : prev
+          );
+        } else {
+          toast.error(msg || 'Could not submit review');
+        }
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Error submitting review');
+      const msg = err?.message || '';
+      if (
+        msg.toLowerCase().includes('already been reviewed') ||
+        msg.toLowerCase().includes('already reviewed')
+      ) {
+        toast.info('This trip has already been reviewed.');
+        setReviewSubmitted(true);
+        setTrip((prev: any) =>
+          prev
+            ? {
+                ...prev,
+                review: { rating, comment: reviewComment },
+              }
+            : prev
+        );
+      } else {
+        toast.error(msg || 'Error submitting review');
+      }
     } finally {
       setIsSubmittingReview(false);
+    }
+  };
+
+  // Helper to check existing review
+  const syncExistingReview = async (tripData: any) => {
+    if (!tripData) return;
+    if (tripData.review) {
+      setRating(tripData.review.rating || 5);
+      if (tripData.review.comment) setReviewComment(tripData.review.comment);
+      setReviewSubmitted(true);
+      return;
+    }
+    if (tripData.status === 'COMPLETED') {
+      try {
+        const reviewsRes = await getMyReviewsAction();
+        if (reviewsRes.success && Array.isArray(reviewsRes.data)) {
+          const existing = reviewsRes.data.find((r: any) => r.tripId === tripData.id);
+          if (existing) {
+            tripData.review = existing;
+            setRating(existing.rating || 5);
+            if (existing.comment) setReviewComment(existing.comment);
+            setReviewSubmitted(true);
+          }
+        }
+      } catch {
+        // non-blocking
+      }
     }
   };
 
@@ -85,6 +154,7 @@ export default function ActiveTripView() {
         if (tripIdParam) {
           const res = await getTripByIdAction(tripIdParam);
           if (res.success && res.data) {
+            await syncExistingReview(res.data);
             setTrip(res.data);
             setLoading(false);
             return;
@@ -94,6 +164,7 @@ export default function ActiveTripView() {
         // Fallback: check dashboard overview or my trips for any active trip
         const overviewRes = await getUserDashboardOverviewAction();
         if (overviewRes.success && overviewRes.data?.live?.activeTrip) {
+          await syncExistingReview(overviewRes.data.live.activeTrip);
           setTrip(overviewRes.data.live.activeTrip);
           setLoading(false);
           return;
@@ -106,7 +177,9 @@ export default function ActiveTripView() {
           const active = myTripsRes.data.find(
             (t: any) => t.status !== 'COMPLETED' && t.status !== 'CANCELLED'
           );
-          setTrip(active || myTripsRes.data[0]);
+          const currentTrip = active || myTripsRes.data[0];
+          await syncExistingReview(currentTrip);
+          setTrip(currentTrip);
         }
       } catch (err) {
         console.error('Error fetching active trip:', err);
@@ -272,22 +345,23 @@ export default function ActiveTripView() {
               </p>
               <div className="flex justify-between text-center text-[10px] font-bold">
                 {statusSteps.map((step, idx) => {
-                  const isDone = idx < activeStep;
-                  const isCurrent = idx === activeStep;
+                  const isCompleted = trip.status === 'COMPLETED';
+                  const isDone = isCompleted ? idx <= activeStep : idx < activeStep;
+                  const isCurrent = isCompleted ? false : idx === activeStep;
                   return (
                     <div key={step.key} className="flex flex-col items-center">
                       <span
                         className={`mb-1 flex h-7 w-7 items-center justify-center rounded-full text-xs transition ${
                           isDone
-                            ? 'bg-emerald-500 text-white'
+                            ? 'bg-emerald-500 text-white shadow-xs'
                             : isCurrent
                             ? 'border-2 border-[#e63946] bg-red-50 text-[#e63946]'
                             : 'bg-slate-100 text-slate-400'
                         }`}
                       >
-                        {isDone ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                        {isDone ? <Check className="h-3.5 w-3.5 stroke-[2.5]" /> : idx + 1}
                       </span>
-                      <span className={isCurrent ? 'text-[#e63946]' : isDone ? 'text-emerald-600' : 'text-slate-400'}>
+                      <span className={isCurrent ? 'text-[#e63946]' : isDone ? 'text-emerald-600 font-bold' : 'text-slate-400'}>
                         {step.label}
                       </span>
                     </div>
@@ -411,14 +485,44 @@ export default function ActiveTripView() {
             {/* Post-Trip Rating & Feedback Card */}
             {trip.status === 'COMPLETED' && (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
-                  <span className="text-xs font-bold text-slate-900">Rate Paramedic Care</span>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                    <span className="text-xs font-bold text-slate-900">Rate Paramedic Care</span>
+                  </div>
+                  {(trip.review || reviewSubmitted) && (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                      Reviewed ✓
+                    </span>
+                  )}
                 </div>
-                {reviewSubmitted ? (
-                  <p className="text-xs font-medium text-emerald-700">
-                    Thank you! Your feedback helps maintain our 5-star emergency dispatch standard.
-                  </p>
+                {trip.review || reviewSubmitted ? (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-5 w-5 ${
+                            star <= (trip.review?.rating || rating)
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-slate-300'
+                          }`}
+                        />
+                      ))}
+                      <span className="text-xs font-bold text-slate-700 ml-1">
+                        {trip.review?.rating || rating}.0 / 5.0
+                      </span>
+                    </div>
+                    {(trip.review?.comment || reviewComment) && (
+                      <p className="text-xs italic text-slate-600 bg-white/70 p-2.5 rounded-xl border border-emerald-100">
+                        &quot;{trip.review?.comment || reviewComment}&quot;
+                      </p>
+                    )}
+                    <p className="text-[11px] font-medium text-emerald-700 flex items-center gap-1">
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      Thank you! Your feedback helps maintain our 5-star emergency dispatch standard.
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <p className="text-[11px] text-slate-500">
