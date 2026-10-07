@@ -14,11 +14,13 @@ import {
   Ambulance,
   Check,
   CreditCard,
+  History,
   Hospital,
   MapPin,
   MessageSquare,
   Navigation,
   Phone,
+  Plus,
   Radio,
   Send,
   ShieldCheck,
@@ -148,43 +150,67 @@ export default function ActiveTripView() {
 
   // Load active trip
   useEffect(() => {
+    let isInitial = true;
+
     async function fetchTrip() {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      }
       try {
         if (tripIdParam) {
           const res = await getTripByIdAction(tripIdParam);
-          if (res.success && res.data) {
+          if (
+            res.success &&
+            res.data &&
+            res.data.status !== 'COMPLETED' &&
+            res.data.status !== 'CANCELLED'
+          ) {
             await syncExistingReview(res.data);
             setTrip(res.data);
-            setLoading(false);
+            return;
+          } else {
+            setTrip(null);
             return;
           }
         }
 
-        // Fallback: check dashboard overview or my trips for any active trip
+        // Fallback: check dashboard overview for live active trip
         const overviewRes = await getUserDashboardOverviewAction();
-        if (overviewRes.success && overviewRes.data?.live?.activeTrip) {
-          await syncExistingReview(overviewRes.data.live.activeTrip);
-          setTrip(overviewRes.data.live.activeTrip);
-          setLoading(false);
+        if (
+          overviewRes.success &&
+          overviewRes.data?.live?.activeTrip &&
+          overviewRes.data.live.activeTrip.status !== 'COMPLETED' &&
+          overviewRes.data.live.activeTrip.status !== 'CANCELLED'
+        ) {
+          const liveTrip = overviewRes.data.live.activeTrip;
+          await syncExistingReview(liveTrip);
+          setTrip(liveTrip);
           return;
         }
 
-        // Fallback: check my-trips
+        // Fallback: check my-trips strictly for an active (non-completed, non-cancelled) trip
         const myTripsRes = await getMyTripsAction();
-        if (myTripsRes.success && myTripsRes.data && myTripsRes.data.length > 0) {
-          // Find first non-completed/non-cancelled trip or latest trip
+        if (myTripsRes.success && Array.isArray(myTripsRes.data)) {
           const active = myTripsRes.data.find(
             (t: any) => t.status !== 'COMPLETED' && t.status !== 'CANCELLED'
           );
-          const currentTrip = active || myTripsRes.data[0];
-          await syncExistingReview(currentTrip);
-          setTrip(currentTrip);
+          if (active) {
+            await syncExistingReview(active);
+            setTrip(active);
+            return;
+          }
         }
+
+        // No active trip in progress
+        setTrip(null);
       } catch (err) {
         console.error('Error fetching active trip:', err);
+        setTrip(null);
       } finally {
-        setLoading(false);
+        if (isInitial) {
+          setLoading(false);
+          isInitial = false;
+        }
       }
     }
 
@@ -273,22 +299,60 @@ export default function ActiveTripView() {
     return <ActiveTripSkeleton />;
   }
 
-  if (!trip) {
+  if (!trip || trip.status === 'COMPLETED' || trip.status === 'CANCELLED') {
     return (
-      <div className="flex min-h-[450px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-[#e63946]">
-          <Ambulance className="h-8 w-8" />
+      <div className="flex min-h-[580px] w-full flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-xs">
+        <div className="relative mb-6 flex items-center justify-center">
+          <div className="absolute h-24 w-24 rounded-full bg-red-100/60 animate-ping opacity-40" />
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#e63946] to-rose-600 text-white shadow-lg shadow-red-500/20">
+            <Ambulance className="h-10 w-10" />
+          </div>
         </div>
-        <h2 className="text-xl font-black text-slate-900">No Active Emergency Trip</h2>
-        <p className="mt-2 max-w-md text-xs text-slate-500">
-          You currently have no emergency ambulance dispatches in transit. If you need urgent medical transport, initiate a request below.
+
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1 text-xs font-semibold text-slate-600 mb-3">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          Fleet Operations Standby
+        </div>
+
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          You don&apos;t have an active trip right now
+        </h2>
+
+        <p className="mt-3 max-w-md text-sm text-slate-500 leading-relaxed">
+          There are currently no active ambulance dispatches linked to your account.
+          If you need emergency medical transport or want to schedule a transfer, book an ambulance below.
         </p>
-        <DynamicActionButton
-          variant="danger"
-          className="mt-6 h-11 px-6 rounded-2xl text-xs font-bold"
-          onClick={() => router.push('/dashboard/patient/book-ambulance')}
-          label="Book Ambulance Now"
-        />
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <DynamicActionButton
+            variant="danger"
+            className="h-12 px-6 rounded-2xl text-xs font-bold shadow-md shadow-red-500/15"
+            onClick={() => router.push('/dashboard/patient/book-ambulance')}
+            icon={Plus}
+            iconPosition="left"
+            label="Book Ambulance Now"
+          />
+          <DynamicActionButton
+            variant="outline"
+            className="h-12 px-6 rounded-2xl text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700"
+            onClick={() => router.push('/dashboard/patient/trip-history')}
+            icon={History}
+            iconPosition="left"
+            label="View Trip History"
+          />
+        </div>
+
+        <div className="mt-10 max-w-lg rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-xs text-slate-500 flex items-center gap-3 text-left">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-[#e63946]">
+            <Phone className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="font-semibold text-slate-800">Critical Medical Emergency?</span>
+            <p className="text-[11px] text-slate-500">
+              For immediate life-threatening situations, call our 24/7 emergency dispatch helpline or dial <strong className="text-slate-900">999</strong> directly.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
