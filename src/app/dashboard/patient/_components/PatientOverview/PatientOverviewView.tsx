@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getUserDashboardOverviewAction } from '@/services/user/user.service';
+import { getMyTripsAction } from '@/services/trip/trip.service';
 import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import {
@@ -39,10 +40,44 @@ export default function PatientOverviewView() {
     async function loadDashboard() {
       setLoading(true);
       try {
-        const res = await getUserDashboardOverviewAction();
-        if (res.success && res.data) {
-          setData(res.data);
+        const [overviewRes, myTripsRes] = await Promise.all([
+          getUserDashboardOverviewAction(),
+          getMyTripsAction(),
+        ]);
+
+        let combinedData: any = {};
+        if (overviewRes.success && overviewRes.data) {
+          combinedData = { ...overviewRes.data };
         }
+
+        // If backend overview had missing or zero trips, cross-reference with myTrips
+        if (myTripsRes.success && Array.isArray(myTripsRes.data)) {
+          const tripsList = myTripsRes.data;
+          if (!combinedData.recentTrips || combinedData.recentTrips.length === 0) {
+            combinedData.recentTrips = tripsList.slice(0, 5);
+          }
+          if (!combinedData.totalTripsCount && !combinedData.stats?.totalTripsBooked) {
+            combinedData.totalTripsCount = tripsList.length;
+          }
+          if (!combinedData.completedTripsCount && !combinedData.stats?.completedTrips) {
+            combinedData.completedTripsCount = tripsList.filter(
+              (t: any) => t.status === 'COMPLETED'
+            ).length;
+          }
+          if (!combinedData.totalSpent && !combinedData.stats?.totalSpent) {
+            const calculatedTotalPaid = tripsList.reduce((acc: number, t: any) => {
+              if (t.invoice?.paymentStatus === 'PAID') {
+                return acc + Number(t.invoice?.paidAmount ?? t.invoice?.totalAmount ?? 0);
+              }
+              return acc;
+            }, 0);
+            if (calculatedTotalPaid > 0) {
+              combinedData.totalSpent = calculatedTotalPaid;
+            }
+          }
+        }
+
+        setData(combinedData);
       } catch (err) {
         console.error('Failed to load patient dashboard:', err);
       } finally {
@@ -57,11 +92,16 @@ export default function PatientOverviewView() {
   }
 
   const patientName = profile?.name || user?.name || 'Valued Patient';
-  const activeTrip = data?.activeTrip;
-  const totalTrips = data?.totalTripsCount ?? 0;
-  const completedTrips = data?.completedTripsCount ?? 0;
-  const totalSpent = data?.spentAgg?._sum?.paidAmount ?? 0;
-  const completeness = data?.completenessScore ?? 85;
+  const activeTrip = data?.live?.activeTrip ?? data?.activeTrip;
+  const totalTrips = data?.stats?.totalTripsBooked ?? data?.totalTripsCount ?? 0;
+  const completedTrips = data?.stats?.completedTrips ?? data?.completedTripsCount ?? 0;
+  const totalSpent =
+    data?.stats?.totalSpent ?? data?.totalSpent ?? data?.spentAgg?._sum?.paidAmount ?? 0;
+  const completeness =
+    typeof data?.completenessScore === 'number'
+      ? data.completenessScore
+      : parseInt(String(data?.emergencyProfile?.profileCompleteness || '')) ||
+        (data?.completenessScore ?? 85);
   const unpaidInvoices = data?.unpaidInvoices ?? [];
   const recentTrips = data?.recentTrips ?? [];
 
@@ -322,7 +362,10 @@ export default function PatientOverviewView() {
                     <div className="flex items-center justify-between gap-4 sm:justify-end">
                       <div className="text-right">
                         <span className="text-sm font-extrabold text-slate-900">
-                          BDT {Number(trip.fare || 0).toLocaleString()}
+                          BDT{' '}
+                          {Number(
+                            trip.fare ?? trip.invoice?.totalAmount ?? trip.estimatedFare ?? 0
+                          ).toLocaleString()}
                         </span>
                         <div className="mt-0.5">
                           <span
