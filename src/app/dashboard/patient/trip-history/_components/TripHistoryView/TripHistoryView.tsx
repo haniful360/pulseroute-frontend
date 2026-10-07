@@ -23,8 +23,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyTripsAction } from '@/services/trip/trip.service';
-import { exportInvoiceReceiptAction } from '@/services/invoice/invoice.service';
+import {
+  exportInvoiceReceiptAction,
+  getInvoiceByIdAction,
+} from '@/services/invoice/invoice.service';
 import { TripHistorySkeleton } from '@/components/dashboard/skeletons/patient';
+import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf';
 
 interface PatientTrip {
   id: string;
@@ -117,6 +121,67 @@ export default function TripHistoryView() {
       }
     } catch (err: any) {
       toast.error(err?.message || 'Error downloading receipt');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleDownloadInvoicePdf = async (trip: PatientTrip) => {
+    try {
+      setDownloadingId(`pdf-${trip.rawId}`);
+      toast.info('Generating official PDF invoice...');
+      const targetId = trip.invoiceId || trip.rawId;
+      const res = await getInvoiceByIdAction(targetId);
+      if (res.success && res.data) {
+        const inv = res.data;
+        generateInvoicePdf({
+          invoiceNumber: inv.invoiceNumber || 'INV-PENDING',
+          tripId: inv.tripId || trip.rawId,
+          tripCode: inv.trip?.tripCode,
+          issuedAt: inv.issuedAt || inv.createdAt,
+          paidAt: inv.paidAt,
+          paymentStatus: inv.paymentStatus || 'PAID',
+          paymentMethod: inv.paymentMethod || 'STRIPE',
+          totalAmount: Number(inv.totalAmount || trip.rawFare || 0),
+          baseFare: Number(inv.baseFare || 2000),
+          distanceFare: Number(inv.distanceFare || 0),
+          surgeFare: Number(inv.surgeFare || 0),
+          discountAmount: Number(inv.discountAmount || 0),
+          taxAmount: Number(inv.taxAmount || 0),
+          platformCommission: Number(inv.platformCommission || 0),
+          driverEarning: Number(inv.driverEarning || 0),
+          paidAmount: Number(inv.paidAmount || 0),
+          transactionId:
+            inv.paymentRecords?.[0]?.gatewayTransactionId ||
+            inv.paymentRecords?.[0]?.id ||
+            'N/A',
+          patient: {
+            name: inv.patient?.name || 'PulseRoute Patient',
+            email: inv.patient?.email,
+            contactNumber: inv.patient?.contactNumber,
+          },
+          driver: {
+            name: inv.driver?.name || trip.driver,
+            contactNumber: inv.driver?.contactNumber || trip.driverPhone,
+            licenseNumber: inv.driver?.licenseNumber,
+          },
+          trip: {
+            tripCode: inv.trip?.tripCode,
+            ambulanceType: inv.trip?.ambulanceType || trip.ambulance,
+            emergencySeverity: inv.trip?.emergencySeverity || 'HIGH',
+            pickupAddress: inv.trip?.pickupAddress || trip.pickup,
+            destinationAddress: inv.trip?.destinationAddress || trip.destination,
+            distanceKm: inv.trip?.distanceKm,
+            estimatedDurationMins: inv.trip?.estimatedDurationMins,
+          },
+        });
+        toast.success('Official invoice PDF downloaded.');
+      } else {
+        toast.error('Could not load invoice data for PDF generation.');
+      }
+    } catch (err) {
+      console.error('Failed to download invoice PDF:', err);
+      toast.error('Error generating PDF.');
     } finally {
       setDownloadingId(null);
     }
@@ -352,19 +417,27 @@ export default function TripHistoryView() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
               <DynamicActionButton
                 variant="outline"
                 onClick={() => setSelectedTrip(null)}
                 label="Close"
               />
               <DynamicActionButton
-                variant="danger"
+                variant="outline"
                 icon={Download}
                 iconPosition="left"
                 isLoading={downloadingId === selectedTrip.rawId}
                 onClick={() => handleDownloadReceipt(selectedTrip)}
-                label="Download Receipt"
+                label="Download CSV"
+              />
+              <DynamicActionButton
+                variant="danger"
+                icon={Download}
+                iconPosition="left"
+                isLoading={downloadingId === `pdf-${selectedTrip.rawId}`}
+                onClick={() => handleDownloadInvoicePdf(selectedTrip)}
+                label="Download Invoice PDF"
               />
             </div>
           </div>

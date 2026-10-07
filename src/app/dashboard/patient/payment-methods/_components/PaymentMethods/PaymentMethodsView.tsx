@@ -11,11 +11,18 @@ import {
   CreditCard,
   FileText,
   ShieldCheck,
+  Eye,
+  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getMyInvoicesAction } from '@/services/invoice/invoice.service';
+import {
+  getMyInvoicesAction,
+  getInvoiceByIdAction,
+} from '@/services/invoice/invoice.service';
 import { PaymentMethodsSkeleton } from '@/components/dashboard/skeletons/patient';
 import StripeCardPaymentForm from '@/components/payment/StripeCardPaymentForm';
+import InvoiceDetailsModal from '@/components/payment/InvoiceDetailsModal';
+import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
@@ -33,6 +40,12 @@ export default function PaymentMethodsView() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
+
+  // Invoice Details Modal & PDF State
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [modalInvoiceId, setModalInvoiceId] = useState<string | null>(null);
+  const [selectedInvoiceForModal, setSelectedInvoiceForModal] = useState<any>(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
 
   // Fetch real invoices
   const loadInvoices = useCallback(async () => {
@@ -83,6 +96,73 @@ export default function PaymentMethodsView() {
   const tripRoute = selectedInvoice?.trip?.destinationAddress
     ? `${selectedInvoice.trip.pickupAddress || 'Pickup'} to ${selectedInvoice.trip.destinationAddress}`
     : 'Emergency Dispatch Route';
+
+  const handleOpenDetails = (inv: any) => {
+    setSelectedInvoiceForModal(inv);
+    setModalInvoiceId(inv.id);
+    setDetailsModalOpen(true);
+  };
+
+  const handleQuickDownloadPdf = async (inv: any) => {
+    try {
+      setDownloadingInvoiceId(inv.id);
+      toast.info('Preparing official PDF invoice...');
+      let fullInvoice = inv;
+      if (!inv.patient || !inv.driver) {
+        const res = await getInvoiceByIdAction(inv.id);
+        if (res.success && res.data) {
+          fullInvoice = res.data;
+        }
+      }
+      generateInvoicePdf({
+        invoiceNumber: fullInvoice.invoiceNumber || 'INV-PENDING',
+        tripId: fullInvoice.tripId,
+        tripCode: fullInvoice.trip?.tripCode,
+        issuedAt: fullInvoice.issuedAt || fullInvoice.createdAt,
+        paidAt: fullInvoice.paidAt,
+        paymentStatus: fullInvoice.paymentStatus || 'UNPAID',
+        paymentMethod: fullInvoice.paymentMethod || 'STRIPE',
+        totalAmount: Number(fullInvoice.totalAmount || 0),
+        baseFare: Number(fullInvoice.baseFare || 2000),
+        distanceFare: Number(fullInvoice.distanceFare || 0),
+        surgeFare: Number(fullInvoice.surgeFare || 0),
+        discountAmount: Number(fullInvoice.discountAmount || 0),
+        taxAmount: Number(fullInvoice.taxAmount || 0),
+        platformCommission: Number(fullInvoice.platformCommission || 0),
+        driverEarning: Number(fullInvoice.driverEarning || 0),
+        paidAmount: Number(fullInvoice.paidAmount || 0),
+        transactionId:
+          fullInvoice.paymentRecords?.[0]?.gatewayTransactionId ||
+          fullInvoice.paymentRecords?.[0]?.id ||
+          'N/A',
+        patient: {
+          name: fullInvoice.patient?.name || 'PulseRoute Patient',
+          email: fullInvoice.patient?.email,
+          contactNumber: fullInvoice.patient?.contactNumber,
+        },
+        driver: {
+          name: fullInvoice.driver?.name || 'Assigned Driver',
+          contactNumber: fullInvoice.driver?.contactNumber,
+          licenseNumber: fullInvoice.driver?.licenseNumber,
+        },
+        trip: {
+          tripCode: fullInvoice.trip?.tripCode,
+          ambulanceType: fullInvoice.trip?.ambulanceType || 'ICU',
+          emergencySeverity: fullInvoice.trip?.emergencySeverity || 'HIGH',
+          pickupAddress: fullInvoice.trip?.pickupAddress || 'Emergency Location',
+          destinationAddress: fullInvoice.trip?.destinationAddress || 'Hospital',
+          distanceKm: fullInvoice.trip?.distanceKm,
+          estimatedDurationMins: fullInvoice.trip?.estimatedDurationMins,
+        },
+      });
+      toast.success('Invoice PDF downloaded.');
+    } catch (err) {
+      console.error('Failed to download PDF:', err);
+      toast.error('Failed to download invoice PDF.');
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
+  };
 
   if (loadingInvoices) {
     return <PaymentMethodsSkeleton />;
@@ -264,10 +344,32 @@ export default function PaymentMethodsView() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-black text-slate-900">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-black text-slate-900 mr-1.5">
                       BDT {Number(inv.totalAmount || 0).toLocaleString()}
                     </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDetails(inv)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
+                      title="View all invoice details"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-slate-500" />
+                      <span>Details</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleQuickDownloadPdf(inv)}
+                      disabled={downloadingInvoiceId === inv.id}
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-red-50 hover:text-[#e63946] hover:border-red-200 transition cursor-pointer disabled:opacity-50"
+                      title="Download Invoice PDF"
+                    >
+                      <Download className="h-3.5 w-3.5 text-slate-500" />
+                      <span>{downloadingInvoiceId === inv.id ? 'PDF...' : 'PDF'}</span>
+                    </button>
+
                     {inv.paymentStatus !== 'PAID' ? (
                       <button
                         type="button"
@@ -285,7 +387,7 @@ export default function PaymentMethodsView() {
                         {selectedInvoice?.id === inv.id ? 'Selected ✓' : 'Pay Invoice'}
                       </button>
                     ) : (
-                      <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                      <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1 ml-0.5">
                         <Check className="h-3.5 w-3.5" /> Settled
                       </span>
                     )}
@@ -296,6 +398,14 @@ export default function PaymentMethodsView() {
           </div>
         )}
       </div>
+
+      {/* Invoice Details & PDF Download Modal */}
+      <InvoiceDetailsModal
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        invoiceId={modalInvoiceId}
+        initialInvoice={selectedInvoiceForModal}
+      />
     </div>
   );
 }
