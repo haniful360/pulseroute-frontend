@@ -53,9 +53,12 @@ export default function AnnouncementsView() {
             recipients: 60,
           }));
           setBroadcasts(mapped);
+        } else if (!res.success) {
+          toast.error(res.message || 'Failed to load past broadcasts');
         }
       } catch (err) {
         console.error('Failed to load past broadcasts:', err);
+        toast.error('Network error: Unable to load announcements');
       } finally {
         setLoading(false);
       }

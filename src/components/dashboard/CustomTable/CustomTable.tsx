@@ -1,6 +1,8 @@
 import React from 'react';
 import { ITableProps } from '@/types/custom-table.types';
 import { cn } from '@/lib/utils';
+import EmptyState from '@/components/shared/EmptyState/EmptyState';
+import { LucideIcon } from 'lucide-react';
 
 const CustomTable = <T extends object>({
   columns,
@@ -8,6 +10,9 @@ const CustomTable = <T extends object>({
   className,
   headerClassName,
   variant = 'light',
+  emptyTitle = 'No records found',
+  emptyDescription = 'There are no items to display at this time.',
+  emptyIcon,
 }: ITableProps<T>) => {
   const isLight = variant === 'light';
 
@@ -71,12 +76,15 @@ const CustomTable = <T extends object>({
             <tr>
               <td
                 colSpan={columns?.length || 1}
-                className={cn(
-                  'px-6 py-12 text-center text-sm font-medium',
-                  isLight ? 'text-slate-400' : 'text-slate-500',
-                )}
+                className="py-12 px-6"
               >
-                No records found.
+                <EmptyState
+                  variant={variant}
+                  title={emptyTitle}
+                  description={emptyDescription}
+                  icon={emptyIcon as LucideIcon}
+                  className="border-none bg-transparent shadow-none py-4 sm:py-6"
+                />
               </td>
             </tr>
           )}

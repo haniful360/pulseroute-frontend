@@ -29,12 +29,15 @@ export default function RevenueView() {
 
         if (invRes?.data?.data) {
           setInvoices(invRes.data.data);
+        } else if (invRes && !invRes.success) {
+          toast.error(invRes.message || 'Failed to load invoices');
         }
         if (analyticsRes?.data) {
           setOverview(analyticsRes.data);
         }
       } catch (err) {
         console.error('Failed to load revenue and invoice data:', err);
+        toast.error('Network error: Unable to load financial records');
       }
     });
   };

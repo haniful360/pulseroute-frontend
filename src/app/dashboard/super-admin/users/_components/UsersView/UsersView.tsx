@@ -87,9 +87,12 @@ export default function UsersView() {
           }));
           setUsersList(mapped);
         }
+      } else if (!res.success) {
+        toast.error(res.message || 'Failed to load user accounts');
       }
     } catch (err) {
       console.error('Failed to load users:', err);
+      toast.error('Network error: Unable to load user accounts');
     } finally {
       setLoading(false);
     }
@@ -502,7 +505,13 @@ export default function UsersView() {
             </table>
           </div>
         ) : (
-          <CustomTable columns={columns} data={filteredUsers} />
+          <CustomTable
+            columns={columns}
+            data={filteredUsers}
+            emptyTitle="No Users Found"
+            emptyDescription="No platform accounts matched your filter or search query."
+            emptyIcon={Users}
+          />
         )}
       </div>
 

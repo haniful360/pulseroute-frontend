@@ -7,6 +7,7 @@ import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { getAllTripsAction } from '@/services/trip/trip.service';
+import { toast } from 'sonner';
 
 interface TripRow {
   id: string;
@@ -56,9 +57,12 @@ export default function TripsView() {
             });
             setTripsList(mapped);
           }
+        } else if (!res.success) {
+          toast.error(res.message || 'Failed to retrieve emergency trips');
         }
       } catch (err) {
         console.error('Failed to load trips for admin:', err);
+        toast.error('Network error: Unable to load trip records');
       } finally {
         setLoading(false);
       }

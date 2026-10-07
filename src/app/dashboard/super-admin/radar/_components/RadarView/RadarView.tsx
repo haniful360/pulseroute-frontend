@@ -9,6 +9,9 @@ import GoogleMapView, { MapMarkerItem } from '@/components/shared/GoogleMap/Goog
 import { getAllDriversAction } from '@/services/driver/driver.service';
 import { getOverviewAnalyticsAction } from '@/services/analytics/analytics.service';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import EmptyState from '@/components/shared/EmptyState/EmptyState';
+
 
 // Standard Dhaka coverage coordinates for realistic fleet simulation if driver GPS is not yet active
 const DHAKA_LOCATIONS = [
@@ -50,6 +53,7 @@ export default function RadarView() {
         }
       } catch (err) {
         console.error('Failed to load radar fleet data:', err);
+        toast.error('Network error: Unable to sync radar telemetry');
       }
     });
   };
@@ -380,8 +384,13 @@ export default function RadarView() {
                 );
               })
             ) : (
-              <div className="p-8 text-center text-sm text-slate-500">
-                No active ambulances matching "{searchQuery}"
+              <div className="py-6 px-4">
+                <EmptyState
+                  icon={Ambulance}
+                  title="No Ambulances Found"
+                  description={searchQuery ? `No vehicles matching "${searchQuery}"` : "No vehicles currently reporting telemetry."}
+                  className="border-none bg-transparent shadow-none py-6"
+                />
               </div>
             )}
           </div>

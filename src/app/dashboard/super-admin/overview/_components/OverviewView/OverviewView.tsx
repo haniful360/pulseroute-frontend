@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { getOverviewAnalyticsAction, getRecentActivitiesAction } from '@/services/analytics/analytics.service';
+import { toast } from 'sonner';
 
 export default function OverviewView() {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -35,12 +36,15 @@ export default function OverviewView() {
         ]);
         if (anRes.success && anRes.data) {
           setAnalytics(anRes.data);
+        } else if (!anRes.success) {
+          toast.error(anRes.message || 'Failed to load executive analytics');
         }
         if (actRes.success && Array.isArray(actRes.data)) {
           setActivitiesList(actRes.data);
         }
       } catch (err) {
         console.error('Failed to load overview analytics:', err);
+        toast.error('Network error: Unable to load operations overview');
       } finally {
         setLoading(false);
       }

@@ -19,6 +19,8 @@ import {
 import { toast } from 'sonner';
 import { getInvoiceByIdAction } from '@/services/invoice/invoice.service';
 import { generateInvoicePdf, InvoicePdfData } from '@/lib/pdf/generateInvoicePdf';
+import { Skeleton } from '@/components/ui/skeleton';
+import EmptyState from '@/components/shared/EmptyState/EmptyState';
 
 interface InvoiceDetailsModalProps {
   invoiceId: string | null;
@@ -138,9 +140,44 @@ export default function InvoiceDetailsModal({
       variant="light"
     >
       {loading ? (
-        <div className="py-12 text-center space-y-3">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
-          <p className="text-xs font-semibold text-slate-500">Retrieving official invoice details...</p>
+        <div className="space-y-4 py-2 animate-in fade-in duration-200">
+          <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-5 w-36 rounded-md" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-48 rounded-md" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-slate-100 bg-white p-3.5 space-y-2">
+              <Skeleton className="h-4 w-28 rounded-md" />
+              <Skeleton className="h-4 w-36 rounded-md" />
+              <Skeleton className="h-3 w-28 rounded-md" />
+            </div>
+            <div className="rounded-2xl border border-slate-100 bg-white p-3.5 space-y-2">
+              <Skeleton className="h-4 w-28 rounded-md" />
+              <Skeleton className="h-4 w-36 rounded-md" />
+              <Skeleton className="h-3 w-28 rounded-md" />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 space-y-2.5">
+            <Skeleton className="h-4 w-32 rounded-md" />
+            <Skeleton className="h-4 w-full rounded-md" />
+            <Skeleton className="h-4 w-4/5 rounded-md" />
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4 space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-24 rounded-md" />
+              <Skeleton className="h-3 w-20 rounded-md" />
+            </div>
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-24 rounded-md" />
+              <Skeleton className="h-3 w-20 rounded-md" />
+            </div>
+          </div>
         </div>
       ) : invoice ? (
         <div className="space-y-5 pt-2 text-slate-800">
@@ -310,7 +347,12 @@ export default function InvoiceDetailsModal({
           </div>
         </div>
       ) : (
-        <p className="py-6 text-center text-xs text-slate-500">Invoice could not be loaded.</p>
+        <EmptyState
+          icon={FileText}
+          title="Invoice Record Not Found"
+          description="We were unable to locate the itemized invoice record for this dispatch."
+          className="border-none shadow-none py-8 bg-transparent"
+        />
       )}
     </DynamicModal>
   );

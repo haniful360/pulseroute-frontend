@@ -19,4 +19,8 @@ export interface ITableProps<T> {
   className?: string;
   headerClassName?: string;
   variant?: 'light' | 'dark';
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyIcon?: React.ComponentType<{ className?: string }>;
 }
+

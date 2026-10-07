@@ -14,6 +14,7 @@ import {
   Flame,
   Search,
   Timer,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyTripsAction } from '@/services/trip/trip.service';
@@ -83,9 +84,12 @@ export default function ShiftHistoryView() {
             status: trip.status === 'COMPLETED' ? 'Completed' : trip.status,
           }));
           setShifts(mapped);
+        } else if (!tripsRes.success) {
+          toast.error(tripsRes.message || 'Failed to retrieve shift logs');
         }
       } catch (err) {
         console.error('Failed to load driver shifts:', err);
+        toast.error('Network error: Unable to load shift history');
       } finally {
         setLoading(false);
       }
@@ -291,12 +295,14 @@ export default function ShiftHistoryView() {
               </div>
             ))}
           </div>
-        ) : filteredShifts.length > 0 ? (
-          <CustomTable columns={columns} data={filteredShifts} />
         ) : (
-          <div className="p-10 text-center text-sm text-slate-500">
-            No shift logs recorded matching your search.
-          </div>
+          <CustomTable
+            columns={columns}
+            data={filteredShifts}
+            emptyTitle="No Shift Logs Found"
+            emptyDescription="No paramedic shifts matching your filter criteria were found."
+            emptyIcon={Calendar}
+          />
         )}
       </div>
     </div>

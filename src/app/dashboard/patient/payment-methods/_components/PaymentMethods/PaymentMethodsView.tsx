@@ -23,6 +23,7 @@ import { PaymentMethodsSkeleton } from '@/components/dashboard/skeletons/patient
 import StripeCardPaymentForm from '@/components/payment/StripeCardPaymentForm';
 import InvoiceDetailsModal from '@/components/payment/InvoiceDetailsModal';
 import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf';
+import EmptyState from '@/components/shared/EmptyState/EmptyState';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
@@ -302,18 +303,18 @@ export default function PaymentMethodsView() {
         </div>
 
         {/* Invoices List / Payment History */}
-        {invoices.length > 0 && (
-          <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-8">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Emergency Trip Invoices</h3>
-                <p className="text-xs text-slate-500">
-                  Review your recent ambulance dispatch payment receipts
-                </p>
-              </div>
-              <FileText className="h-5 w-5 text-slate-400" />
+        <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-8">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Emergency Trip Invoices</h3>
+              <p className="text-xs text-slate-500">
+                Review your recent ambulance dispatch payment receipts
+              </p>
             </div>
+            <FileText className="h-5 w-5 text-slate-400" />
+          </div>
 
+          {invoices.length > 0 ? (
             <div className="mt-4 divide-y divide-slate-100">
               {invoices.map((inv) => (
                 <div
@@ -395,8 +396,17 @@ export default function PaymentMethodsView() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="mt-4">
+              <EmptyState
+                icon={FileText}
+                title="No Invoices Found"
+                description="You have no billing records yet. Completed ambulance dispatches will automatically appear here."
+                className="border-none bg-transparent shadow-none py-6 sm:py-8"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Invoice Details & PDF Download Modal */}

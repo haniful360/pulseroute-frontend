@@ -86,9 +86,12 @@ export default function FleetView() {
           }));
           setVehiclesList(mapped);
         }
+      } else if (!res.success) {
+        toast.error(res.message || 'Failed to load fleet vehicles');
       }
     } catch (err) {
       console.error('Failed to load fleet vehicles:', err);
+      toast.error('Network error: Unable to load fleet vehicles');
     } finally {
       setLoading(false);
     }

@@ -20,6 +20,7 @@ import {
   MapPin,
   Search,
   User,
+  Ambulance,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyTripsAction } from '@/services/trip/trip.service';
@@ -87,9 +88,12 @@ export default function TripHistoryView() {
             };
           });
           setTrips(mapped);
+        } else if (!res.success) {
+          toast.error(res.message || 'Failed to retrieve trip history');
         }
       } catch (err) {
         console.error('Failed to load trips:', err);
+        toast.error('Network error: Unable to load dispatch records');
       } finally {
         setLoading(false);
       }
@@ -368,7 +372,13 @@ export default function TripHistoryView() {
           </div>
         </div>
 
-        <CustomTable columns={columns} data={filteredTrips} />
+        <CustomTable
+          columns={columns}
+          data={filteredTrips}
+          emptyTitle="No Emergency Dispatches Found"
+          emptyDescription="You haven't requested any ambulance dispatches yet or no trips matched your filter."
+          emptyIcon={Ambulance}
+        />
       </div>
 
       {/* Trip Details Modal */}

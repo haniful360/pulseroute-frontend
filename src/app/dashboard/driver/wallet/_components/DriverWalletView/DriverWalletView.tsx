@@ -76,9 +76,12 @@ export default function DriverWalletView() {
             method: tx.paymentMethod || 'Stripe Express',
           }));
           setLedger(items);
+        } else if (!wRes.success) {
+          toast.error(wRes.message || 'Failed to load wallet balance');
         }
       } catch (err) {
         console.error('Failed to load wallet data:', err);
+        toast.error('Network error: Unable to load wallet information');
       } finally {
         setLoading(false);
       }
@@ -297,12 +300,14 @@ export default function DriverWalletView() {
               </div>
             ))}
           </div>
-        ) : ledger.length > 0 ? (
-          <CustomTable columns={columns} data={ledger} />
         ) : (
-          <div className="p-10 text-center text-sm text-slate-500">
-            No transactions recorded yet in your wallet ledger.
-          </div>
+          <CustomTable
+            columns={columns}
+            data={ledger}
+            emptyTitle="No Ledger Transactions"
+            emptyDescription="Your earnings, trip disbursements, and payouts will appear here once active dispatches occur."
+            emptyIcon={Wallet}
+          />
         )}
       </div>
 

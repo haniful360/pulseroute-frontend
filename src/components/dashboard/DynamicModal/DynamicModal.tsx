@@ -36,9 +36,9 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className={`max-w-137.5 gap-0 rounded-2xl p-5 ${
+        className={`w-[95vw] max-w-full sm:max-w-xl max-h-[92vh] overflow-y-auto gap-0 rounded-3xl p-5 sm:p-6 custom-scrollbar ${
           isLight
-            ? 'border-gray-200 bg-white text-slate-900 shadow-2xl'
+            ? 'border-slate-200 bg-white text-slate-900 shadow-2xl'
             : 'border-white/10 bg-[#0B1120] text-white shadow-xl'
         } ${className}`}
       >

@@ -30,9 +30,12 @@ export default function PricingView() {
           setBaseFare(String(first.baseFare));
           setPerKmRate(String(first.perKmRate));
           setMinimumFare(String(first.minimumFare || first.baseFare));
+        } else if (res && !res.success) {
+          toast.error(res.message || 'Failed to load pricing schedules');
         }
       } catch (err) {
         console.error('Failed to load pricing configs:', err);
+        toast.error('Network error: Unable to load pricing strategy');
       } finally {
         setIsLoading(false);
       }
