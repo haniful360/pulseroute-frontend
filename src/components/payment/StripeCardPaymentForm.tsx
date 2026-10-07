@@ -1,9 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import {
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
 import { toast } from 'sonner';
-import { CreditCard, LockKeyhole, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  CreditCard,
+  Calendar,
+  LockKeyhole,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  User,
+} from 'lucide-react';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import {
   createPaymentIntentAction,
@@ -15,24 +29,21 @@ interface StripeCardPaymentFormProps {
   onPaymentSuccess?: () => void;
 }
 
-const CARD_ELEMENT_OPTIONS = {
+const ELEMENT_STYLE = {
   style: {
     base: {
       color: '#0f172a',
       fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
       fontSmoothing: 'antialiased',
-      fontSize: '15px',
+      fontSize: '14px',
       '::placeholder': {
         color: '#94a3b8',
       },
-      iconColor: '#e63946',
     },
     invalid: {
       color: '#dc2626',
-      iconColor: '#dc2626',
     },
   },
-  hidePostalCode: true,
 };
 
 export default function StripeCardPaymentForm({
@@ -42,8 +53,10 @@ export default function StripeCardPaymentForm({
   const stripe = useStripe();
   const elements = useElements();
 
+  const [cardholderName, setCardholderName] = useState(
+    invoice?.patient?.name || ''
+  );
   const [isProcessing, setIsProcessing] = useState(false);
-  const [cardComplete, setCardComplete] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
 
   const amount = invoice ? Number(invoice.totalAmount || 0) : 0;
@@ -62,8 +75,8 @@ export default function StripeCardPaymentForm({
       return;
     }
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
+    const cardNumberElement = elements.getElement(CardNumberElement);
+    if (!cardNumberElement) {
       toast.error('Card element is unavailable. Please refresh.');
       return;
     }
@@ -83,9 +96,9 @@ export default function StripeCardPaymentForm({
       // 2. Confirm card payment directly with Stripe client-side
       const stripeResult = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
-          card: cardElement,
+          card: cardNumberElement,
           billing_details: {
-            name: invoice.patient?.name || 'PulseRoute Patient',
+            name: cardholderName.trim() || invoice.patient?.name || 'PulseRoute Patient',
           },
         },
       });
@@ -112,7 +125,6 @@ export default function StripeCardPaymentForm({
             onPaymentSuccess();
           }
         } else {
-          // Even if backend settle confirmation has slight delay, Stripe succeeded
           toast.info(
             settleRes.message || 'Payment authorized via Stripe! Updating ledger records.'
           );
@@ -151,24 +163,43 @@ export default function StripeCardPaymentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Real Stripe Card Element */}
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 1. Cardholder Name */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+          <User className="h-3.5 w-3.5 text-slate-500" />
+          Cardholder Name
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            required
+            placeholder="e.g. Abdur Rahman"
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-[#e63946] focus:ring-2 focus:ring-red-500/20"
+          />
+        </div>
+      </div>
+
+      {/* 2. Individual Card Number Element */}
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-            <CreditCard className="h-4 w-4 text-[#e63946]" />
-            Card Information
+            <CreditCard className="h-3.5 w-3.5 text-[#e63946]" />
+            Card Number
           </label>
           <span className="text-[11px] font-semibold text-slate-400">
             Visa • Mastercard • AMEX
           </span>
         </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition focus-within:border-[#e63946] focus-within:ring-2 focus-within:ring-red-500/20">
-          <CardElement
-            options={CARD_ELEMENT_OPTIONS}
+        <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-2xs transition focus-within:border-[#e63946] focus-within:ring-2 focus-within:ring-red-500/20">
+          <CardNumberElement
+            options={{
+              ...ELEMENT_STYLE,
+              showIcon: true,
+            }}
             onChange={(e) => {
-              setCardComplete(e.complete);
               if (e.error) {
                 setCardError(e.error.message);
               } else {
@@ -177,14 +208,58 @@ export default function StripeCardPaymentForm({
             }}
           />
         </div>
-
-        {cardError && (
-          <p className="flex items-center gap-1.5 text-xs font-medium text-red-600">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>{cardError}</span>
-          </p>
-        )}
       </div>
+
+      {/* 3. Expiration Date & CVC Elements Side by Side */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Expiry Date */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-slate-500" />
+            Expiration Date
+          </label>
+          <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-2xs transition focus-within:border-[#e63946] focus-within:ring-2 focus-within:ring-red-500/20">
+            <CardExpiryElement
+              options={ELEMENT_STYLE}
+              onChange={(e) => {
+                if (e.error) {
+                  setCardError(e.error.message);
+                } else {
+                  setCardError(null);
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* CVC / CVV */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <LockKeyhole className="h-3.5 w-3.5 text-slate-500" />
+            CVC / CVV
+          </label>
+          <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-2xs transition focus-within:border-[#e63946] focus-within:ring-2 focus-within:ring-red-500/20">
+            <CardCvcElement
+              options={ELEMENT_STYLE}
+              onChange={(e) => {
+                if (e.error) {
+                  setCardError(e.error.message);
+                } else {
+                  setCardError(null);
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Card Error Display */}
+      {cardError && (
+        <p className="flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5">
+          <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+          <span>{cardError}</span>
+        </p>
+      )}
 
       {/* Security badge and hint */}
       <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
