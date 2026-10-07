@@ -5,20 +5,12 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import DynamicBackBtn from '@/components/dashboard/DynamicBackBtn/DynamicBackBtn';
-import DynamicBadge from '@/components/dashboard/DynamicBadge/DynamicBadge';
-import DynamicModal from '@/components/dashboard/DynamicModal/DynamicModal';
-import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import {
-  ArrowLeft,
   Check,
   CreditCard,
   FileText,
-  LockKeyhole,
-  Plus,
   ShieldCheck,
-  Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMyInvoicesAction } from '@/services/invoice/invoice.service';
@@ -36,18 +28,11 @@ export default function PaymentMethodsView() {
   const queryTripId = searchParams.get('tripId');
 
   const [paid, setPaid] = useState(false);
-  const [addCardModalOpen, setAddCardModalOpen] = useState(false);
 
   // Invoices state
   const [invoices, setInvoices] = useState<any[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
-
-  // Add Card State (for future tokenized vaulting)
-  const [cardHolder, setCardHolder] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvc, setCvc] = useState('');
 
   // Fetch real invoices
   const loadInvoices = useCallback(async () => {
@@ -98,12 +83,6 @@ export default function PaymentMethodsView() {
   const tripRoute = selectedInvoice?.trip?.destinationAddress
     ? `${selectedInvoice.trip.pickupAddress || 'Pickup'} to ${selectedInvoice.trip.destinationAddress}`
     : 'Emergency Dispatch Route';
-
-  const handleSaveCard = (e: React.FormEvent) => {
-    e.preventDefault();
-    setAddCardModalOpen(false);
-    toast.success('Payment card saved to your PulseRoute wallet.');
-  };
 
   if (loadingInvoices) {
     return <PaymentMethodsSkeleton />;
@@ -316,70 +295,7 @@ export default function PaymentMethodsView() {
             </div>
           </div>
         )}
-
-        <button
-          type="button"
-          onClick={() => setAddCardModalOpen(true)}
-          className="mx-auto mt-6 flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#e63946]"
-        >
-          <Plus className="h-4 w-4" /> Add or replace payment card
-        </button>
       </div>
-
-      {/* Add Card Modal */}
-      <DynamicModal
-        isOpen={addCardModalOpen}
-        onClose={() => setAddCardModalOpen(false)}
-        title="Add Payment Card"
-        description="Enter card information for future emergency dispatches."
-        variant="light"
-      >
-        <form onSubmit={handleSaveCard} className="space-y-4 pt-2">
-          <InputField
-            label="Cardholder Name"
-            placeholder="e.g. Abdur Rahman"
-            value={cardHolder}
-            onChange={(e) => setCardHolder(e.target.value)}
-            required
-          />
-          <InputField
-            label="Card Number"
-            placeholder="4242 4242 4242 4242"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value)}
-            required
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <InputField
-              label="Expiry (MM/YY)"
-              placeholder="MM/YY"
-              value={expiry}
-              onChange={(e) => setExpiry(e.target.value)}
-              required
-            />
-            <InputField
-              label="CVC"
-              placeholder="123"
-              value={cvc}
-              onChange={(e) => setCvc(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-3">
-            <DynamicActionButton
-              variant="outline"
-              onClick={() => setAddCardModalOpen(false)}
-              label="Cancel"
-            />
-            <DynamicActionButton
-              type="submit"
-              variant="danger"
-              label="Save Card"
-            />
-          </div>
-        </form>
-      </DynamicModal>
     </div>
   );
 }
