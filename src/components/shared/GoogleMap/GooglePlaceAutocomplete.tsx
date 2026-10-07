@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useGoogleMaps } from '@/hooks/useGoogleMaps';
 import { MapPin, Navigation, Hospital, Search, Check, Building2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { forwardGeocode } from '@/lib/geocoding';
 
 export interface PlaceSelection {
   address: string;
@@ -124,6 +125,31 @@ export default function GooglePlaceAutocomplete({
   const [suggestions, setSuggestions] = useState<PlaceSelection[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const debounceTimerRef = useRef<any>(null);
+  const lastResolvedAddressRef = useRef<string>(value);
+
+  // Helper to forward-geocode manual typing to real coordinates
+  const handleManualGeocode = useCallback(
+    async (text: string) => {
+      const clean = text.trim();
+      if (!clean || !onPlaceSelect) return;
+      if (clean === lastResolvedAddressRef.current) return;
+
+      try {
+        const geo = await forwardGeocode(clean);
+        if (geo) {
+          lastResolvedAddressRef.current = clean;
+          onPlaceSelect({
+            address: clean,
+            lat: geo.lat,
+            lng: geo.lng,
+          });
+        }
+      } catch {
+        // preserve manual text
+      }
+    },
+    [onPlaceSelect]
+  );
 
   // 1. Google Places Autocomplete (When Google Maps is fully authenticated)
   useEffect(() => {
@@ -144,6 +170,7 @@ export default function GooglePlaceAutocomplete({
         const lng = place.geometry.location.lng();
         const address = place.formatted_address || place.name || '';
 
+        lastResolvedAddressRef.current = address;
         onChange(address);
         if (onPlaceSelect) {
           onPlaceSelect({
@@ -221,10 +248,13 @@ export default function GooglePlaceAutocomplete({
 
     debounceTimerRef.current = setTimeout(() => {
       searchNominatimAndPresets(text);
-    }, 250);
+      // Auto forward-geocode if user paused typing
+      handleManualGeocode(text);
+    }, 600);
   };
 
   const handleSelectSuggestion = (place: PlaceSelection) => {
+    lastResolvedAddressRef.current = place.address;
     onChange(place.address);
     if (onPlaceSelect) {
       onPlaceSelect(place);
@@ -271,6 +301,25 @@ export default function GooglePlaceAutocomplete({
             } else {
               searchNominatimAndPresets(value);
             }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (suggestions.length > 0) {
+                handleSelectSuggestion(suggestions[0]);
+              } else if (value.trim()) {
+                handleManualGeocode(value);
+                setIsOpen(false);
+              }
+            }
+          }}
+          onBlur={() => {
+            // Slight delay so clicking a suggestion is processed before blur
+            setTimeout(() => {
+              if (value.trim()) {
+                handleManualGeocode(value);
+              }
+            }, 300);
           }}
           placeholder={placeholder}
           required={required}

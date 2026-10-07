@@ -163,42 +163,53 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setNotifications((prev) => [normalized, ...prev.filter((n) => n.id !== normalized.id)]);
           setUnreadCount((prev) => prev + 1);
 
-          // Toast alert with direct action if link is provided
-          const isEmergency =
-            normalized.type === 'TRIP' ||
-            normalized.title.toLowerCase().includes('emergency') ||
-            normalized.title.toLowerCase().includes('critical') ||
-            normalized.title.toLowerCase().includes('dispatch');
+          // Toast alert with appropriate color and icon based on notification context
+          const titleLower = normalized.title.toLowerCase();
+          const messageLower = normalized.message.toLowerCase();
 
-          if (isEmergency) {
+          const isFailureOrCancel =
+            titleLower.includes('cancel') ||
+            titleLower.includes('reject') ||
+            titleLower.includes('failed') ||
+            messageLower.includes('cancelled');
+
+          const isSuccess =
+            titleLower.includes('completed') ||
+            titleLower.includes('arrived') ||
+            titleLower.includes('accepted') ||
+            titleLower.includes('success') ||
+            messageLower.includes('completed') ||
+            messageLower.includes('arrived');
+
+          const actionConfig = normalized.link
+            ? {
+                label: 'Open',
+                onClick: () => {
+                  if (typeof window !== 'undefined' && normalized.link) {
+                    window.location.href = normalized.link;
+                  }
+                },
+              }
+            : undefined;
+
+          if (isFailureOrCancel) {
             toast.error(normalized.title, {
               description: normalized.message,
-              duration: 8000,
-              action: normalized.link
-                ? {
-                    label: 'Open',
-                    onClick: () => {
-                      if (typeof window !== 'undefined' && normalized.link) {
-                        window.location.href = normalized.link;
-                      }
-                    },
-                  }
-                : undefined,
+              duration: 7000,
+              action: actionConfig,
+            });
+          } else if (isSuccess) {
+            toast.success(normalized.title, {
+              description: normalized.message,
+              duration: 6000,
+              action: actionConfig,
             });
           } else {
+            // Live active trip progress (EN_ROUTE, IN_TRANSIT, DISPATCHED, etc.)
             toast.info(normalized.title, {
               description: normalized.message,
-              duration: 5000,
-              action: normalized.link
-                ? {
-                    label: 'View',
-                    onClick: () => {
-                      if (typeof window !== 'undefined' && normalized.link) {
-                        window.location.href = normalized.link;
-                      }
-                    },
-                  }
-                : undefined,
+              duration: 6000,
+              action: actionConfig,
             });
           }
         };

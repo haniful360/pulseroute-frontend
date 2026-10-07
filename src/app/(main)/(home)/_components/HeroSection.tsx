@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
-import InputField from '@/components/dashboard/Fields/InputField/InputField';
+import GooglePlaceAutocomplete from '@/components/shared/GoogleMap/GooglePlaceAutocomplete';
+import { getCurrentDevicePosition, reverseGeocode, forwardGeocode } from '@/lib/geocoding';
 import {
   Select,
   SelectContent,
@@ -134,56 +135,22 @@ export const HeroSection: React.FC = () => {
     }
   }, [selectedVehicle, selectedHospital, pickupCoords, pricingConfigs]);
 
-  // 3. Real Geolocation
-  const handleUseCurrentLocation = () => {
-    if (!('geolocation' in navigator)) {
-      toast.error('Geolocation is not supported by your browser.');
-      return;
-    }
+  // 3. Real Geolocation (Automatic GPS Extraction + Reverse Geocoding)
+  const handleUseCurrentLocation = async () => {
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        setPickupCoords({ lat, lng });
+    try {
+      const pos = await getCurrentDevicePosition();
+      setPickupCoords({ lat: pos.lat, lng: pos.lng });
 
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
-          );
-          if (res.ok) {
-            const data = await res.json();
-            const road = data.address?.road || '';
-            const area =
-              data.address?.suburb ||
-              data.address?.neighbourhood ||
-              data.address?.city ||
-              'Dhaka';
-            const formatted = [road, area].filter(Boolean).join(', ');
-            if (formatted) {
-              setPickupAddress(formatted);
-              toast.success('Current location detected.');
-              setIsLocating(false);
-              return;
-            }
-          }
-        } catch {
-          // Ignore reverse geocode network issues
-        }
-
-        setPickupAddress(`GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-        toast.success('Current GPS coordinates locked.');
-        setIsLocating(false);
-      },
-      (err) => {
-        console.warn('Geolocation failed or permission denied:', err);
-        setPickupCoords({ lat: 23.7925, lng: 90.4078 });
-        setPickupAddress('Road 11, Banani, Dhaka');
-        toast.info('Using default Banani location (location access denied).');
-        setIsLocating(false);
-      },
-      { timeout: 7000, enableHighAccuracy: true }
-    );
+      const address = await reverseGeocode(pos.lat, pos.lng);
+      setPickupAddress(address);
+      toast.success(`Current location locked: ${address}`);
+    } catch (err: any) {
+      console.warn('Geolocation failed:', err);
+      toast.error(err.message || 'Unable to detect GPS location. You can type your location manually.');
+    } finally {
+      setIsLocating(false);
+    }
   };
 
   // 4. Real Emergency Trip Creation
@@ -192,6 +159,18 @@ export const HeroSection: React.FC = () => {
     if (!pickupAddress.trim()) {
       toast.error('Please specify your pickup location or click Use current location.');
       return;
+    }
+
+    // If address was typed manually, synchronize coordinates via forward geocoding
+    let effectiveCoords = pickupCoords;
+    try {
+      const geo = await forwardGeocode(pickupAddress.trim());
+      if (geo) {
+        effectiveCoords = { lat: geo.lat, lng: geo.lng };
+        setPickupCoords(effectiveCoords);
+      }
+    } catch {
+      // Retain existing coordinates
     }
 
     const hospitalObj = HOSPITALS.find((h) => h.id === selectedHospital);
@@ -215,8 +194,8 @@ export const HeroSection: React.FC = () => {
       toast.info('Please log in or register to dispatch an emergency ambulance.');
       const bookingData = {
         pickup: pickupAddress.trim(),
-        pickupLat: pickupCoords.lat,
-        pickupLng: pickupCoords.lng,
+        pickupLat: effectiveCoords.lat,
+        pickupLng: effectiveCoords.lng,
         dest: destinationAddress,
         destLat: destinationLatitude,
         destLng: destinationLongitude,
@@ -229,9 +208,13 @@ export const HeroSection: React.FC = () => {
       }
       const queryParams = new URLSearchParams({
         pickup: pickupAddress.trim(),
+        pickupLat: String(effectiveCoords.lat),
+        pickupLng: String(effectiveCoords.lng),
         type: ambulanceTypeUpper,
         severity: severityUpper,
         ...(destinationAddress ? { dest: destinationAddress } : {}),
+        ...(destinationLatitude ? { destLat: String(destinationLatitude) } : {}),
+        ...(destinationLongitude ? { destLng: String(destinationLongitude) } : {}),
       });
       router.push(
         `/login?redirect=${encodeURIComponent(
@@ -248,8 +231,8 @@ export const HeroSection: React.FC = () => {
         ambulanceType: ambulanceTypeUpper,
         emergencySeverity: severityUpper,
         pickupAddress: pickupAddress.trim(),
-        pickupLatitude: pickupCoords.lat,
-        pickupLongitude: pickupCoords.lng,
+        pickupLatitude: effectiveCoords.lat,
+        pickupLongitude: effectiveCoords.lng,
         destinationAddress,
         destinationLatitude,
         destinationLongitude,
@@ -380,12 +363,15 @@ export const HeroSection: React.FC = () => {
                 <form onSubmit={handleFindAmbulance} className="mt-4 space-y-4">
                   {/* Pickup Address */}
                   <div>
-                    <InputField
+                    <GooglePlaceAutocomplete
                       label="Pickup address"
-                      type="text"
                       value={pickupAddress}
-                      onChange={(e) => setPickupAddress(e.target.value)}
-                      placeholder="Building, road, area"
+                      onChange={setPickupAddress}
+                      onPlaceSelect={(place) => {
+                        setPickupCoords({ lat: place.lat, lng: place.lng });
+                        setPickupAddress(place.address);
+                      }}
+                      placeholder="Type building, road, area or hospital"
                       required
                     />
                     {/* Use Current Location trigger */}
@@ -393,10 +379,10 @@ export const HeroSection: React.FC = () => {
                       type="button"
                       onClick={handleUseCurrentLocation}
                       disabled={isLocating}
-                      className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-red-600 transition-colors hover:text-red-700"
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-red-600 transition-colors hover:text-red-700 cursor-pointer disabled:opacity-50"
                     >
                       <Crosshair className={`h-3.5 w-3.5 ${isLocating ? 'animate-spin' : ''}`} />
-                      <span>{isLocating ? 'Locating...' : 'Use current location'}</span>
+                      <span>{isLocating ? 'Extracting GPS location...' : 'Use current location'}</span>
                     </button>
                   </div>
 

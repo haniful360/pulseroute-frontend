@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { createTripAction } from '@/services/trip/trip.service';
 import { getAllPricingConfigsAction, estimateFareAction } from '@/services/pricing/pricing.service';
+import { getCurrentDevicePosition, reverseGeocode, forwardGeocode } from '@/lib/geocoding';
 
 const ambulanceCategories = [
   { label: 'BASIC' as const, icon: Ambulance, defaultPrice: '1,500' },
@@ -71,12 +72,22 @@ export default function BookAmbulanceView() {
       try {
         const params = new URLSearchParams(window.location.search);
         const urlPickup = params.get('pickup');
+        const urlPickupLat = params.get('pickupLat');
+        const urlPickupLng = params.get('pickupLng');
         const urlType = params.get('type') as 'BASIC' | 'AC' | 'ICU' | 'CCU' | 'NEONATAL' | 'FREEZER' | null;
         const urlDest = params.get('dest');
+        const urlDestLat = params.get('destLat');
+        const urlDestLng = params.get('destLng');
 
         if (urlPickup) setPickupLocation(urlPickup);
+        if (urlPickupLat && urlPickupLng) {
+          setPickupCoords({ lat: Number(urlPickupLat), lng: Number(urlPickupLng) });
+        }
         if (urlType) setSelectedCategory(urlType);
         if (urlDest) setDestinationHospital(urlDest);
+        if (urlDestLat && urlDestLng) {
+          setDestinationCoords({ lat: Number(urlDestLat), lng: Number(urlDestLng) });
+        }
 
         const saved = sessionStorage.getItem('pending_ambulance_booking');
         if (saved) {
@@ -169,40 +180,22 @@ export default function BookAmbulanceView() {
     );
   };
 
-  // Get current device GPS location
-  const handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser.');
-      return;
-    }
-
+  // Get current device GPS location (Automatic Extraction + Reverse Geocoding)
+  const handleUseCurrentLocation = async () => {
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        setPickupCoords({ lat, lng });
+    try {
+      const pos = await getCurrentDevicePosition();
+      setPickupCoords({ lat: pos.lat, lng: pos.lng });
 
-        // Reverse geocode with Google Geocoder if available
-        if (window.google?.maps) {
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ location: { lat, lng } }, (results: any[], status: string) => {
-            if (status === 'OK' && results?.[0]) {
-              setPickupLocation(results[0].formatted_address);
-            } else {
-              setPickupLocation(`GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-            }
-          });
-        }
-        setIsLocating(false);
-        toast.success('Current GPS coordinates locked for emergency pickup.');
-      },
-      (err) => {
-        setIsLocating(false);
-        toast.error(`Unable to retrieve GPS location: ${err.message}`);
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+      const address = await reverseGeocode(pos.lat, pos.lng);
+      setPickupLocation(address);
+      toast.success(`Current GPS location locked: ${address}`);
+    } catch (err: any) {
+      console.warn('Geolocation failed:', err);
+      toast.error(err.message || 'Unable to retrieve GPS location. You can type your location manually.');
+    } finally {
+      setIsLocating(false);
+    }
   };
 
   // Confirm emergency booking
@@ -214,12 +207,24 @@ export default function BookAmbulanceView() {
 
     setIsSubmitting(true);
     try {
+      // If address was typed manually, synchronize coordinates via forward geocoding
+      let effectiveCoords = pickupCoords;
+      try {
+        const geo = await forwardGeocode(pickupLocation.trim());
+        if (geo) {
+          effectiveCoords = { lat: geo.lat, lng: geo.lng };
+          setPickupCoords(effectiveCoords);
+        }
+      } catch {
+        // preserve current coords
+      }
+
       const payload = {
         ambulanceType: selectedCategory,
         emergencySeverity: 'HIGH' as const,
-        pickupAddress: pickupLocation,
-        pickupLatitude: pickupCoords.lat,
-        pickupLongitude: pickupCoords.lng,
+        pickupAddress: pickupLocation.trim(),
+        pickupLatitude: effectiveCoords.lat,
+        pickupLongitude: effectiveCoords.lng,
         destinationAddress: destinationHospital,
         destinationLatitude: destinationCoords.lat,
         destinationLongitude: destinationCoords.lng,
