@@ -7,19 +7,19 @@ export interface IUpdateProfilePayload {
   name?: string;
   phone?: string;
   contactNumber?: string;
-  avatarUrl?: string;
-  address?: string;
-  emergencyContactNumber?: string;
-  bloodGroup?: string;
-  gender?: 'MALE' | 'FEMALE' | 'OTHER';
-  dateOfBirth?: string;
-  medicalHistory?: string;
-  profilePhoto?: string;
-  orgEmail?: string;
-  department?: string;
-  nidNumber?: string;
-  licenseExpiry?: string;
-  experienceYears?: number;
+  avatarUrl?: string | null;
+  address?: string | null;
+  emergencyContactNumber?: string | null;
+  bloodGroup?: string | null;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER' | null;
+  dateOfBirth?: string | null;
+  medicalHistory?: string | Record<string, any> | null;
+  profilePhoto?: string | null;
+  orgEmail?: string | null;
+  department?: string | null;
+  nidNumber?: string | null;
+  licenseExpiry?: string | null;
+  experienceYears?: number | null;
 }
 
 export interface IUserFilterRequest {

@@ -1,320 +1,379 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Image, { StaticImageData } from 'next/image';
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   Heart,
   CheckCircle2,
   X,
   Plus,
   ShieldCheck,
-  Users,
   Phone,
-  Link as LinkIcon,
-  Pencil,
-  Trash2,
-  Megaphone,
-  ChevronDown,
   AlertTriangle,
+  ChevronDown,
+  User,
+  Calendar,
+  MapPin,
+  Activity,
+  Pill,
+  FileText,
+  Camera,
+  Trash2,
+  Loader2,
+  Lock,
+  Sparkles,
 } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import DynamicModal from '@/components/dashboard/DynamicModal/DynamicModal';
-import InputField from '@/components/dashboard/Fields/InputField/InputField';
-
-import abdurRahmanImg from '@/assets/dashboard/patient/abdur-rahman.png';
-import fatemaBegumImg from '@/assets/dashboard/patient/fatema-begum.png';
-
+import { useAuth } from '@/context/AuthContext';
 import { getMyProfileAction, updateMyProfileAction } from '@/services/user/user.service';
+import { compressImageFile } from '@/lib/image-compressor';
 import { toast } from 'sonner';
+import { MedicalProfileSkeleton } from '@/components/dashboard/skeletons/patient';
 
-interface Contact {
-  id: string;
-  name: string;
-  relationship: string;
-  phone: string;
-  autoSms: boolean;
-  avatar?: StaticImageData | string;
-}
+const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-const initialContacts: Contact[] = [
-  {
-    id: '1',
-    name: 'Abdur Rahman',
-    relationship: 'Husband',
-    phone: '+880 1712 345678',
-    autoSms: true,
-    avatar: abdurRahmanImg,
-  },
-  {
-    id: '2',
-    name: 'Fatema Begum',
-    relationship: 'Sister',
-    phone: '+880 1819 123456',
-    autoSms: false,
-    avatar: fatemaBegumImg,
-  },
+const SUGGESTED_CONDITIONS = [
+  'Hypertension',
+  'Diabetes (Type 2)',
+  'Asthma',
+  'Cardiac Arrhythmia',
+  'Chronic Kidney Disease',
+  'Epilepsy',
 ];
 
-const bloodGroups = ['A+', 'A-', 'B+ (Positive)', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const SUGGESTED_ALLERGIES = [
+  'Penicillin',
+  'Latex',
+  'Aspirin',
+  'Sulfa Drugs',
+  'Iodine',
+  'Peanuts',
+  'Shellfish',
+];
 
 export default function MedicalProfileView() {
-  // Vital Information state
-  const [bloodGroup, setBloodGroup] = useState('B+ (Positive)');
-  const [conditions, setConditions] = useState<string[]>(['Hypertension', 'Type 2 Diabetes']);
-  const [newCondition, setNewCondition] = useState('');
-  const [allergies, setAllergies] = useState<string[]>(['Penicillin', 'Latex']);
-  const [newAllergy, setNewAllergy] = useState('');
-  const [address, setAddress] = useState('House 12, Road 5, Dhanmondi, Dhaka');
-  const [emergencyPhone, setEmergencyPhone] = useState('+8801711223355');
+  const { refreshUser } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Loading & Action states
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Emergency Contacts state
-  const [contacts, setContacts] = useState<Contact[]>(initialContacts);
-
-  // Toast notification state
+  const [isProcessingAvatar, setIsProcessingAvatar] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState(
-    'Your medical data has been saved successfully.',
-  );
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Loaded pristine state for Cancel
+  const [initialData, setInitialData] = useState<any>(null);
+
+  // Form states
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const [bloodGroup, setBloodGroup] = useState('B+');
+  const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('MALE');
+  const [dob, setDob] = useState('');
+
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [newCondition, setNewCondition] = useState('');
+
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [newAllergy, setNewAllergy] = useState('');
+
+  const [medications, setMedications] = useState('');
+  const [clinicalNotes, setClinicalNotes] = useState('');
+
+  // Clean blood group string helper (e.g. "B+ (Positive)" -> "B+")
+  const normalizeBloodGroup = (val: string | null | undefined): string => {
+    if (!val) return 'B+';
+    const clean = val.split(' ')[0].trim().toUpperCase();
+    return BLOOD_GROUPS.includes(clean) ? clean : 'B+';
+  };
+
+  // Populate state helper
+  const populateProfile = (data: any) => {
+    const user = data || {};
+    const patient = data?.patient || {};
+
+    setFullName(patient.name || user.name || '');
+    setEmail(patient.email || user.email || '');
+    setPhone(patient.contactNumber || user.phone || '');
+    setEmergencyPhone(patient.emergencyContactNumber || '');
+    setAddress(patient.address || '');
+    setAvatarUrl(patient.profilePhoto || user.avatarUrl || null);
+
+    setBloodGroup(normalizeBloodGroup(patient.bloodGroup));
+    if (patient.gender) setGender(patient.gender);
+
+    if (patient.dateOfBirth) {
+      try {
+        const d = new Date(patient.dateOfBirth);
+        if (!isNaN(d.getTime())) {
+          setDob(d.toISOString().split('T')[0]);
+        }
+      } catch {
+        setDob('');
+      }
+    } else {
+      setDob('');
+    }
+
+    // Parse medical history
+    if (patient.medicalHistory) {
+      try {
+        const parsed = JSON.parse(patient.medicalHistory);
+        if (Array.isArray(parsed.conditions)) {
+          setConditions(parsed.conditions);
+        } else if (typeof parsed.conditions === 'string') {
+          setConditions([parsed.conditions]);
+        }
+
+        if (Array.isArray(parsed.allergies)) {
+          setAllergies(parsed.allergies);
+        } else if (typeof parsed.allergies === 'string') {
+          setAllergies([parsed.allergies]);
+        }
+
+        if (parsed.medications) setMedications(parsed.medications);
+        if (parsed.notes) setClinicalNotes(parsed.notes);
+      } catch {
+        // Plain text fallback
+        setConditions(patient.medicalHistory ? [patient.medicalHistory] : []);
+      }
+    } else {
+      setConditions([]);
+      setAllergies([]);
+      setMedications('');
+      setClinicalNotes('');
+    }
+  };
 
   // Load real profile from backend
   useEffect(() => {
     async function loadProfile() {
+      setIsLoading(true);
       try {
         const res = await getMyProfileAction();
         if (res.success && res.data) {
-          const patient = res.data.patient || {};
-          if (patient.bloodGroup) {
-            setBloodGroup(patient.bloodGroup.includes('(') ? patient.bloodGroup : `${patient.bloodGroup} (Positive)`);
-          }
-          if (patient.address) setAddress(patient.address);
-          if (patient.emergencyContactNumber) setEmergencyPhone(patient.emergencyContactNumber);
-
-          if (patient.medicalHistory) {
-            try {
-              const parsed = JSON.parse(patient.medicalHistory);
-              if (parsed.conditions) setConditions(parsed.conditions);
-              if (parsed.allergies) setAllergies(parsed.allergies);
-              if (parsed.contacts) setContacts(parsed.contacts);
-            } catch {
-              // Plain text medical history
-              setConditions([patient.medicalHistory]);
-            }
-          }
+          setInitialData(res.data);
+          populateProfile(res.data);
         }
       } catch (err) {
         console.error('Failed to load patient medical profile:', err);
+        toast.error('Unable to fetch profile from server. Please check your connection.');
+      } finally {
+        setIsLoading(false);
       }
     }
     loadProfile();
   }, []);
 
-  // Modal states for Contact Add/Edit
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [contactName, setContactName] = useState('');
-  const [contactRelation, setContactRelation] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
-  const [contactAutoSms, setContactAutoSms] = useState(true);
+  // Compute profile completeness
+  const completeness = (() => {
+    let score = 0;
+    if (bloodGroup) score += 20;
+    if (emergencyPhone && emergencyPhone.trim().length >= 6) score += 20;
+    if (phone && phone.trim().length >= 6) score += 15;
+    if (address && address.trim().length > 3) score += 15;
+    if (gender && dob) score += 15;
+    if (conditions.length > 0 || allergies.length > 0) score += 15;
+    return Math.min(100, score);
+  })();
 
-  // Delete modal state
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
+  // Calculate age from DOB
+  const calculateAge = (dobString: string): string => {
+    if (!dobString) return '';
+    try {
+      const birth = new Date(dobString);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age > 0 ? `${age} yrs` : '';
+    } catch {
+      return '';
+    }
+  };
 
-  // Conditions tag handling
+  // Condition tag handlers
+  const handleAddCondition = (val?: string) => {
+    const toAdd = (val || newCondition).trim();
+    if (!toAdd) return;
+    if (!conditions.includes(toAdd)) {
+      setConditions([...conditions, toAdd]);
+    }
+    setNewCondition('');
+  };
+
   const handleRemoveCondition = (index: number) => {
     setConditions(conditions.filter((_, i) => i !== index));
   };
 
-  const handleAddCondition = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newCondition.trim()) {
-      e.preventDefault();
-      if (!conditions.includes(newCondition.trim())) {
-        setConditions([...conditions, newCondition.trim()]);
-      }
-      setNewCondition('');
+  // Allergy tag handlers
+  const handleAddAllergy = (val?: string) => {
+    const toAdd = (val || newAllergy).trim();
+    if (!toAdd) return;
+    if (!allergies.includes(toAdd)) {
+      setAllergies([...allergies, toAdd]);
     }
+    setNewAllergy('');
   };
 
-  // Allergies tag handling
   const handleRemoveAllergy = (index: number) => {
     setAllergies(allergies.filter((_, i) => i !== index));
   };
 
-  const handleAddAllergy = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newAllergy.trim()) {
-      e.preventDefault();
-      if (!allergies.includes(newAllergy.trim())) {
-        setAllergies([...allergies, newAllergy.trim()]);
-      }
-      setNewAllergy('');
+  // Avatar upload handler
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingAvatar(true);
+    try {
+      const compressed = await compressImageFile(file, 800, 800, 0.85);
+      setAvatarUrl(compressed);
+      toast.success('Profile photo ready. Click "Save Changes" to apply.');
+    } catch {
+      toast.error('Failed to process image. Please choose another photo.');
+    } finally {
+      setIsProcessingAvatar(false);
+      e.target.value = '';
     }
   };
 
-  // Toggle Auto-SMS for a contact
-  const handleToggleSms = (id: string, checked: boolean) => {
-    setContacts(contacts.map((c) => (c.id === id ? { ...c, autoSms: checked } : c)));
+  const handleRemoveAvatar = () => {
+    setAvatarUrl(null);
+    toast.info('Profile photo cleared.');
   };
 
-  // Open modal to add new contact
-  const handleOpenAddContact = () => {
-    setEditingContact(null);
-    setContactName('');
-    setContactRelation('Husband');
-    setContactPhone('');
-    setContactAutoSms(true);
-    setIsContactModalOpen(true);
-  };
-
-  // Open modal to edit existing contact
-  const handleOpenEditContact = (contact: Contact) => {
-    setEditingContact(contact);
-    setContactName(contact.name);
-    setContactRelation(contact.relationship);
-    setContactPhone(contact.phone.replace('+880 ', ''));
-    setContactAutoSms(contact.autoSms);
-    setIsContactModalOpen(true);
-  };
-
-  // Save contact (add or edit)
-  const handleSaveContact = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contactName.trim() || !contactPhone.trim()) return;
-
-    const formattedPhone = contactPhone.startsWith('+880')
-      ? contactPhone
-      : `+880 ${contactPhone.trim()}`;
-
-    if (editingContact) {
-      setContacts(
-        contacts.map((c) =>
-          c.id === editingContact.id
-            ? {
-                ...c,
-                name: contactName.trim(),
-                relationship: contactRelation.trim() || 'Family',
-                phone: formattedPhone,
-                autoSms: contactAutoSms,
-              }
-            : c,
-        ),
-      );
-    } else {
-      const newContactItem: Contact = {
-        id: Date.now().toString(),
-        name: contactName.trim(),
-        relationship: contactRelation.trim() || 'Family',
-        phone: formattedPhone,
-        autoSms: contactAutoSms,
-      };
-      setContacts([...contacts, newContactItem]);
-    }
-
-    setIsContactModalOpen(false);
-  };
-
-  // Open delete confirmation
-  const handleOpenDeleteContact = (contact: Contact) => {
-    setContactToDelete(contact);
-    setIsDeleteModalOpen(true);
-  };
-
-  // Confirm delete
-  const handleConfirmDelete = () => {
-    if (contactToDelete) {
-      setContacts(contacts.filter((c) => c.id !== contactToDelete.id));
-      setIsDeleteModalOpen(false);
-      setContactToDelete(null);
+  // Cancel / Reset
+  const handleCancel = () => {
+    if (initialData) {
+      populateProfile(initialData);
+      toast.info('Form reverted to saved profile values.');
     }
   };
 
-  // Global Save Changes
+  // Save changes to backend
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
+      const medicalHistoryPayload = JSON.stringify({
+        conditions,
+        allergies,
+        medications: medications.trim(),
+        notes: clinicalNotes.trim(),
+      });
+
       const payload = {
-        bloodGroup: bloodGroup.split(' ')[0],
-        address,
-        emergencyContactNumber: contacts[0]?.phone || emergencyPhone,
-        medicalHistory: JSON.stringify({
-          conditions,
-          allergies,
-          contacts,
-        }),
+        name: fullName.trim(),
+        phone: phone.trim(),
+        contactNumber: phone.trim(),
+        address: address.trim(),
+        emergencyContactNumber: emergencyPhone.trim(),
+        bloodGroup: bloodGroup.trim(),
+        gender: gender || null,
+        dateOfBirth: dob ? dob : null,
+        medicalHistory: medicalHistoryPayload,
+        avatarUrl: avatarUrl,
+        profilePhoto: avatarUrl,
       };
+
       const res = await updateMyProfileAction(payload);
       if (res.success) {
-        setToastMessage('Your medical data has been saved successfully.');
+        setInitialData(res.data);
+        populateProfile(res.data);
+        await refreshUser();
+        setToastMessage('Your vital medical record and emergency settings have been updated.');
         setShowToast(true);
-        toast.success('Medical profile updated successfully');
+        toast.success('Medical profile updated successfully!');
       } else {
         toast.error(res.message || 'Failed to update profile');
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Error updating profile');
+      console.error('Update medical profile error:', err);
+      toast.error(err?.message || 'Error updating profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Cancel action
-  const handleCancel = () => {
-    setBloodGroup('B+ (Positive)');
-    setConditions(['Hypertension', 'Type 2 Diabetes']);
-    setAllergies(['Penicillin', 'Latex']);
-    setContacts(initialContacts);
-  };
+  if (isLoading) {
+    return <MedicalProfileSkeleton />;
+  }
+
+  const ageText = calculateAge(dob);
 
   return (
     <div className="space-y-6">
-      {/* Top Header Row with Actions & Toast */}
+      {/* 1. Top Header Row with Actions & Live Readiness */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#0B132B] sm:text-3xl">
-            Medical Profile
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 sm:text-base">
-            Manage your vital information and emergency SOS settings.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-black tracking-tight text-[#0B132B] sm:text-3xl">
+              Medical Profile
+            </h1>
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-600/20">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              SOS Active
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            Live clinical parameters, pre-existing conditions, and emergency dispatch contact.
           </p>
         </div>
 
-        {/* Header Action Buttons */}
+        {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleCancel}
             disabled={isSaving}
-            className="cursor-pointer rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
+            className="cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
           >
-            Cancel
+            Discard Changes
           </button>
           <button
             type="button"
             onClick={handleSaveChanges}
-            disabled={isSaving}
-            className="cursor-pointer rounded-xl bg-[#E63946] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition hover:bg-red-600 active:scale-95 disabled:opacity-50"
+            disabled={isSaving || isProcessingAvatar}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#E63946] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-red-500/20 transition hover:bg-red-600 active:scale-95 disabled:opacity-50"
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving Profile...
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Floating Notification Toast (Matches Figma 2:8120) */}
+      {/* 2. Floating Notification Banner */}
       {showToast && (
-        <div className="relative flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/90 p-4 shadow-xs">
+        <div className="relative flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">Profile Updated</h4>
+              <h4 className="text-sm font-bold text-slate-900">Medical Passport Synced</h4>
               <p className="text-xs text-slate-600">{toastMessage}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setShowToast(false)}
-            className="text-slate-400 transition hover:text-slate-600"
+            className="cursor-pointer text-slate-400 transition hover:text-slate-600"
             aria-label="Dismiss notification"
           >
             <X className="h-4 w-4" />
@@ -322,377 +381,577 @@ export default function MedicalProfileView() {
         </div>
       )}
 
-      {/* Main Two-Column Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* ================= LEFT COLUMN ================= */}
-        <div className="space-y-6 lg:col-span-6">
-          {/* Card 1: Vital Information */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs sm:p-7">
-            {/* Header */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#E63946]">
-                <Heart className="h-5 w-5 fill-[#E63946]/10" />
-              </div>
-              <h2 className="text-lg font-bold text-[#0B132B]">Vital Information</h2>
-            </div>
-
-            <div className="mt-6 space-y-5">
-              {/* Blood Group Field */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                  BLOOD GROUP
-                </label>
-                <div className="relative mt-2">
-                  <select
-                    value={bloodGroup}
-                    onChange={(e) => setBloodGroup(e.target.value)}
-                    className="h-12 w-full appearance-none rounded-xl border border-gray-200 bg-slate-50/50 px-4 pr-10 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
-                  >
-                    {bloodGroups.map((bg) => (
-                      <option key={bg} value={bg}>
-                        {bg}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                </div>
-              </div>
-
-              {/* Existing Conditions Field */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                  EXISTING CONDITIONS
-                </label>
-                <div className="mt-2 flex min-h-12 flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-slate-50/50 p-2 focus-within:border-red-500 focus-within:bg-white focus-within:ring-1 focus-within:ring-red-500">
-                  {conditions.map((item, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs"
-                    >
-                      {item}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveCondition(idx)}
-                        className="text-slate-400 transition hover:text-[#E63946]"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    type="text"
-                    value={newCondition}
-                    onChange={(e) => setNewCondition(e.target.value)}
-                    onKeyDown={handleAddCondition}
-                    placeholder="Add condition..."
-                    className="min-w-[120px] flex-1 bg-transparent px-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none"
-                  />
-                </div>
-                <p className="mt-1.5 text-[11px] text-slate-400 italic">
-                  Paramedics will prioritize this info during emergencies.
-                </p>
-              </div>
-
-              {/* Known Allergies Field */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                  KNOWN ALLERGIES
-                </label>
-                <div className="mt-2 flex min-h-12 flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-slate-50/50 p-2 focus-within:border-red-500 focus-within:bg-white focus-within:ring-1 focus-within:ring-red-500">
-                  {allergies.map((item, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs"
-                    >
-                      {item}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAllergy(idx)}
-                        className="text-slate-400 transition hover:text-[#E63946]"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    type="text"
-                    value={newAllergy}
-                    onChange={(e) => setNewAllergy(e.target.value)}
-                    onKeyDown={handleAddAllergy}
-                    placeholder="Add allergy..."
-                    className="min-w-[120px] flex-1 bg-transparent px-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Insurance Coverage (Matches Figma Navy Card) */}
-          <div className="relative overflow-hidden rounded-2xl bg-[#0B132B] p-6 text-white shadow-sm sm:p-7">
-            {/* Red radial glow overlay */}
-            <div className="pointer-events-none absolute -top-12 -left-12 h-44 w-44 rounded-full bg-red-600/15 blur-2xl" />
-
-            {/* Faint Shield Watermark */}
-            <div className="pointer-events-none absolute right-4 bottom-2 text-white/5">
-              <ShieldCheck className="h-28 w-28" />
-            </div>
-
-            <div className="relative z-10 space-y-4">
-              <div>
-                <span className="text-[11px] font-bold tracking-wider text-[#E63946] uppercase">
-                  INSURANCE COVERAGE
-                </span>
-                <h3 className="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">
-                  Guardian Health Plus
-                </h3>
-              </div>
-
-              <div>
-                <span className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
-                  POLICY NUMBER
-                </span>
-                <p className="mt-0.5 font-mono text-base font-semibold tracking-wider text-white">
-                  GH-992-0045-881
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ================= RIGHT COLUMN ================= */}
-        <div className="space-y-6 lg:col-span-6">
-          {/* Card 1: Emergency Contacts */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs sm:p-7">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                  <Users className="h-5 w-5" />
-                </div>
-                <h2 className="text-lg font-bold text-[#0B132B]">Emergency Contacts</h2>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleOpenAddContact}
-                className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-gray-200 bg-slate-50/70 px-3.5 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 active:scale-95"
-              >
-                <Plus className="h-3.5 w-3.5 text-[#E63946]" />
-                Add Contact
-              </button>
-            </div>
-
-            {/* Contact Items List */}
-            <div className="mt-6 space-y-4">
-              {contacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  className="rounded-2xl border border-gray-100 bg-slate-50/60 p-4 transition-all hover:border-gray-200 hover:shadow-2xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-slate-200">
-                        {contact.avatar ? (
-                          <Image
-                            src={contact.avatar}
-                            alt={contact.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-red-100 text-sm font-bold text-[#E63946]">
-                            {contact.name.substring(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-bold text-[#0B132B]">{contact.name}</h4>
-                        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <LinkIcon className="h-3.5 w-3.5 text-slate-400" />
-                            {contact.relationship}
-                          </span>
-                          <span className="flex items-center gap-1 font-medium text-slate-700">
-                            <Phone className="h-3.5 w-3.5 text-slate-400" />
-                            {contact.phone}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Edit & Delete Action Buttons */}
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditContact(contact)}
-                        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 transition hover:border-[#E63946] hover:text-[#E63946]"
-                        title="Edit Contact"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenDeleteContact(contact)}
-                        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 transition hover:border-red-500 hover:text-red-600"
-                        title="Delete Contact"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="mt-3.5 flex items-center justify-between border-t border-gray-200/60 pt-3">
-                    <div>
-                      <p className="text-xs font-semibold text-slate-900">Auto-SMS Alert</p>
-                      <p className="text-[11px] text-slate-500">Send alert when a trip starts</p>
-                    </div>
-
-                    {/* Auto-SMS Switch */}
-                    <Switch
-                      checked={contact.autoSms}
-                      onCheckedChange={(checked) => handleToggleSms(contact.id, checked)}
-                      className="data-[state=checked]:bg-[#E63946]"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card 2: One-Tap SOS Settings (Matches Figma 2:8109) */}
-          <div className="flex items-start gap-4 rounded-2xl border border-dashed border-[#E63946]/40 bg-[#FEF2F2] p-5 sm:p-6">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E63946] text-white shadow-md shadow-red-500/20">
-              <Megaphone className="h-5 w-5" />
+      {/* 3. Emergency SOS Readiness Bar */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#E63946]">
+              <Activity className="h-5 w-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-[#0B132B] sm:text-base">
-                One-Tap SOS Settings
-              </h4>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
-                During an active trip, your &apos;SOS&apos; button will instantly notify these
-                contacts with your live location and medical summary.
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[#0B132B]">
+                  Paramedic Dispatch Readiness
+                </h3>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${
+                    completeness >= 80
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : completeness >= 50
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {completeness}% Ready
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Accurate blood group and emergency contact details reduce first-response triage time by up to 60%.
               </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-sm font-black text-slate-900">{completeness}%</span>
+            <div className="h-2.5 w-32 overflow-hidden rounded-full bg-slate-100 sm:w-48">
+              <div
+                className={`h-full transition-all duration-500 ${
+                  completeness >= 80 ? 'bg-emerald-500' : completeness >= 50 ? 'bg-amber-500' : 'bg-[#E63946]'
+                }`}
+                style={{ width: `${completeness}%` }}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* ================= ADD / EDIT CONTACT MODAL (Figma 2:8110) ================= */}
-      <DynamicModal
-        isOpen={isContactModalOpen}
-        onClose={() => setIsContactModalOpen(false)}
-        title={editingContact ? 'Edit Emergency Contact' : 'Add New Contact'}
-        description="Provide accurate contact information so we can alert them during emergencies."
-        variant="light"
-      >
-        <form onSubmit={handleSaveContact} className="mt-2 space-y-4">
-          <InputField
-            label="Full Name"
-            placeholder="e.g. Abdur Rahman"
-            value={contactName}
-            onChange={(e) => setContactName(e.target.value)}
-            required
-          />
+      {/* 4. Main Two-Column Grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* ================= LEFT COLUMN: IDENTITY & VITALS ================= */}
+        <div className="space-y-6 lg:col-span-7">
+          {/* Card 1: Patient Identity & Primary Contact */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-7">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#E63946]">
+                <User className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#0B132B]">Patient Identity & Contact</h2>
+                <p className="text-xs text-slate-500">
+                  Primary identifiers verified for hospital admissions and ambulance reception.
+                </p>
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700">Relationship *</label>
-            <div className="relative mt-1.5">
-              <select
-                value={contactRelation}
-                onChange={(e) => setContactRelation(e.target.value)}
-                className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/50 px-4 pr-10 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
-              >
-                <option value="Husband">Husband</option>
-                <option value="Wife">Wife</option>
-                <option value="Father">Father</option>
-                <option value="Mother">Mother</option>
-                <option value="Sister">Sister</option>
-                <option value="Brother">Brother</option>
-                <option value="Child">Child</option>
-                <option value="Doctor">Doctor</option>
-                <option value="Friend">Friend</option>
-                <option value="Other">Other</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            {/* Avatar Row */}
+            <div className="mt-6 flex flex-wrap items-center gap-4 sm:gap-6">
+              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-slate-200 bg-gradient-to-tr from-slate-100 to-slate-200 shadow-inner">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={fullName || 'Patient Avatar'}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-red-50 text-xl font-black text-[#E63946]">
+                    {fullName ? fullName.slice(0, 2).toUpperCase() : 'PT'}
+                  </div>
+                )}
+                {isProcessingAvatar && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <h4 className="text-sm font-bold text-slate-900">Patient Profile Photo</h4>
+                <p className="text-xs text-slate-500">
+                  Visible to responding paramedics to confirm patient identity on arrival.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarFileChange}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isProcessingAvatar}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 active:scale-95"
+                  >
+                    <Camera className="h-3.5 w-3.5 text-slate-500" />
+                    Change Photo
+                  </button>
+                  {avatarUrl && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 active:scale-95"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Inputs Grid */}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                  Full Legal Name
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. Baxter Valdez"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                  Registered Email
+                </label>
+                <div className="relative mt-1.5">
+                  <input
+                    type="email"
+                    value={email}
+                    disabled
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 pr-20 text-sm font-medium text-slate-500 cursor-not-allowed"
+                  />
+                  <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                    Verified
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                  Primary Contact Number
+                </label>
+                <div className="relative mt-1.5">
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +1 (295) 241-7038"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center justify-between text-xs font-bold tracking-wider text-red-700 uppercase">
+                  <span>Emergency Hotline Number</span>
+                  <span className="text-[10px] font-bold text-red-600">Priority Dial</span>
+                </label>
+                <div className="relative mt-1.5">
+                  <input
+                    type="text"
+                    value={emergencyPhone}
+                    onChange={(e) => setEmergencyPhone(e.target.value)}
+                    placeholder="e.g. +880 1712 345678"
+                    className="h-11 w-full rounded-xl border border-red-300 bg-red-50/30 px-3.5 pr-10 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                  />
+                  <Phone className="pointer-events-none absolute top-1/2 right-3.5 h-4 w-4 -translate-y-1/2 text-red-500" />
+                </div>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Paramedics and SOS auto-dialer dial this number instantly during dispatch.
+                </p>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                  Residential / Primary Pickup Address
+                </label>
+                <div className="relative mt-1.5">
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="House 12, Road 5, Dhanmondi, Dhaka"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 pl-10 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                  />
+                  <MapPin className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                </div>
+              </div>
             </div>
           </div>
 
-          <InputField
-            label="Phone Number"
-            placeholder="1712 345678"
-            value={contactPhone}
-            onChange={(e) => setContactPhone(e.target.value)}
-            prefix={<span className="px-3 text-xs font-bold text-slate-700">+880</span>}
-            required
-          />
-
-          <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-slate-50 p-3">
-            <div>
-              <p className="text-xs font-semibold text-slate-900">Enable Auto-SMS Alert</p>
-              <p className="text-[11px] text-slate-500">Send automatic alert on emergency start</p>
+          {/* Card 2: Clinical Vitals & Physiology */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-7">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#E63946]">
+                <Heart className="h-5 w-5 fill-[#E63946]/10" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#0B132B]">Clinical Vitals & Blood Group</h2>
+                <p className="text-xs text-slate-500">
+                  Critical baseline physiology used for blood transfusion and paramedic pre-alerting.
+                </p>
+              </div>
             </div>
-            <Switch
-              checked={contactAutoSms}
-              onCheckedChange={setContactAutoSms}
-              className="data-[state=checked]:bg-[#E63946]"
-            />
-          </div>
 
-          <div className="mt-6 flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsContactModalOpen(false)}
-              className="cursor-pointer rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cursor-pointer rounded-xl bg-[#E63946] px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-red-500/20 transition hover:bg-red-600"
-            >
-              {editingContact ? 'Save Changes' : 'Add Contact'}
-            </button>
-          </div>
-        </form>
-      </DynamicModal>
+            {/* Blood Group Grid */}
+            <div className="mt-6">
+              <label className="flex items-center justify-between text-xs font-bold tracking-wider text-slate-600 uppercase">
+                <span>Blood Group</span>
+                <span className="text-xs font-black text-[#E63946]">Selected: {bloodGroup}</span>
+              </label>
+              <div className="mt-2.5 grid grid-cols-4 gap-2 sm:grid-cols-8">
+                {BLOOD_GROUPS.map((bg) => {
+                  const isSelected = bloodGroup === bg;
+                  return (
+                    <button
+                      key={bg}
+                      type="button"
+                      onClick={() => setBloodGroup(bg)}
+                      className={`flex h-12 cursor-pointer flex-col items-center justify-center rounded-2xl border text-sm font-black transition active:scale-95 ${
+                        isSelected
+                          ? 'border-[#E63946] bg-[#E63946] text-white shadow-md shadow-red-500/20'
+                          : 'border-slate-200 bg-slate-50/60 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>{bg}</span>
+                      <span className={`text-[9px] font-semibold ${isSelected ? 'text-red-100' : 'text-slate-400'}`}>
+                        {bg.includes('+') ? 'Rh+' : 'Rh-'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-      {/* ================= DELETE CONFIRMATION MODAL ================= */}
-      <DynamicModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        variant="light"
-      >
-        <div className="flex flex-col items-center py-2 text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-[#E63946]">
-            <AlertTriangle className="h-7 w-7" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900">Remove Contact?</h3>
-          <p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
-            Are you sure you want to remove{' '}
-            <span className="font-semibold text-slate-800">{contactToDelete?.name}</span> from your
-            emergency contacts? They will no longer receive one-tap SOS notifications.
-          </p>
+            {/* Gender & DOB */}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                  Biological Gender
+                </label>
+                <div className="mt-1.5 grid grid-cols-3 gap-2">
+                  {(['MALE', 'FEMALE', 'OTHER'] as const).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGender(g)}
+                      className={`flex h-11 cursor-pointer items-center justify-center rounded-xl border text-xs font-bold uppercase transition active:scale-95 ${
+                        gender === g
+                          ? 'border-[#E63946] bg-red-50 text-[#E63946]'
+                          : 'border-slate-200 bg-slate-50/50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="mt-6 flex w-full gap-3">
-            <button
-              type="button"
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmDelete}
-              className="flex-1 cursor-pointer rounded-xl bg-[#E63946] py-2.5 text-xs font-semibold text-white shadow-md shadow-red-500/20 transition hover:bg-red-600"
-            >
-              Delete
-            </button>
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                    Date of Birth
+                  </label>
+                  {ageText && (
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                      Age: {ageText}
+                    </span>
+                  )}
+                </div>
+                <div className="relative mt-1.5">
+                  <input
+                    type="date"
+                    value={dob}
+                    onChange={(e) => setDob(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 pl-10 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                  />
+                  <Calendar className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </DynamicModal>
+
+        {/* ================= RIGHT COLUMN: CONDITIONS, ALLERGIES & MEDS ================= */}
+        <div className="space-y-6 lg:col-span-5">
+          {/* Card 3: Pre-Existing Conditions */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-7">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <Activity className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#0B132B]">Existing Medical Conditions</h2>
+                <p className="text-xs text-slate-500">
+                  Chronic or recurring conditions paramedics prioritize in transit.
+                </p>
+              </div>
+            </div>
+
+            {/* Current Conditions Chips */}
+            <div className="mt-5">
+              <div className="flex min-h-12 flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 p-2.5">
+                {conditions.length === 0 ? (
+                  <span className="text-xs text-slate-400 italic">
+                    No existing medical conditions listed.
+                  </span>
+                ) : (
+                  conditions.map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-1.5 text-xs font-bold text-amber-900 shadow-2xs"
+                    >
+                      {item}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCondition(idx)}
+                        className="cursor-pointer text-amber-700 transition hover:text-[#E63946]"
+                        title={`Remove ${item}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
+
+              {/* Add New Input */}
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  value={newCondition}
+                  onChange={(e) => setNewCondition(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCondition();
+                    }
+                  }}
+                  placeholder="e.g. Hypertension, Asthma..."
+                  className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-medium text-slate-900 transition focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddCondition()}
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-slate-900 px-3.5 text-xs font-bold text-white transition hover:bg-slate-800 active:scale-95"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </button>
+              </div>
+
+              {/* Suggestions */}
+              <div className="mt-3">
+                <span className="text-[11px] font-semibold text-slate-400">Quick Suggestions:</span>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {SUGGESTED_CONDITIONS.filter((c) => !conditions.includes(c)).slice(0, 4).map((cond) => (
+                    <button
+                      key={cond}
+                      type="button"
+                      onClick={() => handleAddCondition(cond)}
+                      className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-900"
+                    >
+                      + {cond}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Known Allergies */}
+          <div className="rounded-3xl border border-red-200/80 bg-red-50/30 p-6 shadow-xs sm:p-7">
+            <div className="flex items-center gap-3 border-b border-red-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-[#E63946]">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-red-950">Known Allergies & Adverse Reactions</h2>
+                <p className="text-xs text-red-700">
+                  Critical alerts shown in high-contrast red to responding paramedics.
+                </p>
+              </div>
+            </div>
+
+            {/* Allergies Chips */}
+            <div className="mt-5">
+              <div className="flex min-h-12 flex-wrap items-center gap-2 rounded-2xl border border-red-200 bg-white p-2.5">
+                {allergies.length === 0 ? (
+                  <span className="text-xs text-slate-400 italic">
+                    No drug or environmental allergies recorded.
+                  </span>
+                ) : (
+                  allergies.map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 shadow-2xs"
+                    >
+                      {item}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAllergy(idx)}
+                        className="cursor-pointer text-red-400 transition hover:text-red-700"
+                        title={`Remove ${item}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
+
+              {/* Add Allergy Input */}
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  value={newAllergy}
+                  onChange={(e) => setNewAllergy(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddAllergy();
+                    }
+                  }}
+                  placeholder="e.g. Penicillin, Latex..."
+                  className="h-10 flex-1 rounded-xl border border-red-200 bg-white px-3.5 text-xs font-medium text-slate-900 transition focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddAllergy()}
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-[#E63946] px-3.5 text-xs font-bold text-white transition hover:bg-red-600 active:scale-95"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </button>
+              </div>
+
+              {/* Suggestions */}
+              <div className="mt-3">
+                <span className="text-[11px] font-semibold text-red-800">Common Allergies:</span>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {SUGGESTED_ALLERGIES.filter((a) => !allergies.includes(a)).slice(0, 4).map((alg) => (
+                    <button
+                      key={alg}
+                      type="button"
+                      onClick={() => handleAddAllergy(alg)}
+                      className="cursor-pointer rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-red-800 transition hover:border-red-400 hover:bg-red-50"
+                    >
+                      + {alg}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 5: Current Medications & Treatment Notes */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-7">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                <Pill className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#0B132B]">Medications & Clinical Notes</h2>
+                <p className="text-xs text-slate-500">
+                  Daily prescriptions and specific transport instructions.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                  Current Routine Medications
+                </label>
+                <input
+                  type="text"
+                  value={medications}
+                  onChange={(e) => setMedications(e.target.value)}
+                  placeholder="e.g. Amlodipine 5mg daily, Metformin 500mg"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold tracking-wider text-slate-600 uppercase">
+                  Special Emergency Instructions
+                </label>
+                <textarea
+                  rows={3}
+                  value={clinicalNotes}
+                  onChange={(e) => setClinicalNotes(e.target.value)}
+                  placeholder="e.g. Wheelchair accessible transport needed; patient has cardiac pacemaker installed in 2024."
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-sm font-medium text-slate-900 transition focus:border-red-500 focus:bg-white focus:ring-1 focus:ring-red-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 6: Encrypted Telemetry Notice */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B132B] via-[#1C2541] to-[#0B132B] p-6 text-white shadow-lg sm:p-7">
+            <div className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-red-600/15 blur-2xl" />
+            <div className="relative z-10 flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#E63946] text-white shadow-md shadow-red-500/20">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-white">
+                  HIPAA-Grade Live Telemetry
+                </h4>
+                <p className="text-xs leading-relaxed text-slate-300">
+                  Your medical profile is end-to-end encrypted. When you request an ambulance or tap SOS, this dossier is transmitted securely to the dispatched paramedic tablet and receiving hospital triage bay.
+                </p>
+                <div className="pt-2 text-[11px] font-semibold text-emerald-400">
+                  National Emergency Dial: 999 | Health Desk: 16263
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Sticky Bottom Action Bar on Mobile/Desktop */}
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+        <p className="text-xs text-slate-500">
+          Last updated profile will be used in subsequent emergency dispatches.
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
+          >
+            Discard
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveChanges}
+            disabled={isSaving || isProcessingAvatar}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#E63946] px-5 py-2 text-xs font-bold text-white shadow-md shadow-red-500/20 transition hover:bg-red-600 active:scale-95 disabled:opacity-50"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -105,6 +105,26 @@ export default function PatientOverviewView() {
   const unpaidInvoices = data?.unpaidInvoices ?? [];
   const recentTrips = data?.recentTrips ?? [];
 
+  // Medical Profile data
+  const emergencyProfile = data?.emergencyProfile || profile || {};
+  const patientBloodGroup = emergencyProfile.bloodGroup || (profile as any)?.bloodGroup || '';
+  const emergencyPhone = emergencyProfile.emergencyContactNumber || (profile as any)?.emergencyContactNumber || '';
+  
+  let conditionsList: string[] = [];
+  let allergiesList: string[] = [];
+  const medHistory = emergencyProfile.medicalHistory || (profile as any)?.medicalHistory;
+  if (medHistory) {
+    try {
+      const parsed = JSON.parse(medHistory);
+      if (Array.isArray(parsed.conditions)) conditionsList = parsed.conditions;
+      else if (typeof parsed.conditions === 'string') conditionsList = [parsed.conditions];
+      if (Array.isArray(parsed.allergies)) allergiesList = parsed.allergies;
+      else if (typeof parsed.allergies === 'string') allergiesList = [parsed.allergies];
+    } catch {
+      conditionsList = [medHistory];
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* 1. Header Banner */}
@@ -402,6 +422,112 @@ export default function PatientOverviewView() {
 
         {/* Right Column: Emergency Helplines & SOS Contacts (4 Cols) */}
         <div className="space-y-6 lg:col-span-4">
+          {/* Medical SOS Profile Card */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <HeartPulse className="h-4 w-4 text-[#E63946]" />
+                <h3 className="text-sm font-bold text-slate-900">Medical SOS Profile</h3>
+              </div>
+              <Link
+                href="/dashboard/patient/medical-profile"
+                className="text-xs font-bold text-red-600 hover:underline"
+              >
+                Edit
+              </Link>
+            </div>
+
+            <div className="mt-4 space-y-3.5">
+              <div className="flex items-center justify-between rounded-2xl border border-red-100 bg-red-50/50 p-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white font-black text-[#E63946] shadow-2xs">
+                    {patientBloodGroup ? patientBloodGroup.split(' ')[0] : '—'}
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+                      Blood Group
+                    </span>
+                    <p className="text-xs font-bold text-slate-900">
+                      {patientBloodGroup ? `${patientBloodGroup.split(' ')[0]} Verified` : 'Not configured'}
+                    </p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                  {completeness}% Ready
+                </span>
+              </div>
+
+              {emergencyPhone && (
+                <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+                      Emergency Hotline
+                    </span>
+                    <p className="text-xs font-bold text-slate-900">{emergencyPhone}</p>
+                  </div>
+                  <a
+                    href={`tel:${emergencyPhone}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white shadow-2xs hover:bg-red-700"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              )}
+
+              {/* Conditions / Allergies summary tags */}
+              <div className="space-y-2 pt-1">
+                {conditionsList.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                      Conditions:
+                    </span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {conditionsList.map((c, i) => (
+                        <span
+                          key={i}
+                          className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {allergiesList.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold tracking-wider text-red-500 uppercase">
+                      Allergies (Critical):
+                    </span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {allergiesList.map((a, i) => (
+                        <span
+                          key={i}
+                          className="rounded-lg border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-700"
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {conditionsList.length === 0 && allergiesList.length === 0 && (
+                  <p className="text-xs text-slate-400 italic">
+                    No chronic conditions or allergies listed. Add them in your medical profile for paramedic safety.
+                  </p>
+                )}
+              </div>
+
+              <Link
+                href="/dashboard/patient/medical-profile"
+                className="mt-2 block w-full rounded-xl border border-slate-200 py-2 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+              >
+                Manage Full Medical Record
+              </Link>
+            </div>
+          </div>
+
           {/* Rapid Triage Hotlines */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
