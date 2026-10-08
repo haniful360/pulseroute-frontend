@@ -19,6 +19,38 @@ export const metadata: Metadata = {
   title: 'Refund Policy & Billing Guarantee — PulseRoute',
   description:
     'Transparent, patient-centric refund and cancellation guidelines for PulseRoute emergency ambulance dispatches, delay protections, and digital payment disputes.',
+  keywords: [
+    'PulseRoute refund policy',
+    'Ambulance cancellation refund',
+    'Emergency medical billing protection',
+    'Ambulance payment dispute',
+  ],
+  alternates: {
+    canonical: '/refund',
+  },
+  openGraph: {
+    title: 'Refund Policy & Billing Guarantee — PulseRoute',
+    description:
+      'Clear, patient-first refund terms: immediate cancellation windows, vehicle breakdown guarantees, and swift digital refunds.',
+    url: '/refund',
+    siteName: 'PulseRoute',
+    type: 'article',
+    images: [
+      {
+        url: '/images/hero-map.png',
+        width: 1200,
+        height: 630,
+        alt: 'PulseRoute Refund Policy and Billing Guarantee',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Refund Policy & Billing Guarantee — PulseRoute',
+    description:
+      'Clear, patient-first refund terms: immediate cancellation windows, vehicle breakdown guarantees, and swift digital refunds.',
+    images: ['/images/hero-map.png'],
+  },
 };
 
 const SECTIONS: TocSection[] = [

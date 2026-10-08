@@ -20,6 +20,38 @@ export const metadata: Metadata = {
   title: 'Privacy Policy & Medical Data Protection — PulseRoute',
   description:
     'Learn how PulseRoute safeguards patient medical records, live emergency telemetry, paramedic communications, and personal data across Bangladesh.',
+  keywords: [
+    'PulseRoute privacy policy',
+    'Medical data privacy Bangladesh',
+    'Patient records protection',
+    'Emergency telemetry encryption',
+  ],
+  alternates: {
+    canonical: '/privacy',
+  },
+  openGraph: {
+    title: 'Privacy Policy & Medical Data Protection — PulseRoute',
+    description:
+      'PulseRoute data privacy architecture: end-to-end telemetry encryption, strict medical record access control, and compliance.',
+    url: '/privacy',
+    siteName: 'PulseRoute',
+    type: 'article',
+    images: [
+      {
+        url: '/images/hero-map.png',
+        width: 1200,
+        height: 630,
+        alt: 'PulseRoute Privacy Policy and Medical Data Protection',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Privacy Policy & Medical Data Protection — PulseRoute',
+    description:
+      'PulseRoute data privacy architecture: end-to-end telemetry encryption, strict medical record access control, and compliance.',
+    images: ['/images/hero-map.png'],
+  },
 };
 
 const SECTIONS: TocSection[] = [

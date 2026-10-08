@@ -16,9 +16,41 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — PulseRoute Emergency Dispatch',
+  title: 'Terms of Service & Dispatch Agreement — PulseRoute',
   description:
     'Read the official Terms of Service governing the use of PulseRoute emergency dispatch network, vehicle bookings, paramedic care, and platform rules.',
+  keywords: [
+    'PulseRoute terms of service',
+    'Emergency medical service terms',
+    'Ambulance booking agreement',
+    'Patient transport terms Bangladesh',
+  ],
+  alternates: {
+    canonical: '/terms',
+  },
+  openGraph: {
+    title: 'Terms of Service & Dispatch Agreement — PulseRoute',
+    description:
+      'Official terms governing emergency vehicle requests, paramedic response protocols, driver certifications, and digital fare settlements.',
+    url: '/terms',
+    siteName: 'PulseRoute',
+    type: 'article',
+    images: [
+      {
+        url: '/images/hero-map.png',
+        width: 1200,
+        height: 630,
+        alt: 'PulseRoute Terms of Service and Dispatch Agreement',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Terms of Service & Dispatch Agreement — PulseRoute',
+    description:
+      'Official terms governing emergency vehicle requests, paramedic response protocols, driver certifications, and digital fare settlements.',
+    images: ['/images/hero-map.png'],
+  },
 };
 
 const SECTIONS: TocSection[] = [

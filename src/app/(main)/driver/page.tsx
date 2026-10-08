@@ -1,4 +1,11 @@
-import JoinDriverPage, { metadata } from '../join-driver/page';
+import type { Metadata } from 'next';
+import JoinDriverPage, { metadata as joinDriverMetadata } from '../join-driver/page';
 
-export { metadata };
+export const metadata: Metadata = {
+  ...joinDriverMetadata,
+  alternates: {
+    canonical: '/join-driver',
+  },
+};
+
 export default JoinDriverPage;

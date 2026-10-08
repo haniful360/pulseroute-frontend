@@ -6,10 +6,48 @@ import { HowItWorksSection } from './_components/HowItWorksSection';
 import { SafetyStandardsSection } from './_components/SafetyStandardsSection';
 import { TestimonialsSection } from './_components/TestimonialsSection';
 
-export const metadata = {
-  title: 'PulseRoute — Instant Emergency Ambulance Dispatch',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'PulseRoute — Instant Emergency Ambulance Dispatch & Telemetry',
   description:
-    'Verified ambulance dispatch network in Bangladesh. Book Basic, AC, ICU, CCU, Neonatal, and Freezer vans with transparent upfront pricing and live GPS telemetry.',
+    'Verified ambulance dispatch network in Bangladesh. Book Basic Life Support, AC, ICU, CCU, Neonatal, and Freezer vans with transparent upfront pricing and live GPS telemetry.',
+  keywords: [
+    'Ambulance booking Bangladesh',
+    'Emergency ambulance Dhaka',
+    'ICU ambulance service',
+    'Neonatal transport incubator',
+    'Cardiac CCU ambulance',
+    'Emergency 999 integration',
+    'PulseRoute ambulance dispatch',
+  ],
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'PulseRoute — Instant Emergency Ambulance Dispatch & Telemetry',
+    description:
+      'Verified ambulance dispatch network in Bangladesh with transparent upfront pricing, certified paramedic crews, and live GPS telemetry.',
+    url: '/',
+    siteName: 'PulseRoute',
+    type: 'website',
+    locale: 'en_US',
+    images: [
+      {
+        url: '/images/hero-map.png',
+        width: 1200,
+        height: 630,
+        alt: 'PulseRoute Emergency Ambulance Dispatch Radar & Network',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PulseRoute — Instant Emergency Ambulance Dispatch & Telemetry',
+    description:
+      'Verified ambulance dispatch network in Bangladesh with transparent upfront pricing, certified paramedic crews, and live GPS telemetry.',
+    images: ['/images/hero-map.png'],
+  },
 };
 
 export default function HomePage() {
