@@ -9,6 +9,7 @@ import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import CustomTable from '@/components/dashboard/CustomTable/CustomTable';
 import {
   ArrowUpRight,
+  Building,
   Check,
   CreditCard,
   DollarSign,
@@ -43,6 +44,10 @@ export default function DriverWalletView() {
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState('0.00');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [destinationType, setDestinationType] = useState<'stripe' | 'manual'>('stripe');
+  const [manualAccountNumber, setManualAccountNumber] = useState('');
+  const [manualAccountDetails, setManualAccountDetails] = useState('');
 
   useEffect(() => {
     async function loadWalletData() {
@@ -91,11 +96,35 @@ export default function DriverWalletView() {
 
   const handlePayoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const numericAmount = Number(payoutAmount);
+    if (isNaN(numericAmount) || numericAmount < 100) {
+      toast.error('Minimum withdrawal amount is BDT 100.00');
+      return;
+    }
+    if (wallet && numericAmount > Number(wallet.balance)) {
+      toast.error(
+        `Amount exceeds available balance of BDT ${Number(wallet.balance).toFixed(2)}`
+      );
+      return;
+    }
+
+    const resolvedAccountNumber =
+      destinationType === 'manual' && manualAccountNumber.trim()
+        ? manualAccountNumber.trim()
+        : 'STRIPE-CHASE-4242';
+
+    const resolvedAccountDetails =
+      destinationType === 'manual' && manualAccountDetails.trim()
+        ? manualAccountDetails.trim()
+        : 'Chase Bank •••• 4242 (Stripe Connected Express Account)';
+
     setIsProcessing(true);
     try {
       const res = await createPayoutRequestAction({
-        amount: Number(payoutAmount),
+        amount: numericAmount,
         paymentMethod: 'STRIPE',
+        accountNumber: resolvedAccountNumber,
+        accountDetails: resolvedAccountDetails,
         notes: 'Paramedic driver withdrawal',
       });
       if (res.success) {
@@ -334,17 +363,66 @@ export default function DriverWalletView() {
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Destination Account
             </label>
-            <div className="flex items-center justify-between rounded-2xl border-2 border-[#e63946] bg-red-50/40 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#e63946] shadow-xs">
-                  <CreditCard className="h-5 w-5" />
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setDestinationType('stripe')}
+                className={`w-full text-left flex items-center justify-between rounded-2xl border-2 p-3.5 transition cursor-pointer ${
+                  destinationType === 'stripe'
+                    ? 'border-[#e63946] bg-red-50/40'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#e63946] shadow-xs">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Chase Bank •••• 4242</p>
+                    <p className="text-[11px] text-slate-500">Stripe Connected Express Account</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Chase Bank •••• 4242</p>
-                  <p className="text-[11px] text-slate-500">Stripe Connected Express Account</p>
+                {destinationType === 'stripe' && <Check className="h-5 w-5 text-[#e63946]" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDestinationType('manual')}
+                className={`w-full text-left flex items-center justify-between rounded-2xl border-2 p-3.5 transition cursor-pointer ${
+                  destinationType === 'manual'
+                    ? 'border-[#e63946] bg-red-50/40'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-600 shadow-xs">
+                    <Building className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Direct Bank / Mobile Banking</p>
+                    <p className="text-[11px] text-slate-500">bKash, Nagad, or Bangladeshi Bank Account</p>
+                  </div>
                 </div>
-              </div>
-              <Check className="h-5 w-5 text-[#e63946]" />
+                {destinationType === 'manual' && <Check className="h-5 w-5 text-[#e63946]" />}
+              </button>
+
+              {destinationType === 'manual' && (
+                <div className="space-y-3 pt-2">
+                  <InputField
+                    label="Account / Mobile Number *"
+                    placeholder="e.g. 01712345678 or 205.101.4421"
+                    value={manualAccountNumber}
+                    onChange={(e) => setManualAccountNumber(e.target.value)}
+                    required
+                  />
+                  <InputField
+                    label="Account Details / Bank Name"
+                    placeholder="e.g. bKash Personal or Dutch-Bangla Bank Dhanmondi"
+                    value={manualAccountDetails}
+                    onChange={(e) => setManualAccountDetails(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

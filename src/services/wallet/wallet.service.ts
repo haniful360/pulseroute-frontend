@@ -25,6 +25,8 @@ export async function getMyTransactionsAction(
 export async function createPayoutRequestAction(payload: {
   amount: number;
   paymentMethod?: 'STRIPE' | 'BANK_TRANSFER' | 'BKASH';
+  accountNumber?: string;
+  accountDetails?: string;
   notes?: string;
 }): Promise<ApiResponse<any>> {
   return apiPost("/wallets/payout-request", payload);
