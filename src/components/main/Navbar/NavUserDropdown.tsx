@@ -53,7 +53,7 @@ export const NavUserDropdown: React.FC = () => {
     ? '/dashboard/driver/ambulance-profile'
     : isSuperAdmin
     ? '/dashboard/super-admin/settings'
-    : '/dashboard/patient/medical-profile';
+    : '/dashboard/patient/settings';
 
   const settingsUrl = isDriver
     ? '/dashboard/driver/settings'
@@ -71,7 +71,7 @@ export const NavUserDropdown: React.FC = () => {
     ? 'Ambulance Profile'
     : isSuperAdmin
     ? 'Profile & Account'
-    : 'Medical Profile';
+    : 'Profile & Settings';
 
   const displayName = user.name || 'Account';
   const displayEmail = user.email || '';

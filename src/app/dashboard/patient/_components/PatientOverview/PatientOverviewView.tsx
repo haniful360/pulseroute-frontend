@@ -154,12 +154,12 @@ export default function PatientOverviewView() {
                 className="shadow-lg shadow-red-600/30"
               />
             </Link>
-            <Link href="/dashboard/patient/medical-profile">
+            <Link href="/dashboard/patient/settings">
               <DynamicActionButton
                 variant="outline"
                 icon={ShieldCheck}
                 showIcon
-                label="Medical SOS Profile"
+                label="Profile & Settings"
                 className="border-white/20 bg-white/10 text-white hover:bg-white/20"
               />
             </Link>
@@ -273,7 +273,7 @@ export default function PatientOverviewView() {
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-3xl font-black text-slate-900">{completeness}%</span>
             <Link
-              href="/dashboard/patient/medical-profile"
+              href="/dashboard/patient/settings"
               className="text-xs font-bold text-red-600 hover:underline"
             >
               Update
@@ -427,10 +427,10 @@ export default function PatientOverviewView() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <HeartPulse className="h-4 w-4 text-[#E63946]" />
-                <h3 className="text-sm font-bold text-slate-900">Medical SOS Profile</h3>
+                <h3 className="text-sm font-bold text-slate-900">Patient SOS Profile</h3>
               </div>
               <Link
-                href="/dashboard/patient/medical-profile"
+                href="/dashboard/patient/settings"
                 className="text-xs font-bold text-red-600 hover:underline"
               >
                 Edit
@@ -514,16 +514,16 @@ export default function PatientOverviewView() {
 
                 {conditionsList.length === 0 && allergiesList.length === 0 && (
                   <p className="text-xs text-slate-400 italic">
-                    No chronic conditions or allergies listed. Add them in your medical profile for paramedic safety.
+                    Configure your emergency profile and vitals in settings for paramedic safety.
                   </p>
                 )}
               </div>
 
               <Link
-                href="/dashboard/patient/medical-profile"
+                href="/dashboard/patient/settings"
                 className="mt-2 block w-full rounded-xl border border-slate-200 py-2 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-50"
               >
-                Manage Full Medical Record
+                Manage Profile &amp; Settings
               </Link>
             </div>
           </div>

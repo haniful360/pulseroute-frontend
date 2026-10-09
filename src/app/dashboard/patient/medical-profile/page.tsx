@@ -1,11 +1,6 @@
-import MedicalProfileView from '@/app/dashboard/patient/medical-profile/_components/MedicalProfile/MedicalProfileView';
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Medical Profile & SOS Settings | PulseRoute',
-  description: 'Manage your vital medical information and emergency SOS settings on PulseRoute.',
-};
+import { redirect } from 'next/navigation';
 
 export default function MedicalProfilePage() {
-  return <MedicalProfileView />;
+  redirect('/dashboard/patient/settings');
 }
+

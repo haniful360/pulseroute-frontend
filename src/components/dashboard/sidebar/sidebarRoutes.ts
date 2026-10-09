@@ -82,11 +82,6 @@ export const patientRoutes: SidebarRouteItem[] = [
     icon: CreditCard,
   },
   {
-    title: 'Medical Profile',
-    url: '/dashboard/patient/medical-profile',
-    icon: ShieldCheck,
-  },
-  {
     title: 'Notifications',
     url: '/dashboard/patient/notifications',
     icon: Bell,

@@ -64,7 +64,7 @@ export const Navbar: React.FC = () => {
     ? '/dashboard/driver/ambulance-profile'
     : isSuperAdmin
     ? '/dashboard/super-admin/settings'
-    : '/dashboard/patient/medical-profile';
+    : '/dashboard/patient/settings';
 
   const roleLabel = isDriver ? 'Driver' : isSuperAdmin ? 'Admin' : 'Patient';
   const roleBadgeBg = isDriver
