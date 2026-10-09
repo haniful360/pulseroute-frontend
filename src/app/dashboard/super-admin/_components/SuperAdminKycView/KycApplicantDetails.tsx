@@ -115,6 +115,7 @@ export default function KycApplicantDetails({
                   src={applicant.avatarUrl}
                   alt={applicant.name}
                   fill
+                  unoptimized={true}
                   className="object-cover"
                   priority
                 />
@@ -496,6 +497,7 @@ export default function KycApplicantDetails({
                   src={applicant.documents.licenseFront}
                   alt="License Front"
                   fill
+                  unoptimized={true}
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
@@ -524,6 +526,7 @@ export default function KycApplicantDetails({
                   src={applicant.documents.licenseBack}
                   alt="License Back"
                   fill
+                  unoptimized={true}
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
@@ -588,6 +591,7 @@ export default function KycApplicantDetails({
                   src={applicant.documents.nidFront}
                   alt="NID Front"
                   fill
+                  unoptimized={true}
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
@@ -616,6 +620,7 @@ export default function KycApplicantDetails({
                   src={applicant.documents.nidBack}
                   alt="NID Back"
                   fill
+                  unoptimized={true}
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
@@ -747,6 +752,7 @@ export default function KycApplicantDetails({
                   src={applicant.documents.vehicleExterior}
                   alt="Exterior Full View"
                   fill
+                  unoptimized={true}
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 text-white">
@@ -775,6 +781,7 @@ export default function KycApplicantDetails({
                   src={applicant.documents.vehicleInterior}
                   alt="Medical Bay"
                   fill
+                  unoptimized={true}
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 text-white">
@@ -804,6 +811,7 @@ export default function KycApplicantDetails({
                   src={applicant.documents.vehicleCabin}
                   alt="Driver Cabin"
                   fill
+                  unoptimized={true}
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 text-white">
@@ -835,6 +843,7 @@ export default function KycApplicantDetails({
               src={lightboxImage.url}
               alt={lightboxImage.title}
               fill
+              unoptimized={true}
               className="object-contain"
             />
           </div>

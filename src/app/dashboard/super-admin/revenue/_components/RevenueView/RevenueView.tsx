@@ -104,10 +104,10 @@ export default function RevenueView() {
   const pendingPercent = Math.round((pendingSettlement / totalBar) * 100) || 7;
   const refundPercent = Math.max(0, 100 - operatorPercent - commissionPercent - pendingPercent) || 3;
 
-  const formatBDT = (amount: number) => {
-    if (amount >= 1000000) return `৳${(amount / 1000000).toFixed(2)}M`;
-    if (amount >= 1000) return `৳${(amount / 1000).toFixed(1)}K`;
-    return `৳${amount.toLocaleString()}`;
+  const formatUSD = (amount: number) => {
+    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(2)}M`;
+    if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
+    return `$${amount.toLocaleString()}`;
   };
 
   return (
@@ -151,7 +151,7 @@ export default function RevenueView() {
             <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
           ) : (
             <div className="text-2xl font-black text-[#0b132b]">
-              {formatBDT(grossBilled)}
+              {formatUSD(grossBilled)}
             </div>
           )}
           <div className="text-xs font-medium text-emerald-600 mt-1">Total platform invoiced</div>
@@ -169,7 +169,7 @@ export default function RevenueView() {
             <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
           ) : (
             <div className="text-2xl font-black text-[#0b132b]">
-              {formatBDT(platformRevenue)}
+              {formatUSD(platformRevenue)}
             </div>
           )}
           <div className="text-xs font-medium text-slate-500 mt-1">Platform fee collections</div>
@@ -187,7 +187,7 @@ export default function RevenueView() {
             <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
           ) : (
             <div className="text-2xl font-black text-[#0b132b]">
-              {formatBDT(pendingSettlement)}
+              {formatUSD(pendingSettlement)}
             </div>
           )}
           <div className="text-xs font-medium text-amber-600 mt-1">
@@ -207,7 +207,7 @@ export default function RevenueView() {
             <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
           ) : (
             <div className="text-2xl font-black text-[#0b132b]">
-              {formatBDT(totalPaid)}
+              {formatUSD(totalPaid)}
             </div>
           )}
           <div className="text-xs font-medium text-emerald-600 mt-1">Processed transactions</div>
@@ -300,7 +300,7 @@ export default function RevenueView() {
                 <th className="px-5 py-4 font-semibold">Invoice</th>
                 <th className="px-5 py-4 font-semibold">Date</th>
                 <th className="px-5 py-4 font-semibold">Trip ID</th>
-                <th className="px-5 py-4 font-semibold">Gross (BDT)</th>
+                <th className="px-5 py-4 font-semibold">Gross ($)</th>
                 <th className="px-5 py-4 font-semibold">Commission</th>
                 <th className="px-5 py-4 font-semibold">Net Payout</th>
                 <th className="px-5 py-4 font-semibold">Status</th>
@@ -357,13 +357,13 @@ export default function RevenueView() {
                         {tx.tripId ? `TRP-${tx.tripId.slice(-6).toUpperCase()}` : 'TRP-DIRECT'}
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap font-semibold text-slate-900">
-                        ৳{Number(tx.totalAmount || 0).toLocaleString()}
+                        ${Number(tx.totalAmount || 0).toLocaleString()}
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap font-semibold text-[#E63946]">
-                        ৳{Number(tx.platformCommission || 0).toLocaleString()}
+                        ${Number(tx.platformCommission || 0).toLocaleString()}
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap text-[#334155] font-medium">
-                        ৳{Number(tx.driverEarning || 0).toLocaleString()}
+                        ${Number(tx.driverEarning || 0).toLocaleString()}
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         <span

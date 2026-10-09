@@ -102,7 +102,7 @@ export default function PricingView() {
           {isLoading ? (
             <Skeleton className="h-8 w-24 my-1" />
           ) : (
-            <div className="text-2xl font-black text-[#0b132b]">৳{Number(baseFare).toLocaleString()}</div>
+            <div className="text-2xl font-black text-[#0b132b]">${Number(baseFare).toLocaleString()}</div>
           )}
           <div className="text-xs font-medium text-slate-500 mt-1">Current schedule</div>
         </div>
@@ -118,7 +118,7 @@ export default function PricingView() {
           {isLoading ? (
             <Skeleton className="h-8 w-20 my-1" />
           ) : (
-            <div className="text-2xl font-black text-[#0b132b]">৳{perKmRate}</div>
+            <div className="text-2xl font-black text-[#0b132b]">${perKmRate}</div>
           )}
           <div className="text-xs font-medium text-slate-500 mt-1">Dhaka metro</div>
         </div>
@@ -134,7 +134,7 @@ export default function PricingView() {
           {isLoading ? (
             <Skeleton className="h-8 w-24 my-1" />
           ) : (
-            <div className="text-2xl font-black text-[#0b132b]">৳{Number(minimumFare).toLocaleString()}</div>
+            <div className="text-2xl font-black text-[#0b132b]">${Number(minimumFare).toLocaleString()}</div>
           )}
           <div className="text-xs font-medium text-slate-500 mt-1">Base threshold</div>
         </div>
@@ -181,12 +181,12 @@ export default function PricingView() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <InputField
-                    label="Base Fare (BDT)"
+                    label="Base Fare ($)"
                     value={baseFare}
                     onChange={(e) => setBaseFare(e.target.value)}
                   />
                   <InputField
-                    label="Per Kilometer Rate (BDT)"
+                    label="Per Kilometer Rate ($)"
                     value={perKmRate}
                     onChange={(e) => setPerKmRate(e.target.value)}
                   />
@@ -206,7 +206,7 @@ export default function PricingView() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <InputField
-                    label="Minimum Trip Fare (BDT)"
+                    label="Minimum Trip Fare ($)"
                     value={minimumFare}
                     onChange={(e) => setMinimumFare(e.target.value)}
                   />

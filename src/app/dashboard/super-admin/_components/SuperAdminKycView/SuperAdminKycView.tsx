@@ -51,18 +51,18 @@ export default function SuperAdminKycView() {
               const vehicle = drv.currentVehicle || drv.vehicles?.[0];
               const vehiclePhotos = Array.isArray(vehicle?.photos) ? vehicle.photos : [];
 
-              const licenseFront = drv.licensePhotoUrl || licensePhotos[0] || '';
-              const licenseBack = licensePhotos[1] || '';
+              const licenseFront = drv.licensePhotoUrl || licensePhotos[0] || '/assets/dashboard/super-admin/license_front.png';
+              const licenseBack = licensePhotos[1] || '/assets/dashboard/super-admin/license_back.png';
 
-              const nidFront = drv.nidPhotoUrl || nidPhotos[0] || '';
-              const nidBack = nidPhotos[1] || '';
+              const nidFront = drv.nidPhotoUrl || nidPhotos[0] || '/assets/dashboard/super-admin/nid_front.png';
+              const nidBack = nidPhotos[1] || '/assets/dashboard/super-admin/nid_back.png';
 
               const vehicleExterior =
                 vehicle?.photoUrl ||
                 vehiclePhotos[0] ||
-                '';
-              const vehicleInterior = vehiclePhotos[1] || '';
-              const vehicleCabin = vehiclePhotos[2] || '';
+                '/assets/dashboard/super-admin/ambulance_exterior.png';
+              const vehicleInterior = vehiclePhotos[1] || '/assets/dashboard/super-admin/ambulance_interior_icu.png';
+              const vehicleCabin = vehiclePhotos[2] || '/assets/dashboard/super-admin/ambulance_cabin.png';
 
               const expDateStr = drv.licenseExpiry
                 ? new Date(drv.licenseExpiry).toLocaleDateString('en-US', {
@@ -76,7 +76,7 @@ export default function SuperAdminKycView() {
                 id: drv.id,
                 name: drv.name || drv.user?.name || `Driver ${idx + 1}`,
                 email: drv.email || drv.user?.email || 'driver@pulseroute.com',
-                avatarUrl: drv.user?.avatarUrl || '/assets/dashboard/driver/dhaka_radar_map.png',
+                avatarUrl: drv.user?.avatarUrl || '/assets/dashboard/super-admin/ariful_applicant_avatar.png',
                 urgency: (driverStatus === 'PENDING' || vehicleStatus === 'PENDING') ? 'Urgent' : 'Standard',
                 vehicleType: vehicle?.ambulanceType || 'ICU Ambulance',
                 licensePlate: vehicle?.vehicleNumber || drv.licenseNumber || 'DHA-129-EMG',

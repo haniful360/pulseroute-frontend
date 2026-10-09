@@ -52,15 +52,16 @@ export default function OverviewView() {
     loadOverview();
   }, []);
 
-  const totalTrips = analytics?.totalTrips || 0;
-  const completedTrips = analytics?.completedTrips || 0;
+  const totalTrips = analytics?.trips?.totalTrips ?? analytics?.totalTrips ?? 0;
+  const completedTrips = analytics?.trips?.completedTrips ?? analytics?.completedTrips ?? 0;
   const fulfillmentRate = totalTrips ? ((completedTrips / totalTrips) * 100).toFixed(1) : '98.4';
-  const onlineFleet = analytics?.onlineAmbulances ?? 0;
-  const onTripFleet = analytics?.onTripAmbulances ?? 0;
-  const totalAmbulances = analytics?.totalAmbulances ?? 0;
-  const gmv = analytics?.todayFinancials?.totalRevenue
-    ? `৳${(analytics.todayFinancials.totalRevenue / 1000).toFixed(1)}K`
-    : '৳0.00';
+  const onlineFleet = analytics?.fleet?.onlineAmbulances ?? analytics?.onlineAmbulances ?? 0;
+  const onTripFleet = analytics?.fleet?.onTripAmbulances ?? analytics?.onTripAmbulances ?? 0;
+  const totalAmbulances = analytics?.fleet?.totalAmbulances ?? analytics?.totalAmbulances ?? 0;
+  const totalRevenue = analytics?.financials?.totalPaidAmount ?? analytics?.financials?.totalBilledAmount ?? analytics?.today?.revenueToday ?? 0;
+  const gmv = totalRevenue > 0
+    ? `$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : '$0.00';
 
   return (
     <div className="space-y-6">
@@ -121,10 +122,13 @@ export default function OverviewView() {
         </div>
 
         {/* Card 3 */}
-        <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
+        <Link
+          href="/dashboard/super-admin/revenue"
+          className="group block rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm transition-all hover:border-red-300 hover:shadow-md"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase">Revenue GMV</div>
-            <div className="rounded-lg bg-red-50 p-2 text-[#e63946]">
+            <div className="rounded-lg bg-red-50 p-2 text-[#e63946] group-hover:bg-[#E63946] group-hover:text-white transition-colors">
               <Wallet className="h-4 w-4" />
             </div>
           </div>
@@ -132,14 +136,21 @@ export default function OverviewView() {
             {loading ? (
               <Skeleton className="h-8 w-20 bg-slate-200 mt-1" />
             ) : (
-              <div className="text-2xl font-black text-[#0b132b]">{gmv}</div>
+              <div>
+                <div className="text-2xl font-black text-[#0b132b]">{gmv}</div>
+                {analytics?.financials?.totalCommissionEarned ? (
+                  <div className="text-[10px] font-medium text-slate-500 mt-0.5">
+                    Net Platform Profit: ${Number(analytics.financials.totalCommissionEarned).toLocaleString()}
+                  </div>
+                ) : null}
+              </div>
             )}
-            <div className="flex items-center text-xs font-bold text-emerald-600">
+            <div className="flex items-center text-xs font-bold text-emerald-600 group-hover:underline">
               <ArrowUpRight className="h-3 w-3 mr-1" />
-              Emergency billing
+              View Revenue
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Card 4 */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">

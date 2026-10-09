@@ -48,7 +48,7 @@ export const JoinDriverHero: React.FC = () => {
                   Avg. monthly
                 </p>
                 <p className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                  ৳48–72k
+                  $48–72k
                 </p>
               </div>
             </div>

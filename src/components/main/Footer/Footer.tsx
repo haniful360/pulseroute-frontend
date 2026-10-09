@@ -179,7 +179,7 @@ export const Footer: React.FC = () => {
             <span className="text-slate-700">•</span>
             <span>বাংলা (BN)</span>
             <span className="text-slate-700">•</span>
-            <span>Currency: BDT ৳</span>
+            <span>Currency: USD ($)</span>
           </div>
         </div>
       </div>

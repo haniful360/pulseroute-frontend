@@ -154,20 +154,20 @@ export default function DriverKycView() {
   const licensePhoto =
     driver?.licensePhotoUrl ||
     driver?.licensePhotos?.[0] ||
-    '/assets/dashboard/driver/dhaka_radar_map.png';
+    '/assets/dashboard/super-admin/license_front.png';
   const nidPhoto =
     driver?.nidPhotoUrl ||
     driver?.nidPhotos?.[0] ||
-    '/assets/dashboard/driver/dhaka_radar_map.png';
+    '/assets/dashboard/super-admin/nid_front.png';
   const vehiclePhoto =
     driver?.currentVehicle?.photoUrl ||
     driver?.currentVehicle?.photos?.[0] ||
     driver?.vehicles?.[0]?.photoUrl ||
-    '/assets/dashboard/driver/dhaka_radar_map.png';
+    '/assets/dashboard/super-admin/ambulance_exterior.png';
   const vehicleInteriorPhoto =
     driver?.currentVehicle?.photos?.[1] ||
     driver?.vehicles?.[0]?.photos?.[1] ||
-    '/assets/dashboard/driver/dhaka_radar_map.png';
+    '/assets/dashboard/super-admin/ambulance_interior_icu.png';
 
   const formatDate = (dateStr: string | Date | undefined) => {
     if (!dateStr) return 'N/A';
@@ -529,6 +529,7 @@ export default function DriverKycView() {
                     src={licensePhoto}
                     alt="Driving License"
                     fill
+                    unoptimized={true}
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
@@ -585,6 +586,7 @@ export default function DriverKycView() {
                     src={nidPhoto}
                     alt="National ID"
                     fill
+                    unoptimized={true}
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
@@ -645,6 +647,7 @@ export default function DriverKycView() {
                     src={vehiclePhoto}
                     alt="Vehicle Exterior"
                     fill
+                    unoptimized={true}
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
@@ -867,6 +870,7 @@ export default function DriverKycView() {
               src={lightboxImage.url}
               alt={lightboxImage.title}
               fill
+              unoptimized={true}
               className="object-contain"
             />
           </div>
