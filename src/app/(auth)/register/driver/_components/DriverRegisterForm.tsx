@@ -49,10 +49,7 @@ export default function DriverRegisterForm() {
       stretcher: true,
       firstAidKit: true,
     },
-    photos: [
-      'https://images.unsplash.com/photo-1587745416684-47953f16f02f?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=400&q=80',
-    ],
+    photos: [],
   });
 
   const stepTitles = [

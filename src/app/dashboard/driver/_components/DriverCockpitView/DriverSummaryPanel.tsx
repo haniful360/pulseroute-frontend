@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowUpRight,
   CheckCircle2,
-  Clock,
   DollarSign,
   Flame,
+  Loader2,
+  Power,
+  PowerOff,
+  Radio,
   Star,
   TrendingUp,
 } from 'lucide-react';
@@ -19,11 +22,9 @@ import {
 
 export default function DriverSummaryPanel() {
   const router = useRouter();
-  // Live shift clock
-  const [seconds, setSeconds] = useState(24135);
-  const [isShiftEnded, setIsShiftEnded] = useState(false);
   const [overview, setOverview] = useState<any>(null);
-  const [dutyStatus, setDutyStatus] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
+  // Default driver duty status is OFFLINE
+  const [dutyStatus, setDutyStatus] = useState<'ONLINE' | 'OFFLINE'>('OFFLINE');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
@@ -36,9 +37,8 @@ export default function DriverSummaryPanel() {
             res.data.duty?.dutyStatus ||
             res.data.driver?.dutyStatus ||
             res.data.dutyStatus;
-          if (currentDuty) {
+          if (currentDuty === 'ONLINE' || currentDuty === 'OFFLINE') {
             setDutyStatus(currentDuty);
-            setIsShiftEnded(currentDuty === 'OFFLINE');
           }
         }
       } catch (err) {
@@ -48,32 +48,16 @@ export default function DriverSummaryPanel() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    if (isShiftEnded) return;
-    const interval = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isShiftEnded]);
-
-  const formatTime = (totalSecs: number) => {
-    const hrs = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
-    const mins = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
-    const secs = String(totalSecs % 60).padStart(2, '0');
-    return `${hrs}:${mins}:${secs}`;
-  };
-
-  const handleEndShift = async () => {
-    const nextStatus = dutyStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE';
+  const handleSetDutyStatus = async (nextStatus: 'ONLINE' | 'OFFLINE') => {
+    if (dutyStatus === nextStatus && !isUpdatingStatus) return;
     setIsUpdatingStatus(true);
     try {
       const res = await updateDutyStatusAction({ dutyStatus: nextStatus });
       if (res.success) {
         setDutyStatus(nextStatus);
-        setIsShiftEnded(nextStatus === 'OFFLINE');
         toast.success(
           nextStatus === 'ONLINE'
-            ? 'Shift resumed! Paramedic unit is ONLINE on central radar.'
+            ? 'Shift active! Unit is ONLINE on central dispatch radar.'
             : 'Shift paused. Unit is OFFLINE.'
         );
       } else {
@@ -181,49 +165,126 @@ export default function DriverSummaryPanel() {
         </div>
       </div>
 
-      {/* 3. Active Duty Hours Card (Red Gradient with Live Monospace Timer) */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#E63946] to-[#C1121F] p-5 text-white shadow-lg shadow-red-500/25">
+      {/* 3. Duty Availability / Online-Offline Status Card */}
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold tracking-wider text-white/80 uppercase">
-            ACTIVE DUTY HOURS
-          </span>
-          <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase backdrop-blur-md">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
-            <span>LIVE CLOCK</span>
+          <div className="flex items-center gap-2">
+            <Radio
+              className={`h-4 w-4 ${
+                dutyStatus === 'ONLINE'
+                  ? 'animate-pulse text-emerald-500'
+                  : 'text-slate-400'
+              }`}
+            />
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              DUTY STATUS
+            </span>
+          </div>
+
+          <div
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase transition-colors ${
+              dutyStatus === 'ONLINE'
+                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border border-slate-200 bg-slate-100 text-slate-600'
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                dutyStatus === 'ONLINE'
+                  ? 'bg-emerald-500 animate-pulse'
+                  : 'bg-slate-400'
+              }`}
+            />
+            <span>{dutyStatus === 'ONLINE' ? 'ONLINE' : 'OFFLINE'}</span>
           </div>
         </div>
 
-        {/* Digital Counter */}
-        <div className="mt-4">
-          <div className="font-mono text-4xl font-extrabold tracking-wider text-white sm:text-5xl">
-            {formatTime(seconds)}
-          </div>
-          <div className="mt-2 flex items-center justify-between text-xs font-medium text-white/80">
-            <span>SHIFT TARGET: 09:00 Hours</span>
-            <span className="font-bold text-white">74%</span>
-          </div>
-
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-            <div className="h-full w-[74%] rounded-full bg-white" />
-          </div>
+        {/* Status description */}
+        <div className="mt-3.5">
+          <h3 className="text-sm font-bold text-slate-900">
+            {dutyStatus === 'ONLINE'
+              ? 'Ready for Emergency Dispatches'
+              : 'Currently Off Duty'}
+          </h3>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            {dutyStatus === 'ONLINE'
+              ? 'Your ambulance is active on central dispatch radar and eligible for trip assignments.'
+              : 'You are invisible to dispatch radar. Switch online when you are ready to receive trips.'}
+          </p>
         </div>
 
-        {/* End Shift Button */}
-        <div className="mt-5">
+        {/* Dual Online & Offline Buttons */}
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
           <button
             type="button"
-            onClick={handleEndShift}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white py-3 text-xs font-bold text-[#E63946] shadow-md transition-all hover:bg-slate-50 active:scale-[0.99]"
+            disabled={isUpdatingStatus}
+            onClick={() => handleSetDutyStatus('OFFLINE')}
+            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all disabled:opacity-50 ${
+              dutyStatus === 'OFFLINE'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            <Clock className="h-4 w-4" />
-            <span>
-              {isUpdatingStatus
-                ? 'Updating Status...'
-                : isShiftEnded
-                  ? 'Resume Shift (Go Online)'
-                  : 'End Shift (Go Offline)'}
-            </span>
+            <PowerOff className="h-3.5 w-3.5 text-slate-400" />
+            <span>Offline</span>
           </button>
+
+          <button
+            type="button"
+            disabled={isUpdatingStatus}
+            onClick={() => handleSetDutyStatus('ONLINE')}
+            className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all disabled:opacity-50 ${
+              dutyStatus === 'ONLINE'
+                ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/30'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Power className="h-3.5 w-3.5 text-white" />
+            <span>Online</span>
+          </button>
+        </div>
+
+        {/* Action Toggle Button */}
+        <div className="mt-3">
+          {dutyStatus === 'OFFLINE' ? (
+            <button
+              type="button"
+              disabled={isUpdatingStatus}
+              onClick={() => handleSetDutyStatus('ONLINE')}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-60"
+            >
+              {isUpdatingStatus ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Connecting Radar...</span>
+                </>
+              ) : (
+                <>
+                  <Power className="h-4 w-4" />
+                  <span>Go Online (Start Duty)</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={isUpdatingStatus}
+              onClick={() => handleSetDutyStatus('OFFLINE')}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 py-3 text-xs font-bold text-[#E63946] shadow-xs transition-all hover:bg-red-100 active:scale-[0.99] disabled:opacity-60"
+            >
+              {isUpdatingStatus ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Disconnecting...</span>
+                </>
+              ) : (
+                <>
+                  <PowerOff className="h-4 w-4" />
+                  <span>Go Offline (End Duty)</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

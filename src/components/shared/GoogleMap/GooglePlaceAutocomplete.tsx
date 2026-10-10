@@ -21,6 +21,7 @@ export interface GooglePlaceAutocompleteProps {
   placeholder?: string;
   icon?: React.ReactNode;
   className?: string;
+  labelClassName?: string;
   required?: boolean;
 }
 
@@ -114,6 +115,7 @@ export default function GooglePlaceAutocomplete({
   placeholder = 'Search address or hospital...',
   icon,
   className,
+  labelClassName,
   required,
 }: GooglePlaceAutocompleteProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -278,7 +280,7 @@ export default function GooglePlaceAutocomplete({
   return (
     <div ref={containerRef} className={cn('relative space-y-1.5', className)}>
       {label && (
-        <label className="block text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+        <label className={cn('block text-xs font-semibold text-slate-600', labelClassName)}>
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}

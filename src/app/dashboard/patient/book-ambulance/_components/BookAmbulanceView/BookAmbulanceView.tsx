@@ -10,6 +10,7 @@ import GooglePlaceAutocomplete from '@/components/shared/GoogleMap/GooglePlaceAu
 import {
   Ambulance,
   Cross,
+  Crosshair,
   Hospital,
   MapPin,
   Navigation,
@@ -54,6 +55,8 @@ export default function BookAmbulanceView() {
   });
 
   const [selectedCategory, setSelectedCategory] = useState<'BASIC' | 'AC' | 'ICU' | 'CCU' | 'NEONATAL' | 'FREEZER'>('ICU');
+  const [severity, setSeverity] = useState<'stable' | 'urgent' | 'critical'>('critical');
+  const [patientNotes, setPatientNotes] = useState<string>('');
   const [selectedRequirements, setSelectedRequirements] = useState<string[]>([
     'Cardiac Monitoring',
     'Unconscious',
@@ -78,6 +81,8 @@ export default function BookAmbulanceView() {
         const urlDest = params.get('dest');
         const urlDestLat = params.get('destLat');
         const urlDestLng = params.get('destLng');
+        const urlSeverity = params.get('severity')?.toLowerCase() as 'stable' | 'urgent' | 'critical' | null;
+        const urlNotes = params.get('notes');
 
         if (urlPickup) setPickupLocation(urlPickup);
         if (urlPickupLat && urlPickupLng) {
@@ -88,6 +93,8 @@ export default function BookAmbulanceView() {
         if (urlDestLat && urlDestLng) {
           setDestinationCoords({ lat: Number(urlDestLat), lng: Number(urlDestLng) });
         }
+        if (urlSeverity) setSeverity(urlSeverity);
+        if (urlNotes) setPatientNotes(urlNotes);
 
         const saved = sessionStorage.getItem('pending_ambulance_booking');
         if (saved) {
@@ -101,6 +108,11 @@ export default function BookAmbulanceView() {
             setDestinationCoords({ lat: Number(parsed.destLat), lng: Number(parsed.destLng) });
           }
           if (parsed.type) setSelectedCategory(parsed.type);
+          if (parsed.severity) {
+            const s = parsed.severity.toLowerCase() as 'stable' | 'urgent' | 'critical';
+            setSeverity(s);
+          }
+          if (parsed.notes) setPatientNotes(parsed.notes);
           sessionStorage.removeItem('pending_ambulance_booking');
           toast.success('Loaded your emergency booking request details.');
         }
@@ -219,18 +231,29 @@ export default function BookAmbulanceView() {
         // preserve current coords
       }
 
+      const severityMap: Record<string, 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'> = {
+        stable: 'LOW',
+        urgent: 'HIGH',
+        critical: 'CRITICAL',
+      };
+
+      const combinedNotes = [
+        patientNotes.trim(),
+        selectedRequirements.length ? `Requirements: ${selectedRequirements.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
       const payload = {
         ambulanceType: selectedCategory,
-        emergencySeverity: 'HIGH' as const,
+        emergencySeverity: (severityMap[severity] || 'CRITICAL') as 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW',
         pickupAddress: pickupLocation.trim(),
         pickupLatitude: effectiveCoords.lat,
         pickupLongitude: effectiveCoords.lng,
         destinationAddress: destinationHospital,
         destinationLatitude: destinationCoords.lat,
         destinationLongitude: destinationCoords.lng,
-        patientNotes: selectedRequirements.length
-          ? `Patient requirements: ${selectedRequirements.join(', ')}`
-          : undefined,
+        patientNotes: combinedNotes || undefined,
       };
 
       const res = await createTripAction(payload);
@@ -298,11 +321,11 @@ export default function BookAmbulanceView() {
             <DynamicBadge text="System Ready" color="#10b981" size="xs" />
           </div>
 
-          <div className="space-y-5 rounded-3xl border border-slate-200 bg-slate-50/50 p-4 shadow-xs">
-            {/* Pickup Location with Google Place Autocomplete */}
+          <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/50 p-4 shadow-xs">
+            {/* 1. Pickup Address */}
             <div>
               <GooglePlaceAutocomplete
-                label="PICKUP LOCATION"
+                label="Pickup address"
                 value={pickupLocation}
                 onChange={setPickupLocation}
                 onPlaceSelect={(place) => {
@@ -310,24 +333,24 @@ export default function BookAmbulanceView() {
                   setPickupLocation(place.address);
                 }}
                 icon={<MapPin className="h-4 w-4 text-[#e63946]" />}
-                placeholder="Enter pickup address in Dhaka"
+                placeholder="Type building, road, area or hospital"
                 required
               />
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
                 disabled={isLocating}
-                className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-[#e63946] hover:underline cursor-pointer disabled:opacity-50"
+                className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:text-red-700 cursor-pointer disabled:opacity-50"
               >
-                <Navigation className="h-3 w-3" />
-                {isLocating ? 'Locking GPS...' : 'Use current GPS location'}
+                <Crosshair className={`h-3.5 w-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+                <span>{isLocating ? 'Extracting GPS location...' : 'Use current location'}</span>
               </button>
             </div>
 
-            {/* Destination Hospital with Google Place Autocomplete */}
+            {/* 2. Destination Hospital */}
             <div>
               <GooglePlaceAutocomplete
-                label="DESTINATION HOSPITAL"
+                label="Destination hospital"
                 value={destinationHospital}
                 onChange={setDestinationHospital}
                 onPlaceSelect={(place) => {
@@ -335,17 +358,17 @@ export default function BookAmbulanceView() {
                   setDestinationHospital(place.address);
                 }}
                 icon={<Hospital className="h-4 w-4 text-blue-600" />}
-                placeholder="Select or search hospital in Dhaka"
+                placeholder="Search hospitals & clinics"
               />
             </div>
 
-            {/* Ambulance Category Selector */}
+            {/* 3. Ambulance Type */}
             <div>
-              <p className="mb-2 text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                AMBULANCE CATEGORY
-              </p>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                Ambulance type
+              </label>
               <div className="grid grid-cols-3 gap-2">
-                {ambulanceCategories.map(({ label, icon: Icon, defaultPrice }) => {
+                {ambulanceCategories.map(({ label, icon: Icon }) => {
                   const isSelected = selectedCategory === label;
                   return (
                     <button
@@ -371,12 +394,56 @@ export default function BookAmbulanceView() {
               </div>
             </div>
 
-            {/* Patient Requirements */}
+            {/* 4. Emergency Severity */}
             <div>
-              <p className="mb-2 text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                PATIENT REQUIREMENTS
-              </p>
-              <div className="flex flex-wrap gap-2">
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                Emergency severity
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSeverity('stable')}
+                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                    severity === 'stable'
+                      ? 'bg-slate-800 text-white shadow-xs'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  Stable
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSeverity('urgent')}
+                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                    severity === 'urgent'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  Urgent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSeverity('critical')}
+                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                    severity === 'critical'
+                      ? 'bg-red-600 text-white shadow-xs shadow-red-600/30'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  Critical
+                </button>
+              </div>
+            </div>
+
+            {/* 5. Patient Notes for the Crew */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-600">
+                Patient notes for the crew
+              </label>
+
+              {/* Quick Requirement Chips */}
+              <div className="flex flex-wrap gap-1.5">
                 {requirementsList.map((req) => {
                   const selected = selectedRequirements.includes(req);
                   return (
@@ -384,25 +451,34 @@ export default function BookAmbulanceView() {
                       key={req}
                       type="button"
                       onClick={() => toggleRequirement(req)}
-                      className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-bold transition cursor-pointer ${
+                      className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-[10px] font-bold transition cursor-pointer ${
                         selected
                           ? 'bg-[#0b132b] text-white shadow-xs'
-                          : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                          : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       {req}
-                      {selected ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3 text-slate-400" />}
+                      {selected ? <X className="h-2.5 w-2.5" /> : <Plus className="h-2.5 w-2.5 text-slate-400" />}
                     </button>
                   );
                 })}
               </div>
+
+              {/* Note input */}
+              <textarea
+                rows={2}
+                value={patientNotes}
+                onChange={(e) => setPatientNotes(e.target.value)}
+                placeholder="Symptoms, floor number, oxygen needed..."
+                className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none"
+              />
             </div>
 
-            {/* Estimated Fare & ETA */}
+            {/* 6. Estimated Fare & ETA */}
             <div className="flex items-end justify-between rounded-2xl border border-slate-200 bg-white p-4">
               <div>
-                <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                  ESTIMATED FARE
+                <p className="text-xs font-semibold text-slate-500">
+                  Estimated fare - {selectedCategory}
                 </p>
                 <p className="mt-0.5 text-xl font-black text-slate-900">
                   BDT {estimatedFare ? estimatedFare.toLocaleString() : '3,500'}{' '}
@@ -413,7 +489,7 @@ export default function BookAmbulanceView() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">ETA</p>
+                <p className="text-xs font-semibold text-slate-400">ETA</p>
                 <p className="mt-0.5 text-sm font-bold text-slate-900">
                   {estimatedDurationMins - 4} - {estimatedDurationMins} mins
                 </p>
