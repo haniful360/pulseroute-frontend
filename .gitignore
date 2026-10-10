@@ -2,7 +2,6 @@
 
 # dependencies
 /node_modules
-.env
 /.pnp
 .pnp.*
 .yarn/*
@@ -31,7 +30,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
+.env
+.env*.local
+.env.local
+.env.development
+.env.test
+.env.production
+!.env.example
 
 # vercel
 .vercel
