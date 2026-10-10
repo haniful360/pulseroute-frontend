@@ -1,168 +1,233 @@
-# 🚀 Next.js Starter Template
+# 🚑 PulseRoute — Emergency Ambulance Dispatch Platform
 
-This repository contains a Next.js template for creating new projects with the latest features and best practices.
+[![Live Website](https://img.shields.io/badge/Live%20Website-Vercel-success?style=for-the-badge&logo=vercel)](https://pulseroute-eta.vercel.app)
+[![Frontend Repo](https://img.shields.io/badge/GitHub-Frontend%20Repo-181717?style=for-the-badge&logo=github)](https://github.com/haniful360/pulseroute-frontend)
+[![Backend Repo](https://img.shields.io/badge/GitHub-Backend%20Repo-181717?style=for-the-badge&logo=github)](https://github.com/haniful360/pulseroute-backend)
+[![API Documentation](https://img.shields.io/badge/API%20Docs-Swagger%20UI-blue?style=for-the-badge&logo=swagger)](https://pulseroute-backend.vercel.app/api-docs)
+[![Demo Video](https://img.shields.io/badge/Demo%20Video-Bubbles-purple?style=for-the-badge&logo=video)](https://app.usebubbles.com/hWzURS9VPq62mbqDwLpVey/recording-oct-10-2026)
 
-## Prerequisites
-
-Before you begin, ensure you have the following installed on your machine:
-
-- [Node.js](https://nodejs.org/)
-- [npm](https://npmjs.com/)
-- [Git](https://git-scm.com/)
-
-## Step By Step Instruction For Setup
-
-Follow these steps to quickly initialize your new project from the template repository.
+**PulseRoute** is an enterprise-grade, emergency healthcare ambulance dispatch and fleet management web application. Built with **Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, and Leaflet Maps**, PulseRoute bridges the gap between emergency patients, ambulance drivers, and healthcare administrators with real-time GPS tracking, instant WebSocket dispatching, and automated cashless Stripe payments.
 
 ---
 
-#### 1\. Clone the Repository
+## 📌 Quick Links & Project Resources
 
-Run the following `git clone` command in your terminal to download the template repository to your local machine.
+| Resource | URL / Details |
+| :--- | :--- |
+| **🚑 Project Name** | **PulseRoute — Emergency Ambulance Dispatch Platform** |
+| **🌐 Live Application** | [https://pulseroute-eta.vercel.app](https://pulseroute-eta.vercel.app) |
+| **💻 Frontend Repository** | [https://github.com/haniful360/pulseroute-frontend](https://github.com/haniful360/pulseroute-frontend) |
+| **⚙️ Backend Repository** | [https://github.com/haniful360/pulseroute-backend](https://github.com/haniful360/pulseroute-backend) |
+| **📖 Backend API & Docs** | [https://pulseroute-backend.vercel.app](https://pulseroute-backend.vercel.app) & [Swagger Docs](https://pulseroute-backend.vercel.app/api-docs) |
+| **🎥 Project Demo Video** | [Watch Walkthrough Video (Bubbles)](https://app.usebubbles.com/hWzURS9VPq62mbqDwLpVey/recording-oct-10-2026) |
+| **🔐 Super Admin Portal** | [https://pulseroute-eta.vercel.app/super-admin/login](https://pulseroute-eta.vercel.app/super-admin/login) |
 
-```bash
-git clone https://github.com/Binary-Mindz/next-js-project-template.git
+---
+
+## 🔑 Demo & Testing Credentials
+
+Use these verified credentials to explore administrative features and test platform capabilities:
+
+| Role | Login URL | Email | Password | Access Privileges |
+| :--- | :--- | :--- | :--- | :--- |
+| **Super Admin** | [`/super-admin/login`](https://pulseroute-eta.vercel.app/super-admin/login) | `haniful@gmail.com` | `haniful123` | Full administrative control: Live Fleet Radar, Driver KYC verification, trip dispatch audit, pricing & commission settings, revenue ops, and payout management |
+
+---
+
+## 🌟 Key Features by Role
+
+### 1. 🧑‍⚕️ Patient / Caller Experience
+- **Instant Ambulance Booking**: Select emergency pickup location, hospital destination, and choose ambulance tier (`BASIC`, `AC`, `ICU`, `CCU`, `FREEZER`, `NEONATAL`).
+- **Interactive Geospatial Maps**: Interactive Leaflet maps with dynamic route tracing, distance & ETA calculations.
+- **Live Trip Radar**: Real-time GPS ambulance tracking powered by WebSockets (Socket.IO).
+- **100% Cashless Payments**: Frictionless credit/debit card checkout via Stripe integration.
+- **Trip History & PDF Invoices**: Download official medical transport receipts with full fare breakdown using jsPDF.
+
+### 2. 🚑 Driver Cockpit & Operations
+- **Live Duty Radar**: Toggle online/duty availability with instant auditory dispatch siren alerts.
+- **Trip Dispatch Workflow**: One-tap accept/reject countdown timer, turn-by-turn navigation route, and state triggers (*En Route -> Arrived -> In-Transit -> Completed*).
+- **Driver Stripe Wallet**: Real-time earnings breakdown, platform commission tracking, net balance, and payout withdrawal requests.
+- **Fleet & KYC Compliance**: Driver license and emergency vehicle document upload with instant verification status badges.
+
+### 3. 🛡️ Super Admin Management Suite
+- **Executive KPI Dashboard**: High-level telemetry of platform revenue, active dispatches, driver response rate, and fleet health.
+- **Live Fleet Radar**: Real-time map displaying all online ambulances, current dispatches, and emergency cluster heatmaps.
+- **Driver & Fleet KYC Approval**: Review submitted vehicle permits, driver certifications, and toggle verification statuses.
+- **Financial & Revenue Operations**: Configure dynamic base fares, per-km rates, severity multipliers, and platform commission percentages.
+- **Payout Settlement Engine**: Inspect, approve, and disburse driver payout requests.
+
+### 4. 🌐 Public Landing & Information Portal
+- High-converting, responsive landing pages highlighting platform safety standards, transparent fare calculators, driver recruitment onboarding (`/join-driver`), and 24/7 emergency helplines.
+
+---
+
+## 💻 Tech Stack & Architecture
+
+### **Core Framework & Language**
+- **Next.js 16** (App Router architecture, Server & Client Components)
+- **React 19**
+- **TypeScript 5**
+
+### **Styling & Design System**
+- **Tailwind CSS v4** + `@tailwindcss/postcss`
+- **Radix UI Primitives** (Accessible modals, dropdowns, popovers, tabs)
+- **Lucide React & React Icons**
+- **Sonner** (Toast notifications)
+
+### **Maps & Real-Time Communication**
+- **Leaflet & React Leaflet** (Interactive maps, custom ambulance markers, routing polyline)
+- **Socket.IO Client** (Live GPS coordinates streaming and instant dispatch alerts)
+
+### **State, Forms & Validation**
+- **React Hook Form** + **Zod** (Schema-driven form validation)
+- **Redux Toolkit** / Context API (Global auth and trip state)
+
+### **Payments & Utilities**
+- **Stripe SDK** (`@stripe/stripe-js`, `@stripe/react-stripe-js`)
+- **Recharts** (Interactive financial & revenue analytics charts)
+- **jsPDF** (Automated trip invoice generation)
+
+---
+
+## 📂 Project Directory Structure
+
+```text
+pulseroute-frontend/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/                  # Authentication routes (Login, Register, OTP, Super Admin)
+│   │   │   ├── login/
+│   │   │   ├── register/
+│   │   │   ├── super-admin/         # Super Admin login route
+│   │   │   └── verify-otp/
+│   │   ├── (main)/                  # Public pages (Home, About, Pricing, Safety, Contact)
+│   │   ├── dashboard/               # Role-protected dashboard routes
+│   │   │   ├── admin/               # Admin panel
+│   │   │   ├── driver/              # Driver cockpit & wallet
+│   │   │   ├── patient/             # Patient ambulance booking & trips
+│   │   │   └── super-admin/         # Super Admin oversight & fleet radar
+│   │   ├── globals.css              # Global styles & Tailwind v4 config
+│   │   └── layout.tsx               # Root layout & providers
+│   ├── components/                  # Shared UI components, modals, sidebar, navbar
+│   │   ├── dashboard/               # Dashboard layout & navigation items
+│   │   └── ui/                      # Base Radix & custom UI primitives
+│   ├── services/                    # API service layers (Auth, Trip, Driver, Wallet, Admin)
+│   ├── hooks/                       # Custom React hooks (Geolocation, Socket, Auth)
+│   ├── types/                       # TypeScript interfaces & type definitions
+│   └── utils/                       # Helper functions (Formatting, calculations, token storage)
+├── public/                          # Static images, icons, and audio assets
+├── .env.example                     # Environment variables template
+├── package.json                     # Project dependencies & scripts
+└── tsconfig.json                    # TypeScript compiler configuration
 ```
 
 ---
 
-#### 2\. Rename the Directory
+## ⚙️ Local Development & Setup Guide
 
-Rename the newly cloned directory from `next-js-project-template` to your desired **project name** (e.g., `my-new-app`).
+### 1. Prerequisites
+Ensure you have the following installed:
+- **Node.js**: v20.x or v22.x+ ([Download Node.js](https://nodejs.org/))
+- **pnpm**: v9+ (Recommended: `npm install -g pnpm` or `corepack enable`)
+
+---
+
+### 2. Clone the Repository
 
 ```bash
-mv next-js-project-template your-project-name
+git clone https://github.com/haniful360/pulseroute-frontend.git
+cd pulseroute-frontend
 ```
 
 ---
 
-#### 3\. Navigate to the Project Directory
-
-Change your current directory to the new project folder.
+### 3. Install Dependencies
 
 ```bash
-cd your-project-name
+pnpm install
 ```
 
 ---
 
-#### 4\. Remove the Existing `.git` Folder
+### 4. Configure Environment Variables
 
-Since this is a new project based on a template, you should remove the template's `.git` history folder so you can initialize your own new repository.
-
-##### 1. Using Git Bash
+Create a `.env.local` file in the root directory:
 
 ```bash
-rm -rf .git
+cp .env.example .env.local
 ```
 
-##### 2. Using Command Prompt
+Fill in the required environment variables:
 
-```cmd
-rmdir /s /q .git
+```env
+# Backend API endpoints
+BACKEND_API_URL=http://localhost:5000/api/v1
+NEXT_PUBLIC_BACKEND_API_URL=http://localhost:5000/api/v1
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+
+# WebSocket URL (Socket.IO)
+NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
+
+# Stripe Payment Gateway (Publishable Key)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51UCG2ZGq4WtGBuFRXigLeicjwUgsp5lM1grFEx7Iyy2jOGuSdQanfYt8hxwLaopeuiDlHoCWoN1N3K0w7oPRzXBk00F9KAzs0o
+
+# Optional: Google Maps / Auth integration
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 ```
 
-##### 3. Using PowerShell
+> **Note for production testing**: You can set `NEXT_PUBLIC_BACKEND_API_URL=https://pulseroute-backend.vercel.app/api/v1` and `NEXT_PUBLIC_SOCKET_URL=https://pulseroute-backend.vercel.app` to connect directly to the live production backend.
 
-You can also use **PowerShell** to remove the `.git` folder.
+---
 
-```powershell
-Remove-Item -Recurse -Force .git
-```
-
-##### 4. Using File Explorer (Manual Way)
-
-> _Steps:_
-
-1. Open **File Explorer** and navigate to your project directory.
-2. **Show hidden files** (since `.git` is a hidden folder):
-   - Click on the **"View"** tab at the top.
-   - Check the box next to **Hidden items**.
-
-3. Find the `.git` folder and delete it like any other folder.
-
-#### 5\. Initialize a New Git Repository (Next Step)
-
-After removing the old history, initialize a fresh Git repository for your new project.
+### 5. Run the Development Server
 
 ```bash
-git init
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+---
+
+### 6. Build for Production
+
+```bash
+# Type check and build Next.js optimized bundle
+pnpm build
+
+# Start production server
+pnpm start
 ```
 
 ---
 
-#### 6\. Check Package Versions
+## 🚀 Available Scripts
 
-Run the following command to see all available updates. This command checks and lists outdated dependencies in your project, but it does not modify your package.json yet.
-
-```bash
-npx ncu
-```
-
-#### 7\. Update All Packages to the Latest Version
-
-To update all dependencies to their latest versions, run the following command. This will update your package.json to the latest versions of all dependencies, and then install those updated versions into your project.
-
-```bash
-npm run update-deps
-```
-
-> **_Congratulations You have successfully completed all the steps!! You are good to go. 🚀_**
-
-## Now, you can start building your projects with the latest dependencies.
-
-<p style="color: red;"><strong>Note:</strong> The following steps are not required. They are just for specific version controlling. You can access the full documentation <a href="https://www.npmjs.com/package/npm-check-updates" target="_blank">here</a>.</p>
-
-### Semantic Versioning (Optional)
-
-In semantic versioning, the version number consists of three parts: `MAJOR.MINOR.PATCH`.
-
-- **PATCH** (Rightmost number) refers to bug fixes.
-- **MINOR** (Middle number) refers to backwards-compatible new features.
-- **MAJOR** (Leftmost number) refers to breaking changes or new features that are not backwards-compatible.
+| Script | Command | Purpose |
+| :--- | :--- | :--- |
+| `dev` | `pnpm dev` | Starts the Next.js development server with hot-reload |
+| `build` | `pnpm build` | Compiles and optimizes production bundle |
+| `start` | `pnpm start` | Starts the Next.js production server |
+| `lint` | `pnpm lint` | Runs ESLint to check for code quality and errors |
+| `lint:fix` | `pnpm lint:fix` | Automatically fixes ESLint warnings and errors |
+| `format` | `pnpm format` | Checks code formatting with Prettier |
+| `format:fix` | `pnpm format:fix`| Fixes code formatting with Prettier |
+| `typecheck` | `pnpm typecheck` | Validates TypeScript types across the project |
 
 ---
 
-##### 1. Update Patches version.
+## 🛡️ Security & Best Practices
 
-Start by updating all patches. Patches are bug fixes, and they are usually safe and shouldn't break anything in your project.
-
-Run the following command to update patches:
-
-```bash
-npx ncu -u -t patch
-```
-
-After updating, run `npm install` to apply the changes. Test your application to ensure everything is working. If everything is fine, commit the changes.
+- **Strict JWT Token Management**: Secure storage and automatic expiration handling with refresh token rotation.
+- **Route Guards & Middleware**: Role-Based Access Control (RBAC) preventing unauthorized access across patient, driver, admin, and super-admin boundaries.
+- **Input Sanitization**: Client-side validation via Zod schemas before network dispatches.
+- **Sensitive Key Protection**: Secret credentials and private keys are strictly kept server-side.
 
 ---
 
-##### 2. Update Minor Versions
+## 👨‍💻 Author & Acknowledgements
 
-Next, update all minor versions. Minor updates generally add new features in a backwards-compatible way, so they should not break your code.
+Developed with ❤️ by **[Haniful Islam](https://github.com/haniful360)**.
 
-Run the following command to update minor versions:
-
-```bash
-npx ncu -u -t minor
-```
-
-After updating, run `npm install` to apply the changes. Test your application to ensure everything is working. If everything is fine, commit the changes.
-
----
-
-##### 3. Update Major Versions
-
-Finally, update all major versions. Major updates may introduce breaking changes, so it's important to check the release notes for each update before proceeding. Update each major version in a separate commit to ensure you can easily revert if necessary.
-
-To update a specific package (e.g., `node-fetch`), run:
-
-```bash
-npx ncu -u -f package_name
-```
-
-After updating, run `npm install` to apply the changes. Test your application to ensure everything is working. If everything is fine, commit the changes.
-
-Repeat this for each package that needs a major update.
-
----
+For questions, issues, or business inquiries, feel free to open an issue or reach out via [GitHub](https://github.com/haniful360).
