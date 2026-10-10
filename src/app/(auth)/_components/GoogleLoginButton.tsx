@@ -66,12 +66,13 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         }
 
         const targetUrl =
-          redirectUrlRef.current ||
-          (res.data.user.role === 'DRIVER'
-            ? '/dashboard/driver'
-            : res.data.user.role === 'SUPER_ADMIN'
-              ? '/dashboard/super-admin'
-              : '/dashboard/patient');
+          redirectUrlRef.current && redirectUrlRef.current !== '/dashboard/super-admin'
+            ? redirectUrlRef.current
+            : res.data.user.role === 'DRIVER'
+              ? '/dashboard/driver'
+              : res.data.user.role === 'SUPER_ADMIN'
+                ? '/dashboard/super-admin/overview'
+                : '/dashboard/patient';
 
         // Clean client redirect with newly acquired session cookies
         window.location.href = targetUrl;

@@ -102,7 +102,7 @@ export default function VerifyOtpView() {
       if (userRole === 'DRIVER') {
         router.push('/dashboard/driver');
       } else if (userRole === 'SUPER_ADMIN') {
-        router.push('/dashboard/super-admin');
+        router.push('/dashboard/super-admin/overview');
       } else {
         router.push('/dashboard/patient');
       }

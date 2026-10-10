@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   if (role === 'DRIVER') {
     redirect('/dashboard/driver');
   } else if (role === 'SUPER_ADMIN') {
-    redirect('/dashboard/super-admin');
+    redirect('/dashboard/super-admin/overview');
   } else {
     redirect('/dashboard/patient');
   }

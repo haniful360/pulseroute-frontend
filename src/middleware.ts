@@ -48,7 +48,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/driver', request.url));
     }
     if (decoded.role === 'SUPER_ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard/super-admin', request.url));
+      return NextResponse.redirect(new URL('/dashboard/super-admin/overview', request.url));
     }
     return NextResponse.redirect(new URL('/dashboard/patient', request.url));
   }
@@ -71,7 +71,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/driver', request.url));
     }
     if (decoded.role === 'SUPER_ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard/super-admin', request.url));
+      return NextResponse.redirect(new URL('/dashboard/super-admin/overview', request.url));
     }
     return NextResponse.redirect(new URL('/dashboard/patient', request.url));
   }
@@ -85,13 +85,13 @@ export function middleware(request: NextRequest) {
 
     if (pathname.startsWith('/dashboard/driver') && decoded.role !== 'DRIVER') {
       const target =
-        decoded.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/patient';
+        decoded.role === 'SUPER_ADMIN' ? '/dashboard/super-admin/overview' : '/dashboard/patient';
       return NextResponse.redirect(new URL(target, request.url));
     }
 
     if (pathname.startsWith('/dashboard/patient') && decoded.role !== 'USER') {
       const target =
-        decoded.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard/driver';
+        decoded.role === 'SUPER_ADMIN' ? '/dashboard/super-admin/overview' : '/dashboard/driver';
       return NextResponse.redirect(new URL(target, request.url));
     }
   }

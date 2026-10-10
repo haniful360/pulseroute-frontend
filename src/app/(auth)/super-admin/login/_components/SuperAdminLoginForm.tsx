@@ -90,10 +90,10 @@ export default function SuperAdminLoginForm() {
 
       // Check redirect param
       const redirectUrl = searchParams.get('redirect');
-      if (redirectUrl && redirectUrl.startsWith('/dashboard/super-admin')) {
+      if (redirectUrl && redirectUrl !== '/dashboard/super-admin' && redirectUrl.startsWith('/dashboard/super-admin')) {
         router.push(redirectUrl);
       } else {
-        router.push('/dashboard/super-admin');
+        router.push('/dashboard/super-admin/overview');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'An unexpected terminal error occurred';

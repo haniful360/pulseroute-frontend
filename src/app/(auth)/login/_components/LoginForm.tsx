@@ -81,7 +81,7 @@ export default function LoginForm() {
 
       // Check redirect param
       const redirectUrl = searchParams.get('redirect');
-      if (redirectUrl) {
+      if (redirectUrl && redirectUrl !== '/dashboard/super-admin') {
         router.push(redirectUrl);
         return;
       }
@@ -91,7 +91,7 @@ export default function LoginForm() {
       if (userRole === 'DRIVER') {
         router.push('/dashboard/driver');
       } else if (userRole === 'SUPER_ADMIN') {
-        router.push('/dashboard/super-admin');
+        router.push('/dashboard/super-admin/overview');
       } else {
         router.push('/dashboard/patient');
       }
