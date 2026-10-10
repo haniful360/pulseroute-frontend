@@ -22,6 +22,7 @@ import {
   CreditCard,
   ExternalLink,
   Filter,
+  Info,
   Radio,
   RefreshCw,
   Search,
@@ -30,6 +31,16 @@ import {
   Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { resolveNotificationUrl } from '@/utils/notificationNavigation';
 
 function formatRelativeTime(dateString: string) {
   try {
@@ -112,6 +123,7 @@ export default function NotificationCenterView({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState<'all' | 'unread' | 'TRIP' | 'PAYMENT' | 'SYSTEM'>('all');
   const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [selectedDetailItem, setSelectedDetailItem] = useState<INotificationItem | null>(null);
 
   if (isLoading && notifications.length === 0) {
     return <NotificationsSkeleton />;
@@ -162,9 +174,7 @@ export default function NotificationCenterView({
     if (!item.isRead) {
       await markAsRead(item.id);
     }
-    if (item.link) {
-      router.push(item.link);
-    }
+    setSelectedDetailItem(item);
   };
 
   return (
@@ -330,6 +340,7 @@ export default function NotificationCenterView({
           filtered.map((item) => {
             const visuals = getVisuals(item.type);
             const Icon = visuals.icon;
+            const destination = resolveNotificationUrl(item, dashboardType);
 
             return (
               <div
@@ -341,8 +352,16 @@ export default function NotificationCenterView({
               >
                 {/* Left: Icon & Content */}
                 <div
-                  className="flex flex-1 cursor-pointer items-start gap-4"
+                  role="button"
+                  tabIndex={0}
+                  className="flex flex-1 cursor-pointer items-start gap-4 select-none"
                   onClick={() => handleItemClick(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleItemClick(item);
+                    }
+                  }}
                 >
                   <div
                     className={cn(
@@ -357,7 +376,7 @@ export default function NotificationCenterView({
                     <div className="flex flex-wrap items-center gap-2">
                       <h4
                         className={cn(
-                          'text-sm font-bold text-slate-900',
+                          'text-sm font-bold text-slate-900 group-hover:text-[#e63946] transition-colors',
                           !item.isRead && 'font-black',
                         )}
                       >
@@ -392,22 +411,41 @@ export default function NotificationCenterView({
 
                 {/* Right: Actions */}
                 <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
-                  {item.link && (
-                    <Link
-                      href={item.link}
-                      onClick={() => !item.isRead && markAsRead(item.id)}
-                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-[#e63946] hover:text-[#e63946] shadow-2xs"
-                    >
-                      <span>Open</span>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Link>
-                  )}
+                  <button
+                    type="button"
+                    title="View details"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!item.isRead) markAsRead(item.id);
+                      setSelectedDetailItem(item);
+                    }}
+                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    <Info className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    title={`Go to ${destination.label}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!item.isRead) markAsRead(item.id);
+                      router.push(destination.url);
+                    }}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-[#e63946] hover:text-[#e63946] shadow-2xs"
+                  >
+                    <span>{destination.label}</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </button>
 
                   {!item.isRead && (
                     <button
                       type="button"
                       title="Mark as read"
-                      onClick={() => markAsRead(item.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAsRead(item.id);
+                      }}
                       className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600"
                     >
                       <Check className="h-4 w-4" />
@@ -417,7 +455,10 @@ export default function NotificationCenterView({
                   <button
                     type="button"
                     title="Delete notification"
-                    onClick={() => deleteNotification(item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteNotification(item.id);
+                    }}
                     className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -428,6 +469,98 @@ export default function NotificationCenterView({
           })
         )}
       </div>
+
+      {/* Notification Detail Dialog Modal */}
+      <Dialog
+        open={Boolean(selectedDetailItem)}
+        onOpenChange={(open) => !open && setSelectedDetailItem(null)}
+      >
+        <DialogContent className="max-w-md rounded-3xl p-6 sm:p-7">
+          {selectedDetailItem && (() => {
+            const visuals = getVisuals(selectedDetailItem.type);
+            const destination = resolveNotificationUrl(selectedDetailItem, dashboardType);
+            const DetailIcon = visuals.icon;
+
+            return (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-xs',
+                        visuals.bg,
+                      )}
+                    >
+                      <DetailIcon className="h-6 w-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <DialogTitle className="text-base font-black text-slate-900 leading-snug">
+                        {selectedDetailItem.title}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-slate-400 mt-0.5">
+                        {formatRelativeTime(selectedDetailItem.createdAt)} •{' '}
+                        {selectedDetailItem.type || 'SYSTEM'}
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2 text-xs">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 leading-relaxed text-slate-700 font-medium">
+                    {selectedDetailItem.message}
+                  </div>
+
+                  {selectedDetailItem.metadata &&
+                    Object.keys(selectedDetailItem.metadata).length > 0 && (
+                      <div className="rounded-2xl border border-slate-100 bg-white p-3 space-y-1.5">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Context Information
+                        </p>
+                        <div className="space-y-1 font-mono text-[11px] text-slate-600">
+                          {Object.entries(selectedDetailItem.metadata).map(([k, v]) => (
+                            <div key={k} className="flex justify-between items-center">
+                              <span className="text-slate-400">{k}:</span>
+                              <span className="font-semibold text-slate-800">{String(v)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  <div className="text-[11px] text-slate-400 flex justify-between border-t border-slate-100 pt-2.5">
+                    <span>Received Date:</span>
+                    <span className="font-medium text-slate-600">
+                      {new Date(selectedDetailItem.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <DialogFooter className="flex sm:justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedDetailItem(null)}
+                    className="rounded-xl cursor-pointer"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSelectedDetailItem(null);
+                      router.push(destination.url);
+                    }}
+                    className="gap-1.5 rounded-xl bg-[#E63946] hover:bg-[#d62828] text-white font-bold cursor-pointer"
+                  >
+                    <span>{destination.label}</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

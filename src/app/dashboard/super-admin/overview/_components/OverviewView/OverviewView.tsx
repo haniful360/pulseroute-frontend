@@ -12,7 +12,8 @@ import {
   Radio,
   BarChart3,
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -357,6 +358,13 @@ export default function OverviewView() {
           >
             <BarChart3 className="h-4 w-4 text-slate-500" />
             Revenue & Payouts
+          </Link>
+          <Link 
+            href="/dashboard/super-admin/payouts"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 shadow-2xs cursor-pointer"
+          >
+            <CreditCard className="h-4 w-4 text-slate-500" />
+            Driver Payouts
           </Link>
           <Link 
             href="/dashboard/super-admin/pricing"

@@ -97,7 +97,15 @@ export default function DriverSummaryPanel() {
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                {Number(overview?.todayEarnings ?? overview?.driver?.wallet?.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {Number(
+                  overview?.financials?.totalEarnings ??
+                  overview?.financials?.todayEarnings ??
+                  overview?.totalEarnings ??
+                  overview?.todayEarnings ??
+                  overview?.driver?.wallet?.totalEarnings ??
+                  overview?.driver?.wallet?.balance ??
+                  0
+                ).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
               <span className="text-sm font-bold text-slate-400">BDT</span>
             </div>

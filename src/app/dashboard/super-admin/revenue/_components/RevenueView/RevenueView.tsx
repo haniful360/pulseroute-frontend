@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useTransition } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/dashboard/Fields/InputField/InputField';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -125,16 +126,27 @@ export default function RevenueView() {
             Consolidated transaction logs, platform fee settlements, and automated payout schedules.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={loadData}
-          disabled={isPending}
-          className="gap-2 self-start sm:self-auto rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
-        >
-          <RefreshCw className={cn('h-3.5 w-3.5', isPending && 'animate-spin text-[#E63946]')} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link href="/dashboard/super-admin/payouts">
+            <Button
+              size="sm"
+              className="gap-2 rounded-xl bg-[#E63946] text-white hover:bg-[#d62828] shadow-sm"
+            >
+              <CreditCard className="h-3.5 w-3.5" />
+              Driver Payouts
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadData}
+            disabled={isPending}
+            className="gap-2 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', isPending && 'animate-spin text-[#E63946]')} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -190,9 +202,12 @@ export default function RevenueView() {
               {formatUSD(pendingSettlement)}
             </div>
           )}
-          <div className="text-xs font-medium text-amber-600 mt-1">
-            {pendingPayoutCount} pending operator requests
-          </div>
+          <Link
+            href="/dashboard/super-admin/payouts"
+            className="text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline mt-1 flex items-center gap-1"
+          >
+            {pendingPayoutCount} pending operator requests →
+          </Link>
         </div>
 
         {/* Stat 4 */}

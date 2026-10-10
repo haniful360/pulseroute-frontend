@@ -1,14 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { roleTypes } from '@/components/dashboard/sidebar/sidebarRoutes';
 import DynamicActionButton from '@/components/shared/DynamicActionButton/DynamicActionButton';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useModal } from '@/context/ModalContext';
 import { useNotifications } from '@/context/NotificationContext';
@@ -17,20 +26,25 @@ import {
   AlertTriangle,
   Ambulance,
   ArrowRight,
+  ArrowUpRight,
   Bell,
   BellOff,
   Check,
   CheckCheck,
   CreditCard,
   ChevronDown,
+  Info,
   Radio,
   ShieldCheck,
   Trash2,
   Wallet,
   X,
+  ExternalLink,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { INotificationItem } from '@/services/notification/notification.service';
+import { resolveNotificationUrl } from '@/utils/notificationNavigation';
+import { toast } from 'sonner';
 
 const UserDropdown = dynamic(() => import('./UserDropdown/UserDropdown'), {
   ssr: false,
@@ -106,10 +120,12 @@ function getNotificationVisuals(type: string, isLight: boolean) {
 
 function RightSection({ role }: { role: roleTypes }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { openModal } = useModal();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'trip' | 'payment' | 'system'>('all');
   const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [selectedDetailItem, setSelectedDetailItem] = useState<INotificationItem | null>(null);
 
   const {
     notifications,
@@ -138,9 +154,32 @@ function RightSection({ role }: { role: roleTypes }) {
       await markAsRead(item.id);
     }
     setIsOpen(false);
-    if (item.link) {
-      router.push(item.link);
+    setSelectedDetailItem(item);
+  };
+
+  const handleDirectNavigate = (e: React.MouseEvent, item: INotificationItem) => {
+    e.stopPropagation();
+    if (!item.isRead) {
+      markAsRead(item.id);
     }
+    setIsOpen(false);
+    const dest = resolveNotificationUrl(item, role);
+    if (dest?.url) {
+      if (pathname === dest.url) {
+        toast.info(`${dest.label} is currently active on your screen.`);
+      } else {
+        router.push(dest.url);
+      }
+    }
+  };
+
+  const handleViewDetailModal = (e: React.MouseEvent, item: INotificationItem) => {
+    e.stopPropagation();
+    if (!item.isRead) {
+      markAsRead(item.id);
+    }
+    setIsOpen(false);
+    setSelectedDetailItem(item);
   };
 
   const handleNavigateToAll = () => {
@@ -170,8 +209,8 @@ function RightSection({ role }: { role: roleTypes }) {
 
   return (
     <div className="flex items-center gap-3">
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
           <button
             aria-label="Open notifications"
             className={cn(
@@ -189,9 +228,9 @@ function RightSection({ role }: { role: roleTypes }) {
               </span>
             )}
           </button>
-        </DropdownMenuTrigger>
+        </PopoverTrigger>
 
-        <DropdownMenuContent
+        <PopoverContent
           align="end"
           sideOffset={8}
           className={cn(
@@ -283,10 +322,10 @@ function RightSection({ role }: { role: roleTypes }) {
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  'cursor-pointer rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap transition-all duration-150',
+                  'flex shrink-0 items-center rounded-xl px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer',
                   activeTab === tab.id
                     ? isLight
-                      ? 'bg-[#E63946] text-white shadow-xs'
+                      ? 'bg-white text-slate-900 shadow-2xs'
                       : 'bg-primary text-white'
                     : isLight
                       ? 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
@@ -355,19 +394,29 @@ function RightSection({ role }: { role: roleTypes }) {
             ) : (
               filteredNotifications.map((item) => {
                 const visuals = getNotificationVisuals(item.type, isLight);
+                const destination = resolveNotificationUrl(item, role);
+
                 return (
                   <div
                     key={item.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleNotificationClick(item)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleNotificationClick(item);
+                      }
+                    }}
                     className={cn(
-                      'group relative flex cursor-pointer items-start gap-3 p-3.5 transition-colors',
+                      'group relative flex w-full cursor-pointer items-start gap-3 p-3.5 text-left transition-all select-none',
                       isLight
                         ? cn(
-                            'hover:bg-slate-50',
+                            'hover:bg-red-50/50 active:bg-red-100/60',
                             !item.isRead ? 'bg-red-50/25' : 'bg-white',
                           )
                         : cn(
-                            'hover:bg-[#1A2234]',
+                            'hover:bg-[#1A2234] active:bg-[#1F293D]',
                             !item.isRead ? 'bg-[#151D2C]' : 'bg-transparent',
                           ),
                     )}
@@ -387,7 +436,7 @@ function RightSection({ role }: { role: roleTypes }) {
                       <div className="flex items-center gap-2">
                         <p
                           className={cn(
-                            'truncate text-xs font-bold',
+                            'truncate text-xs font-bold transition-colors group-hover:text-[#E63946]',
                             isLight ? 'text-slate-900' : 'text-white',
                             !item.isRead && 'font-black',
                           )}
@@ -427,11 +476,34 @@ function RightSection({ role }: { role: roleTypes }) {
                             {item.type}
                           </span>
                         )}
+                        <button
+                          type="button"
+                          title={`Go to ${destination.label}`}
+                          onClick={(e) => handleDirectNavigate(e, item)}
+                          className="ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-[#E63946] hover:bg-red-50 dark:hover:bg-red-950/30 hover:underline cursor-pointer transition-colors"
+                        >
+                          <span>{destination.label}</span>
+                          <ArrowUpRight className="h-3 w-3 shrink-0" />
+                        </button>
                       </div>
                     </div>
 
-                    {/* Quick Action Buttons (shown on hover) */}
-                    <div className="absolute right-2 top-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Quick Action Buttons */}
+                    <div className="absolute right-2 top-2.5 flex items-center gap-1 opacity-75 group-hover:opacity-100 transition-opacity bg-white/95 dark:bg-slate-900/95 rounded-lg p-0.5 shadow-2xs">
+                      <button
+                        type="button"
+                        title="View details"
+                        onClick={(e) => handleViewDetailModal(e, item)}
+                        className={cn(
+                          'p-1.5 rounded-lg transition-colors cursor-pointer',
+                          isLight
+                            ? 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                            : 'text-slate-400 hover:text-blue-400 hover:bg-slate-800',
+                        )}
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+
                       {!item.isRead && (
                         <button
                           type="button"
@@ -450,6 +522,7 @@ function RightSection({ role }: { role: roleTypes }) {
                           <Check className="h-3.5 w-3.5" />
                         </button>
                       )}
+
                       <button
                         type="button"
                         title="Delete notification"
@@ -486,8 +559,106 @@ function RightSection({ role }: { role: roleTypes }) {
             <span>View all notifications</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </PopoverContent>
+      </Popover>
+
+      {/* NOTIFICATION DETAIL DIALOG */}
+      <Dialog
+        open={Boolean(selectedDetailItem)}
+        onOpenChange={(open) => !open && setSelectedDetailItem(null)}
+      >
+        <DialogContent className="max-w-md rounded-3xl p-6 sm:p-7">
+          {selectedDetailItem && (() => {
+            const visuals = getNotificationVisuals(selectedDetailItem.type, isLight);
+            const destination = resolveNotificationUrl(selectedDetailItem, role);
+
+            return (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-xs',
+                        visuals.bg,
+                      )}
+                    >
+                      {visuals.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <DialogTitle className="text-base font-black text-slate-900 leading-snug">
+                        {selectedDetailItem.title}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-slate-400 mt-0.5">
+                        {formatRelativeTime(selectedDetailItem.createdAt)} •{' '}
+                        {selectedDetailItem.type}
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2 text-xs">
+                  {/* Full Message Box */}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 leading-relaxed text-slate-700 font-medium">
+                    {selectedDetailItem.message}
+                  </div>
+
+                  {/* Metadata if present */}
+                  {selectedDetailItem.metadata && Object.keys(selectedDetailItem.metadata).length > 0 && (
+                    <div className="rounded-2xl border border-slate-100 bg-white p-3 space-y-1.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Context Information
+                      </p>
+                      <div className="space-y-1 font-mono text-[11px] text-slate-600">
+                        {Object.entries(selectedDetailItem.metadata).map(([k, v]) => (
+                          <div key={k} className="flex justify-between items-center">
+                            <span className="text-slate-400">{k}:</span>
+                            <span className="font-semibold text-slate-800">{String(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Timestamp detail */}
+                  <div className="text-[11px] text-slate-400 flex justify-between border-t border-slate-100 pt-2.5">
+                    <span>Received Date:</span>
+                    <span className="font-medium text-slate-600">
+                      {new Date(selectedDetailItem.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <DialogFooter className="flex sm:justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedDetailItem(null)}
+                    className="rounded-xl"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSelectedDetailItem(null);
+                      if (pathname === destination.url) {
+                        toast.info(`${destination.label} is currently active on your screen.`);
+                        router.refresh();
+                      } else {
+                        router.push(destination.url);
+                      }
+                    }}
+                    className="gap-1.5 rounded-xl bg-[#E63946] hover:bg-[#d62828] text-white font-bold cursor-pointer"
+                  >
+                    <span>{destination.label}</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {role === 'admin' && (
         <DynamicActionButton

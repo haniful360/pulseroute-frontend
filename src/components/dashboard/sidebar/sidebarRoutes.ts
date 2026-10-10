@@ -215,6 +215,12 @@ export const superAdminRoutes: SidebarRouteItem[] = [
     icon: BarChart3,
     section: 'FINANCIALS',
   },
+  {
+    title: 'Driver Payouts',
+    url: '/dashboard/super-admin/payouts',
+    icon: CreditCard,
+    section: 'FINANCIALS',
+  },
   // FOOTER ITEMS
   {
     title: 'Announcements',

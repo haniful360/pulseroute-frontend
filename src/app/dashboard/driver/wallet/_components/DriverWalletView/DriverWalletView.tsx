@@ -33,6 +33,7 @@ interface LedgerItem {
   time: string;
   tripId: string;
   amount: string;
+  isDebit?: boolean;
   status: string;
   method: string;
 }
@@ -64,22 +65,52 @@ export default function DriverWalletView() {
           }
         }
         if (txRes.success && Array.isArray(txRes.data)) {
-          const items: LedgerItem[] = txRes.data.map((tx: any) => ({
-            id: tx.id,
-            date: new Date(tx.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }),
-            time: new Date(tx.createdAt).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-            tripId: tx.trip?.tripCode || `#TRP-${tx.id.slice(-4).toUpperCase()}`,
-            amount: `${tx.type === 'DEBIT' ? '-' : '+'}BDT ${Number(tx.amount || 0).toLocaleString()}`,
-            status: tx.status || 'Completed',
-            method: tx.paymentMethod || 'Stripe Express',
-          }));
+          const items: LedgerItem[] = txRes.data.map((tx: any) => {
+            const isDebit =
+              tx.direction === 'DEBIT' ||
+              tx.type === 'PAYOUT_WITHDRAWAL' ||
+              tx.type === 'COMMISSION_DEDUCTION';
+
+            let reference = tx.trip?.tripCode;
+            if (!reference) {
+              if (tx.type === 'PAYOUT_WITHDRAWAL') {
+                reference = tx.referenceId
+                  ? `PAYOUT #${tx.referenceId.slice(-8).toUpperCase()}`
+                  : `#WDL-${tx.id.slice(-4).toUpperCase()}`;
+              } else {
+                reference = `#REF-${tx.id.slice(-4).toUpperCase()}`;
+              }
+            }
+
+            let method = tx.paymentMethod || 'Stripe Express';
+            if (tx.type === 'PAYOUT_WITHDRAWAL') {
+              method = tx.description?.includes('BKASH')
+                ? 'bKash Payout'
+                : 'Central Bank Payout';
+            } else if (tx.type === 'COMMISSION_DEDUCTION') {
+              method = 'Platform Fee (12%)';
+            } else if (tx.type === 'TRIP_EARNING') {
+              method = 'Trip Fare Credit';
+            }
+
+            return {
+              id: tx.id,
+              date: new Date(tx.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }),
+              time: new Date(tx.createdAt).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              tripId: reference,
+              amount: `${isDebit ? '-' : '+'}BDT ${Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+              isDebit,
+              status: tx.status || 'Completed',
+              method,
+            };
+          });
           setLedger(items);
         } else if (!wRes.success) {
           toast.error(wRes.message || 'Failed to load wallet balance');
@@ -185,10 +216,16 @@ export default function DriverWalletView() {
       accessor: 'method' as keyof LedgerItem,
     },
     {
-      header: 'Net Earning',
+      header: 'Net Earning / Debit',
       cell: (row: LedgerItem) => (
         <span
-          className={`font-bold ${row.status === 'Pending' ? 'text-slate-800' : 'text-emerald-600'}`}
+          className={`font-bold ${
+            row.status === 'Pending'
+              ? 'text-slate-800'
+              : row.isDebit
+              ? 'text-rose-600'
+              : 'text-emerald-600'
+          }`}
         >
           {row.amount}
         </span>
@@ -262,7 +299,7 @@ export default function DriverWalletView() {
                 <Skeleton className="h-9 w-36 mt-2" />
               ) : (
                 <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                  BDT {Number(wallet?.totalEarned ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  BDT {Number(wallet?.totalEarnings ?? wallet?.totalEarned ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </h3>
               )}
               <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">

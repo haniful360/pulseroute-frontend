@@ -3,6 +3,56 @@
 
 import { apiGet, apiPatch, apiPost, ApiResponse } from "@/services/fetchClient/fetchClient";
 
+export interface IPayoutDriverInfo {
+  id: string;
+  name: string;
+  email: string;
+  contactNumber?: string;
+  avatarUrl?: string;
+}
+
+export interface IPayoutWalletInfo {
+  id: string;
+  driverId: string;
+  balance: string | number;
+  totalEarnings: string | number;
+  totalCommissionPaid: string | number;
+  totalWithdrawn: string | number;
+  currency: string;
+}
+
+export interface IPayoutRequestItem {
+  id: string;
+  driverId: string;
+  walletId: string;
+  amount: string | number;
+  paymentMethod: string;
+  accountNumber: string;
+  accountDetails?: string;
+  status: 'REQUESTED' | 'PROCESSING' | 'APPROVED' | 'REJECTED';
+  processedAt?: string | null;
+  processedById?: string | null;
+  rejectionReason?: string | null;
+  transactionReference?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  driver?: IPayoutDriverInfo;
+  wallet?: IPayoutWalletInfo;
+}
+
+export interface IPayoutRequestFilter {
+  page?: number;
+  limit?: number;
+  status?: string;
+  driverId?: string;
+}
+
+export interface IProcessPayoutPayload {
+  status: 'APPROVED' | 'REJECTED' | 'PROCESSING';
+  transactionReference?: string;
+  rejectionReason?: string;
+}
+
 /**
  * 1. Get driver's wallet and balance
  */
@@ -36,18 +86,18 @@ export async function createPayoutRequestAction(payload: {
  * 4. Super Admin: Get all payout requests
  */
 export async function getAllPayoutRequestsAction(
-  params?: any
-): Promise<ApiResponse<any>> {
-  return apiGet("/wallets/admin/payouts", { params });
+  params?: IPayoutRequestFilter
+): Promise<ApiResponse<IPayoutRequestItem[]>> {
+  return apiGet("/wallets/admin/payouts", { params: params as any });
 }
 
 /**
- * 5. Super Admin: Process (Approve / Reject) payout request
+ * 5. Super Admin: Process (Approve / Reject / Processing) payout request
  */
 export async function processPayoutRequestAction(
   id: string,
-  payload: { status: 'APPROVED' | 'REJECTED'; adminNotes?: string }
-): Promise<ApiResponse<any>> {
+  payload: IProcessPayoutPayload
+): Promise<ApiResponse<IPayoutRequestItem>> {
   return apiPatch(`/wallets/admin/payouts/${id}`, payload);
 }
 
@@ -59,4 +109,3 @@ export async function exportDriverStatementAction(
 ): Promise<ApiResponse<string>> {
   return apiGet("/wallets/statement/export", { params });
 }
-
